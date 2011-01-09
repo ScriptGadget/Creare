@@ -1,0 +1,28 @@
+---------
+Questions
+---------
+
+  What is the SSL quota on GAE?
+  What should the URLs look like?
+
+
+----
+URLs
+----
+
+  App Home: http://ncm.appspot.com/
+  App Admin: https://ncm.appspot.com/manage
+  Stats and status: https://ncm.appspot.com/status
+  
+  Vendors: http://ncm.appspot.com/vendors
+  A Vendor: http://ncm.appspot.com/vendor/[vendorID]
+  Vendor Store Administration: https://ncm.appspot.com/admin/[vendorID]
+ 
+  A Product: http://ncm.appspot.com/product/[productID]
+  Checkout: http://ncm.appspot.com/checkout
+
+--------
+Thoughts
+--------
+
+  Shopping carts should not outlive a session
