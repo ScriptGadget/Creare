@@ -17,8 +17,11 @@ URLs
   Vendors: http://ncm.appspot.com/vendors
   A Vendor: http://ncm.appspot.com/vendor/[vendorID]
   Vendor Store Administration: https://ncm.appspot.com/admin/[vendorID]
+  New Vendor: http://ncm.appspot.com/vendor_add
+
  
-  A Product: http://ncm.appspot.com/product/[productID]
+  A Product: http://ncm.appspot.com/product/[productID
+  New Vendor: http://ncm.appspot.com/product_add
   Checkout: http://ncm.appspot.com/checkout
 
 --------
@@ -26,3 +29,5 @@ Thoughts
 --------
 
   Shopping carts should not outlive a session
+  Edit in place is nice, is it too costly though?
+  IE...

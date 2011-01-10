@@ -1,0 +1,20 @@
+<html>
+    <head>
+    <title>{{maker.store_name}}</title>
+	</head>
+
+    <body>
+    <div id="main">
+	<p>{{maker.full_name}}'s <em>{{maker.store_name}}</em></p>
+	<p>{{maker.store_description}}</p>
+	<p>{{maker.location}}</p>
+	<p>Products:</p>
+	<dl>
+	{% for product in maker.products %}
+       <dt><a href="/product/{{product.key}}">{{product.description}}</a></dt>
+	   <dd>${pr{oduct.price}}</dd>
+    {% endfor %}
+    </dl>
+    </div>    
+    </body>
+</html>
