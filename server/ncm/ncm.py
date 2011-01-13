@@ -20,8 +20,22 @@ class HomePage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, template_values))
 
-class MakerStorePage(webapp.RequestHandler):
+class PrivacyPage(webapp.RequestHandler):
     """ Renders a store page for a particular maker."""
+    def get(self):
+        template_values = { 'title':'Privacy Policy'}
+        path = os.path.join(os.path.dirname(__file__), "templates/privacy.html")
+        self.response.out.write(template.render(path, template_values))
+
+class TermsPage(webapp.RequestHandler):
+    """ Renders the terms and conditions page. """
+    def get(self):
+        template_values = { 'title':'Terms and Conditions'}
+        path = os.path.join(os.path.dirname(__file__), "templates/terms.html")
+        self.response.out.write(template.render(path, template_values))
+
+class MakerStorePage(webapp.RequestHandler):
+    """ Renders a store page for a particular maker. """
     def get(self, maker_id):
         maker = Maker.get(maker_id)
         template_values = { 'maker':maker}
@@ -39,6 +53,8 @@ class ProductPage(webapp.RequestHandler):
 def main():
     app = webapp.WSGIApplication([
         ('/', HomePage),
+        ('/privacy', PrivacyPage),
+        ('/terms', TermsPage),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/product/(.*)', ProductPage),
         ], debug=True)
