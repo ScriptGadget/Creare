@@ -8,6 +8,64 @@ from google.appengine.api import users
 from google.appengine.ext import db
 from model import Maker, Product
 
+class AuthenticatedPage(webapp.RequestHandler):
+    def authenticate(self):
+        user = users.get_current_user()
+        
+        user_id = None
+        maker = None
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+        else:
+            user_id = user.user_id()   
+            try:
+                makers = Maker.gql("WHERE user_id = :1", user.user_id())
+                maker = makers.fetch(1)
+            except db.KindError:
+                maker = None
+        
+        return (user_id, maker)
+
+class MakerDashboard(AuthenticatedPage):
+    """ Renders a page for Makers to view and manage their catalog and sales """
+    def get(self, maker_id):
+
+        (user_id, maker) = self.authenticate()
+
+        if not maker or not maker.key() == maker_id:
+            self.redirect("/maker_store/" + maker_id)
+
+        template_values = { 'title':'Maker Dashboard', 'maker':maker}
+        path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
+        self.response.out.write(template.render(path, template_values))
+
+class ShopperRegistrationPage(webapp.RequestHandler):
+    """ Renders the new user registration template."""    
+    def get(self):
+        template_values = { 'title':'Register'}
+        path = os.path.join(os.path.dirname(__file__), "templates/register_shopper.html")
+        self.response.out.write(template.render(path, template_values))
+
+class MakerRegistrationPage(webapp.RequestHandler):
+    """ Renders the new maker registration template."""    
+    def get(self):
+        template_values = { 'title':'Open Your Store'}
+        path = os.path.join(os.path.dirname(__file__), "templates/register_maker.html")
+        self.response.out.write(template.render(path, template_values))
+
+    def post(self):
+        maker = Maker();
+        maker.store_name = self.request.get('store_name')
+        maker.store_description = self.request.get('store_description')
+        maker.location = self.request.get('location')
+        maker.full_name = self.request.get('full_name')
+        maker.email = self.request.get('email')
+        maker.paypal = self.request.get('paypal')
+        maker.phone = self.request.get('phone')
+        maker.mailing_address = self.request.get('mailing_address')
+        maker.put()
+        self.redirect('/maker_store/'+str(maker.key()))
+
 class HomePage(webapp.RequestHandler):
     """ Renders the home page template."""
     def get(self):
@@ -56,7 +114,9 @@ def main():
         ('/privacy', PrivacyPage),
         ('/terms', TermsPage),
         (r'/maker_store/(.*)', MakerStorePage),
+        (r'/maker_dashboard/(.*)', MakerDashboard),
         (r'/product/(.*)', ProductPage),
+        ('/register_maker', MakerRegistrationPage),
         ], debug=True)
     util.run_wsgi_app(app)
 
