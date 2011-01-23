@@ -7,16 +7,14 @@ body { background-color: white; }
     padding: 0 0 0 5px;
     height: 180px;
     width: 100%;
-	background-color: black; 
+	background-color: gray; 
 	color: white;
 }
 
 #content { 
 	display: block; 
 	margin-left: 190px;
-	border: 2px outset orange; 
 	padding: 3px 10px; 
-	background-color: green; 
 }
 
 #sidebar { 
@@ -24,13 +22,19 @@ body { background-color: white; }
     font-weight: normal;
     width: 190px;
 	padding: 2px;       
+	margin-top: 10px;
     position: absolute; left: 5px; top:180px
-	background-color: yellow; 
 }
 
 #sidebar h2 {
 	font-size: small;
-	font-weight: italic;
+	font-weight: strong;
+}
+
+#sidebar h3 {
+	font-size: small;
+	font-weight: normal;
+	color: blue;
 }
 
 #menubar { display: block; height: 2em; padding: 1px; }
@@ -50,5 +54,4 @@ body { background-color: white; }
     font-weight: italic;
 	font-size: small;
 	padding: 3px 10px; 
-	background-color: orange; 
 }
