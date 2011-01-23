@@ -7,14 +7,28 @@ body { background-color: white; }
     padding: 0 0 0 5px;
     height: 180px;
     width: 100%;
-	background-color: gray; 
-	color: white;
+	color: black;
 }
 
 #content { 
 	display: block; 
 	margin-left: 190px;
 	padding: 3px 10px; 
+}
+
+.catalog h3 {
+	font-size: small;
+	font-weight: normal;
+	color: black;
+}
+
+.price {
+	color: green;
+	font-size: small;
+}
+
+.catalog p {
+	font-size: small;
 }
 
 #sidebar { 
@@ -40,10 +54,10 @@ body { background-color: white; }
 #menubar { display: block; height: 2em; padding: 1px; }
 #menu { position:relative; float:right; right:50%; font-size: large; margin-top: -1em;}
 #menu li {text-align: left; position: relative; float: left; left: 50%; list-style: none; padding: 3px 5px 3px 5px; margin: 3px 0.5em; border: 0px none #FFF;}
-#menu .current li { background-color: orange; color: #EFE; }
-#menu a { text-decoration: none; background-color: #transparent; color: green;}
-#menu a:hover { text-decoration: none; background-color: #FAFAD2; color: green;}
-#menu .current a { text-decoration: none; background-color: yellow; color: green;}
+#menu .current li { background-color: gray; color: black; }
+#menu a { text-decoration: none; background-color: #transparent; color: black;}
+#menu a:hover { text-decoration: none; background-color: black; color: white;}
+#menu .current a { text-decoration: none; background-color: gray; color: black;}
 
 #alertPanel { color: red; padding: 10px; }
 

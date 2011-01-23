@@ -14,16 +14,19 @@
 
     <div id="sidebar">
 	  {% block sidebar %}
+	  <h2>News</h2>
+	  <h3>A News Item</h3>
+	  <p>News and Info long enough to wrap and need a "more" link. ...(<a href="">more</a>)</p>
 	  <h2>Events</h2>
 	  <h3>An Event</h3>
-	  <p>Information about the event.</p>
+	  <p>A short event.</p>
 	  <h3>An Especially Long Event</h3>
-	  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt. Aptent eum letalis, secundum natu tristique voco paulatim saluto commoveo augue accumsan. In, inhibeo si praesent et appellatio abdo odio turpis. </p>
+	  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt.  ...(<a href="">more</a>)</p>
 	  <h2>Tips</h2>
 	  <h3>A Tip</h3>
-	  <p>Information about a tip.</p>
+	  <p>A short tip.</p>
 	  <h3>An Especially Long Tip</h3>
-	  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt. Aptent eum letalis, secundum natu tristique voco paulatim saluto commoveo augue accumsan. In, inhibeo si praesent et appellatio abdo odio turpis. Demoveo ne si mara venio iriure nostrud, ut, et consequat. Luptatum capto luptatum, in ut metuo tristique. Vereor dolore odio nullus eu iustum vero reprobo virtus epulae feugait lobortis eros, modo. </p>
+	  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt.  ...(<a href="">more</a>) </p>
 
       {% endblock %}
     </div>
@@ -42,11 +45,31 @@
 	
     <div id="content">
 	  {% block content %}
-	  <p>Lorem ipsum dolor sit amet, ne mauris bis euismod, ullamcorper ymo iustum sed. Secundum singularis duis scisco multo appellatio laoreet, nisl vero imputo wisi dignissim capio illum hendrerit. Esse in eros adsum huic adsum eu, qui quia. Wisi singularis, valetudo letatio illum facilisis autem quibus illum illum facilisis letalis quae. Nutus, ut caecus nimis occuro, duis. Quae facilisi acsi, rusticus luptatum ne vel quia. </p>
+	  <table class="catalog">
+      <tr>
+		<td>
+		  <h3>An Item</h3>
+		  <p class="price">Price: $100.00</p>
+		  <p>Lorem ipsum dolor sit amet, ne mauris bis euismod, ullamcorper ymo iustum sed. Secundum singularis duis scisco multo appellatio laoreet, nisl vero imputo wisi dignissim capio illum hendrerit. Esse in eros adsum huic adsum eu, qui quia. Wisi singularis, valetudo letatio illum facilisis autem quibus illum illum facilisis letalis quae. Nutus, ut caecus nimis occuro, duis. Quae facilisi acsi, rusticus luptatum ne vel quia. </p>
+		</td>
 
-	  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt. Aptent eum letalis, secundum natu tristique voco paulatim saluto commoveo augue accumsan. In, inhibeo si praesent et appellatio abdo odio turpis. Demoveo ne si mara venio iriure nostrud, ut, et consequat. Luptatum capto luptatum, in ut metuo tristique. Vereor dolore odio nullus eu iustum vero reprobo virtus epulae feugait lobortis eros, modo. <p>
-
-	  <p>Et in ulciscor ut in opes loquor appellatio, nulla tincidunt, ne odio virtus verto importunus. Pagus, vulputate aptent camur, letalis usitas, nostrud, et valde. Tristique aptent suscipit odio illum esca sudo exerci camur. Iaceo esse aliquip enim importunus tristique feugait gemino, persto ibidem capto indoles esse, ut. Dolus illum verto utrum molior in enim proprius. <p>
+		<td>		  
+		  <h3>An Item</h3>
+		  <p class="price">Price: $23.85</p>
+		  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt. Aptent eum letalis, secundum natu tristique voco paulatim saluto commoveo augue accumsan. In, inhibeo si praesent et appellatio abdo odio turpis. Demoveo ne si mara venio iriure nostrud, ut, et consequat. Luptatum capto luptatum, in ut metuo tristique. Vereor dolore odio nullus eu iustum vero reprobo virtus epulae feugait lobortis eros, modo. <p>
+		</td>
+	  </tr>
+	  <tr>
+		<td>
+		  <h3>An Item</h3>
+		  <p class="price">Price: $19.95</p>
+		  <p>Et in ulciscor ut in opes loquor appellatio, nulla tincidunt, ne odio virtus verto importunus. Pagus, vulputate aptent camur, letalis usitas, nostrud, et valde. Tristique aptent suscipit odio illum esca sudo exerci camur. Iaceo esse aliquip enim importunus tristique feugait gemino, persto ibidem capto indoles esse, ut. Dolus illum verto utrum molior in enim proprius. <p>
+		</td>
+		<td>
+		  &nbsp;
+		</td>
+		</tr>
+	  </table>
       {% endblock %}
     </div>
 
@@ -58,7 +81,7 @@
 
 	<div id="footer">
 	  {% block footer %}
-	  <p>Powered by ScriptGadget - <a href="/privacy">Privacy Policy</a> &nbsp; <a href="/terms">Terms and Conditions</a></p>
+	  <p>Powered by ScriptGadget - <a href="/privacy">Privacy Policy</a> &nbsp; <a href="/terms">Terms and Conditions</a> &nbsp; <a href="">Copyright and D.M.C.A. Policy</a></p>
 	  {% endblock %}
 	</div>
     </body>
