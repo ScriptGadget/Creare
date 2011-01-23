@@ -1,14 +1,12 @@
-<html>
-    <head>
-    <title>{{product.description}}</title>
-	</head>
+{% extends "base.html" %}
 
-    <body>
-    <div id="main">
+{% block title %}
+{{product.description}}
+{% endblock %}
+
+{% block content %}
 	<p>{{product.maker.store_name}}</p>
 	<p>{{product.description}}</p>
 	<p>{{product.price}}</p>
 	<p>{{product.tags}}</p>
-    </div>    
-    </body>
-</html>
+{% endblock %}

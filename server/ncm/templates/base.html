@@ -1,0 +1,57 @@
+<html>
+    <head>
+      <link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />
+      <title>{% block title %} {{ title }} {% endblock %}</title>
+	</head>
+
+    <body>
+
+    <div id="banner">
+	  {% block banner %}
+	  <H1> {{ title  }} </H1>
+      {% endblock %}
+	</div>
+
+    <div id="sidebar">
+	  {% block sidebar %}
+	  <h2>Events</h2>
+	  <p>An Event</p>
+	  <p><strong>An especially long event</strong>: Qui valde si epulae bis eum, in ille suscipit tincidunt. Aptent eum letalis, secundum natu tristique voco paulatim saluto commoveo augue accumsan. In, inhibeo si praesent et appellatio abdo odio turpis. Demoveo ne si mara venio iriure nostrud, ut, et consequat. Luptatum capto luptatum, in ut metuo tristique. Vereor dolore odio nullus eu iustum vero reprobo virtus epulae feugait lobortis eros, modo. </p>
+      {% endblock %}
+    </div>
+
+	<div id="menubar">
+	  <div id="menu">
+		{% block menu %}
+		<ul>
+		  <li><a href="/">Home</a></li>
+		  <li><a href="">Menu Item 2</a></li>
+		  <li><a href="/register_maker">Register</a></li>
+		</ul>
+		{% endblock %}
+	  </div>
+	</div>
+	
+    <div id="content">
+	  {% block content %}
+	  <p>Lorem ipsum dolor sit amet, ne mauris bis euismod, ullamcorper ymo iustum sed. Secundum singularis duis scisco multo appellatio laoreet, nisl vero imputo wisi dignissim capio illum hendrerit. Esse in eros adsum huic adsum eu, qui quia. Wisi singularis, valetudo letatio illum facilisis autem quibus illum illum facilisis letalis quae. Nutus, ut caecus nimis occuro, duis. Quae facilisi acsi, rusticus luptatum ne vel quia. </p>
+
+	  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt. Aptent eum letalis, secundum natu tristique voco paulatim saluto commoveo augue accumsan. In, inhibeo si praesent et appellatio abdo odio turpis. Demoveo ne si mara venio iriure nostrud, ut, et consequat. Luptatum capto luptatum, in ut metuo tristique. Vereor dolore odio nullus eu iustum vero reprobo virtus epulae feugait lobortis eros, modo. <p>
+
+	  <p>Et in ulciscor ut in opes loquor appellatio, nulla tincidunt, ne odio virtus verto importunus. Pagus, vulputate aptent camur, letalis usitas, nostrud, et valde. Tristique aptent suscipit odio illum esca sudo exerci camur. Iaceo esse aliquip enim importunus tristique feugait gemino, persto ibidem capto indoles esse, ut. Dolus illum verto utrum molior in enim proprius. <p>
+      {% endblock %}
+    </div>
+
+    <div id="alerts">
+	  {% block alerts %}
+      <p id="alert">{{ alerts }}</p>        
+	  {% endblock %}
+    </div>
+
+	<div id="footer">
+	  {% block footer %}
+	  <p>Powered by ScriptGadget - <a href="/privacy">Privacy Policy</a> &nbsp; <a href="/terms">Terms and Conditions</a></p>
+	  {% endblock %}
+	</div>
+    </body>
+</html>

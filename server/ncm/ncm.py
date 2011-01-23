@@ -7,9 +7,11 @@ from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext import db
 from model import Maker, Product
+from gaesessions import get_current_session
 
 class AuthenticatedPage(webapp.RequestHandler):
     def authenticate(self):
+        """ Ask a visitor to login before proceeding.  """
         user = users.get_current_user()
         
         user_id = None
@@ -35,6 +37,11 @@ class MakerDashboard(AuthenticatedPage):
         if not maker or not maker.key() == maker_id:
             self.redirect("/maker_store/" + maker_id)
 
+        session = get_current_session()
+        # if session.is_active():
+        c = session.get('counter', 0)
+        session['counter'] = c + 1
+
         template_values = { 'title':'Maker Dashboard', 'maker':maker}
         path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
         self.response.out.write(template.render(path, template_values))
@@ -54,20 +61,28 @@ class MakerRegistrationPage(webapp.RequestHandler):
         self.response.out.write(template.render(path, template_values))
 
     def post(self):
-        maker = Maker();
-        maker.store_name = self.request.get('store_name')
-        maker.store_description = self.request.get('store_description')
-        maker.location = self.request.get('location')
-        maker.full_name = self.request.get('full_name')
-        maker.email = self.request.get('email')
-        maker.paypal = self.request.get('paypal')
-        maker.phone = self.request.get('phone')
-        maker.mailing_address = self.request.get('mailing_address')
-        maker.put()
-        self.redirect('/maker_store/'+str(maker.key()))
+        try:
+            maker = Maker();
+            maker.store_name = self.request.get('store_name')
+            maker.store_description = self.request.get('store_description')
+            maker.location = self.request.get('location')
+            maker.full_name = self.request.get('full_name')
+            maker.email = self.request.get('email')
+            value = self.request.get('paypal')
+            if value.count('@') == 1:
+                maker.paypal = value
+            else:
+                maker.paypal = maker.email
+                
+                maker.phone = self.request.get('phone')
+                maker.mailing_address = self.request.get('mailing_address')
+                maker.put()
+                self.redirect('/maker_store/'+str(maker.key()))
+        except :
+            self.redirect(self.request.uri)
 
 class HomePage(webapp.RequestHandler):
-    """ Renders the home page template."""
+    """ Renders the home page template. """
     def get(self):
         q = Product.all()
         results = q.fetch(3)
@@ -79,7 +94,7 @@ class HomePage(webapp.RequestHandler):
         self.response.out.write(template.render(path, template_values))
 
 class PrivacyPage(webapp.RequestHandler):
-    """ Renders a store page for a particular maker."""
+    """ Renders a store page for a particular maker. """
     def get(self):
         template_values = { 'title':'Privacy Policy'}
         path = os.path.join(os.path.dirname(__file__), "templates/privacy.html")
@@ -101,7 +116,7 @@ class MakerStorePage(webapp.RequestHandler):
         self.response.out.write(template.render(path, template_values))
 
 class ProductPage(webapp.RequestHandler):
-    """ Renders a page for a single product."""
+    """ Renders a page for a single product. """
     def get(self, product_id):
         product = Product.get(product_id)
         template_values = {'product':product}

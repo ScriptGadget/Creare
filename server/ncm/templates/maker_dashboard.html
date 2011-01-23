@@ -4,6 +4,7 @@
 	</head>
 
     <body>
+
     <div id="main">
 	<p>{{maker.full_name}}'s <em>{{maker.store_name}}</em></p>
 	<p>{{maker.store_description}}</p>
@@ -15,6 +16,11 @@
 	   <dd>${pr{oduct.price}}</dd>
     {% endfor %}
     </dl>
-    </div>    
+    </div>
+
+    <div id="alertPanel">
+        <p id="alert">No Messages</p>        
+    </div>
+
     </body>
 </html>

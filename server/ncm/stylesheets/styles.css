@@ -1,0 +1,54 @@
+body { background-color: white; }
+
+.text { color: black; }
+
+#banner { 
+    font-weight: italic;
+    padding: 0 0 0 5px;
+    height: 180px;
+    width: 100%;
+	background-color: black; 
+	color: white;
+}
+
+#content { 
+	display: block; 
+	margin-left: 190px;
+	border: 2px outset orange; 
+	padding: 3px 10px; 
+	background-color: green; 
+}
+
+#sidebar { 
+    font-size: normal;
+    font-weight: normal;
+    width: 190px;
+	padding: 2px;       
+    position: absolute; left: 5px; top:180px
+	background-color: yellow; 
+}
+
+#sidebar h2 {
+	font-size: small;
+	font-weight: italic;
+}
+
+#menubar { display: block; height: 2em; padding: 1px; }
+#menu { position:relative; float:right; right:50%; font-size: large; margin-top: -1em;}
+#menu li {text-align: left; position: relative; float: left; left: 50%; list-style: none; padding: 3px 5px 3px 5px; margin: 3px 0.5em; border: 0px none #FFF;}
+#menu .current li { background-color: orange; color: #EFE; }
+#menu a { text-decoration: none; background-color: #transparent; color: green;}
+#menu a:hover { text-decoration: none; background-color: #FAFAD2; color: green;}
+#menu .current a { text-decoration: none; background-color: yellow; color: green;}
+
+#alertPanel { color: red; padding: 10px; }
+
+#footer { 
+	display: block;
+	margin-left: 190px;
+    text-align: left; 
+    font-weight: italic;
+	font-size: small;
+	padding: 3px 10px; 
+	background-color: orange; 
+}
