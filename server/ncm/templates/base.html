@@ -2,6 +2,12 @@
     <head>
       <link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />
       <title>{% block title %} {{ title }} {% endblock %}</title>
+      <script type="text/javascript" src="/static/json2.js"></script>	
+      <script type="text/javascript" src="/static/async_utils.js"></script>
+      <script type="text/javascript">
+		{% block functions  %}
+		{% endblock %}
+      </script>
 	</head>
 
     <body>
@@ -36,8 +42,14 @@
 		{% block menu %}
 		<ul>
 		  <li><a href="/">Home</a></li>
-		  <li><a href="">Menu Item 2</a></li>
 		  <li><a href="/register_maker">Register</a></li>
+		  {% if maker %}
+		  <li><a href="/maker_store/{{maker.key}}">My Store</a></li>
+		  <li><a href="/register_maker">Account</a></li>
+		  <li><a href="/logout">Logout</a></li>
+		  {% else %}
+		  <li><a href="/login">Login</a></li>
+		  {% endif %}
 		</ul>
 		{% endblock %}
 	  </div>

@@ -1,11 +1,6 @@
-<html>
-    <head>
-    <link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />
-    <title>{{maker.store_name}}</title>
-	</head>
+{% extends "base.html" %}
 
-    <body>
-    <div id="main">
+{% block content %}
 	<p>{{maker.full_name}}'s <em>{{maker.store_name}}</em></p>
 	<p>{{maker.store_description}}</p>
 	<p>{{maker.location}}</p>
@@ -16,9 +11,4 @@
 	   <dd>${pr{oduct.price}}</dd>
     {% endfor %}
     </dl>
-    </div>
-    <div id="alertPanel">
-        <p id="alert">No Messages</p>        
-    </div>
-    </body>
-</html>
+{% endblock %}
