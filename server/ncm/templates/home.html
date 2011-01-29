@@ -1,1 +1,10 @@
 {% extends "base.html" %}
+
+{% block content %}
+	<dl>
+	{% for product in products %}
+       <dt><a href="/product/{{product.key}}">{{product.description}}</a></dt>
+	   <dd>${{product.price}}</dd>
+    {% endfor %}
+    </dl>
+{% endblock  %}

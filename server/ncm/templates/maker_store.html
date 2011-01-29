@@ -8,7 +8,7 @@
 	<dl>
 	{% for product in maker.products %}
        <dt><a href="/product/{{product.key}}">{{product.description}}</a></dt>
-	   <dd>${pr{oduct.price}}</dd>
+	   <dd>${{product.price}}</dd>
     {% endfor %}
     </dl>
 {% endblock %}
