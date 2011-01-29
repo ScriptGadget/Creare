@@ -8,7 +8,7 @@ class Shopper(db.Model):
 
 class Maker(db.Model):
     """ Someone who sells products  """
-    user_id = db.StringProperty()
+    user = db.UserProperty()
     store_name = db.StringProperty()
     store_description = db.StringProperty()
     full_name = db.StringProperty()

@@ -42,10 +42,10 @@
 		{% block menu %}
 		<ul>
 		  <li><a href="/">Home</a></li>
-		  <li><a href="/register_maker">Register</a></li>
+		  <li><a href="/maker">Register</a></li>
 		  {% if maker %}
 		  <li><a href="/maker_store/{{maker.key}}">My Store</a></li>
-		  <li><a href="/register_maker">Account</a></li>
+		  <li><a href="/maker">Account</a></li>
 		  <li><a href="/logout">Logout</a></li>
 		  {% else %}
 		  <li><a href="/login">Login</a></li>

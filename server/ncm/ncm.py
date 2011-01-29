@@ -15,7 +15,7 @@ from model import Maker, Product
 class MakerForm(djangoforms.ModelForm):
     class Meta:
         model = Maker
-        exclude = ['user_id']
+        exclude = ['user']
 
 class ProductForm(djangoforms.ModelForm):
     class Meta:
@@ -24,8 +24,8 @@ class ProductForm(djangoforms.ModelForm):
 
 class MakerPage(webapp.RequestHandler):
     def get(self):
-        authenticator = Authenticator()
-        (user_id, maker) = authenticator.authenticate()
+        authenticator = Authenticator(self)
+        (user, maker) = authenticator.authenticate()
         data = MakerForm()
         template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data}
         path = os.path.join(os.path.dirname(__file__), "templates/register_maker.html")
@@ -37,7 +37,6 @@ class MakerPage(webapp.RequestHandler):
         if data.is_valid():
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
-            # entity.maker
             entity.put()
             self.redirect('/maker')
         else:
@@ -64,7 +63,7 @@ class ProductPage(webapp.RequestHandler):
             logging.info('Valid product entry');
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
-            # entity.user_id = users.get_current_user().user_id
+            # entity.user = users.get_current_user()
             entity.put()
             self.redirect('/products')
         else:
@@ -123,15 +122,16 @@ class EditProductPage(webapp.RequestHandler):
                                   '<input type="submit">'
                                   '</form></body></html>' % id)
 
-
 class Authenticator:
+    def __init__(self, page):
+        self.page = page
+
     def getMakerForUser(self, user):
         """ get the Maker if any associated with this user """
-        user_id = user.user_id()
         maker = None
 
         try:
-            makers = Maker.gql("WHERE user_id = :1", user.user_id())
+            makers = Maker.gql("WHERE user = :1", user)
             maker = makers.get()
         except db.KindError:
             maker = None
@@ -141,66 +141,40 @@ class Authenticator:
     def authenticate(self):
         """ Ask a visitor to login before proceeding.  """
         user = users.get_current_user()
-        user_id = None
-        maker = None
-
-        if user:
-            maker = self.getMakerForUser(user)
-
-        return (user_id, maker)
-
-class AuthenticatedPage(webapp.RequestHandler):
-    def getMakerForUser(self, user):
-        """ get the Maker if any associated with this user """
-        user_id = user.user_id()
-        maker = None
-
-        try:
-            makers = Maker.gql("WHERE user_id = :1", user.user_id())
-            maker = makers.get()
-        except db.KindError:
-            maker = None
-            logging.error("Unexpected db.KindError: " + db.KindError);
-        return maker;
-
-    def authenticate(self):
-        """ Ask a visitor to login before proceeding.  """
-        user = users.get_current_user()
-        user_id = None
         maker = None
 
         if not user:
-            self.redirect(users.create_login_url(self.request.uri))
+            self.page.redirect(users.create_login_url(self.page.request.uri))
         else:
             maker = self.getMakerForUser(user)
+        return (user, maker)
 
-        return (user_id, maker)
-
-class Login(AuthenticatedPage):
+class Login(webapp.RequestHandler):
     """ Just authenticates then redirects to the home page """
     def get(self):
-        (user_id, maker) = self.authenticate()
-        logging.info('user_id: ' + str(user_id) + ' maker: ' + str(maker));
+        authenticator = Authenticator(self)
+        (user, maker) = authenticator.authenticate()
+        logging.info('Logging in with user: ' + str(user) + ' maker: ' + str(maker));
         if maker:
             session = get_current_session()
             session.start(ssl_only=True)
             session.regenerate_id()
             self.redirect("/maker_store")
         else:
-            self.redirect("/register_maker")
+            self.redirect("/maker")
 
-class Logout(AuthenticatedPage):
+class Logout(webapp.RequestHandler):
     """ Just kills the session and clears authentication tokens  """
     def get(self):
         session = get_current_session()
         session.terminate()
         self.redirect(users.create_login_url('/'))
 
-class MakerDashboard(AuthenticatedPage):
+class MakerDashboard(webapp.RequestHandler):
     """ Renders a page for Makers to view and manage their catalog and sales """
     def get(self, maker_id):
 
-        (user_id, maker) = self.authenticate()
+        (user, maker) = self.authenticate()
 
         if not maker or not maker.key() == maker_id:
             self.redirect("/maker_store/" + maker_id)
@@ -214,48 +188,7 @@ class MakerDashboard(AuthenticatedPage):
         path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
         self.response.out.write(template.render(path, template_values))
 
-class MakerRegistrationPage(AuthenticatedPage):
-    """ Renders the new maker registration template."""    
-    def get(self):
-        (user_id, maker) = self.authenticate()
-
-        session = get_current_session()
-        session.start(ssl_only=True)
-        alerts = session.get('alerts', '')
-        template_values = { 'title':'Open Your Store', 'alerts': alerts, 'maker':maker}
-        session['alerts'] = ''
-        path = os.path.join(os.path.dirname(__file__), "templates/register_maker.html")
-        logging.info("Showing Registration Page")
-        self.response.out.write(template.render(path, template_values))
-
-    def post(self):
-        """ Add a new Maker to the community."""
-        try:
-            (user_id, maker) = self.authenticate()
-            if maker is None and user_id is not None:
-                maker = Maker()
-                maker.user_id = user_id
-            maker.store_name = self.request.get('store_name')
-            maker.store_description = self.request.get('store_description')
-            maker.location = self.request.get('location')
-            maker.full_name = self.request.get('full_name')
-            maker.email = self.request.get('email')
-            value = self.request.get('paypal')
-            if value.count('@') == 1:
-                maker.paypal = value
-            else:
-                maker.paypal = maker.email                
-            maker.phone_number = self.request.get('phone_number')
-            maker.mailing_address = self.request.get('mailing_address')
-            maker.put()
-            logging.debug("Adding or updating  maker == " + maker.full_name)
-            self.redirect('/maker_store/'+str(maker.key()))
-        except :
-            session = get_current_session()
-            session['alerts'] = 'An error occured. Please try again'
-            self.redirect(self.request.uri)
-
-class HomePage(AuthenticatedPage):
+class HomePage(webapp.RequestHandler):
     """ Renders the home page template. """
     def get(self):
         user = users.get_current_user()
@@ -307,7 +240,6 @@ def main():
         ('/logout', Logout),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
-        ('/register_maker', MakerRegistrationPage),
         ], debug=True)
     util.run_wsgi_app(app)
 
