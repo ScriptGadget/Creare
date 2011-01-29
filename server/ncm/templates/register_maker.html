@@ -1,37 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-   <h1>{{title}}</h1>
-
     <div id="messagePanel">
-        <p id="line1">Provide a name and description</p>
-        <p id="line2">for your new store.</p>
-    </div>
-
-    <div id="alertPanel">
-        <p id="alert">{{alerts}}</p>   
+        <p id="line1">Provide a name and description for your new store</p>
     </div>
 
     <div id="registrationPanel">
-
          <form id="register" action="/register_maker" method="POST">
-            <p>Store Name:</p>
-            <input id="store_name" class="text" name="store_name" type="text" value="{{maker.store_name}}" />
-            <p>Store Description:</p>
-            <input id="store_description" class="text" name="store_description" type="text"value="{{maker.store_description}}" />
-            <p>Location:</p>
-            <input id="location" class="text" name="location" type="text" value="{{maker.location}}"/>
-            <p>Your Name:</p>
-            <input id="full_name" class="text" name="full_name" type="text" value="{{maker.full_name}}"/>
-            <p>Your Email:</p>
-            <input id="email" class="text" name="email" type="text" value="{{maker.email}}"/>
-            <p>Your Paypal Email (if different):</p>
-            <input id="paypal" class="text" name="paypal" type="text" value="{{maker.paypal}}"/>
-            <p>Your Phone Number:</p>
-            <input id="phone_number" class="text" name="phone_number" type="text" value="{{maker.phone_number}}"/>
-            <p>Your Physical Address:</p>
-            <input id="mailing_address" class="text" name="mailing_address" type="text" value="{{maker.mailing_address}}"/>
-            <div><input id="submit" class="button"  type="submit" value="Create Store" /></div>
+		   <table>
+		   {{ form.as_table }}
+		   </table>
+           <div><input id="submit" class="button"  type="submit" value="Create Store" /></div>
          </form>
 	</div>
 {% endblock %}

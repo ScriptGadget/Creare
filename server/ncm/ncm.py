@@ -7,8 +7,147 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext import db
-from model import Maker, Product
+from google.appengine.ext.db import djangoforms
 from gaesessions import get_current_session
+
+from model import Maker, Product
+
+class MakerForm(djangoforms.ModelForm):
+    class Meta:
+        model = Maker
+        exclude = ['user_id']
+
+class ProductForm(djangoforms.ModelForm):
+    class Meta:
+        model = Product
+        exclude = ['maker']
+
+class MakerPage(webapp.RequestHandler):
+    def get(self):
+        authenticator = Authenticator()
+        (user_id, maker) = authenticator.authenticate()
+        data = MakerForm()
+        template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data}
+        path = os.path.join(os.path.dirname(__file__), "templates/register_maker.html")
+        logging.info("Showing Registration Page")
+        self.response.out.write(template.render(path, template_values))
+
+    def post(self):
+        data = MakerForm(data=self.request.POST)
+        if data.is_valid():
+            # Save the data, and redirect to the view page
+            entity = data.save(commit=False)
+            # entity.maker
+            entity.put()
+            self.redirect('/maker')
+        else:
+            # Reprint the form
+            template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data}
+            path = os.path.join(os.path.dirname(__file__), "templates/register_maker.html")
+            logging.info("Showing Registration Page")
+            self.response.out.write(template.render(path, template_values))
+          
+class ProductPage(webapp.RequestHandler):
+    def get(self):
+        self.response.out.write('<html><body>'
+                                '<form method="POST" '
+                                'action="/product">'
+                                '<table>')
+        self.response.out.write(ProductForm())
+        self.response.out.write('</table>'
+                                '<input type="submit">'
+                                '</form></body></html>')
+
+    def post(self):
+        data = ProductForm(data=self.request.POST)
+        if data.is_valid():
+            logging.info('Valid product entry');
+            # Save the data, and redirect to the view page
+            entity = data.save(commit=False)
+            # entity.user_id = users.get_current_user().user_id
+            entity.put()
+            self.redirect('/products')
+        else:
+            # Reprint the form
+            self.response.out.write('<html><body>'
+                                    '<form method="POST" '
+                                    'action="/product">'
+                                    '<table>')
+            self.response.out.write(data)
+            self.response.out.write('</table>'
+                                    '<input type="submit">'
+                                    '</form></body></html>')
+
+class ProductsPage(webapp.RequestHandler):
+    def get(self):
+        self.response.out.write('<h2>Products</h2>');
+        query = db.GqlQuery("SELECT * FROM Product ORDER BY description")
+        for product in query:
+            self.response.out.write('<a href="/edit?id=%d">Edit</a> - ' %
+                                    product.key().id())
+            self.response.out.write("%s - $%0.2f<br>" %
+                                    (product.description, product.price))
+
+class EditProductPage(webapp.RequestHandler):
+    def get(self):
+        id = int(self.request.get('id'))
+        product = Product.get(db.Key.from_path('Product', id))
+        self.response.out.write('<html><body>'
+                                '<form method="POST" '
+                                'action="/edit">'
+                                '<table>')
+        self.response.out.write(ProductForm(instance=product))
+        self.response.out.write('</table>'
+                                '<input type="hidden" name="_id" value="%s">'
+                                '<input type="submit">'
+                                '</form></body></html>' % id)
+    def post(self):
+      id = int(self.request.get('_id'))
+      product = Product.get(db.Key.from_path('Product', id))
+      data = ProductForm(data=self.request.POST, instance=product)
+      if data.is_valid():
+          # Save the data, and redirect to the view page
+          entity = data.save(commit=False)
+          #entity.added_by = users.get_current_user()
+          entity.put()
+          self.redirect('/products')
+      else:
+          # Reprint the form
+          self.response.out.write('<html><body>'
+                                  '<form method="POST" '
+                                  'action="/edit">'
+                                  '<table>')
+          self.response.out.write(data)
+          self.response.out.write('</table>'
+                                  '<input type="hidden" name="_id" value="%s">'
+                                  '<input type="submit">'
+                                  '</form></body></html>' % id)
+
+
+class Authenticator:
+    def getMakerForUser(self, user):
+        """ get the Maker if any associated with this user """
+        user_id = user.user_id()
+        maker = None
+
+        try:
+            makers = Maker.gql("WHERE user_id = :1", user.user_id())
+            maker = makers.get()
+        except db.KindError:
+            maker = None
+            logging.debugging.error("Unexpected db.KindError: " + db.KindError);
+        return maker;
+
+    def authenticate(self):
+        """ Ask a visitor to login before proceeding.  """
+        user = users.get_current_user()
+        user_id = None
+        maker = None
+
+        if user:
+            maker = self.getMakerForUser(user)
+
+        return (user_id, maker)
 
 class AuthenticatedPage(webapp.RequestHandler):
     def getMakerForUser(self, user):
@@ -21,7 +160,7 @@ class AuthenticatedPage(webapp.RequestHandler):
             maker = makers.get()
         except db.KindError:
             maker = None
-            logging.debugging.error("Unexpected db.KindError: " + db.KindError);
+            logging.error("Unexpected db.KindError: " + db.KindError);
         return maker;
 
     def authenticate(self):
@@ -154,17 +293,13 @@ class MakerStorePage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
         self.response.out.write(template.render(path, template_values))
 
-class ProductPage(webapp.RequestHandler):
-    """ Renders a page for a single product. """
-    def get(self, product_id):
-        product = Product.get(product_id)
-        template_values = {'product':product}
-        path = os.path.join(os.path.dirname(__file__), "templates/product.html")
-        self.response.out.write(template.render(path, template_values))        
-
 def main():
     app = webapp.WSGIApplication([
         ('/', HomePage),
+        ('/maker', MakerPage),
+        ('/product', ProductPage),
+        ('/products', ProductsPage),
+        ('/edit', EditProductPage),
         ('/home', HomePage),
         ('/privacy', PrivacyPage),
         ('/terms', TermsPage),
@@ -172,7 +307,6 @@ def main():
         ('/logout', Logout),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
-        (r'/product/(.*)', ProductPage),
         ('/register_maker', MakerRegistrationPage),
         ], debug=True)
     util.run_wsgi_app(app)

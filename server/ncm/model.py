@@ -24,4 +24,4 @@ class Product(db.Model):
     description = db.StringProperty()
     price = db.FloatProperty()
     tags = db.CategoryProperty()
-    maker = db.ReferenceProperty(Maker, collection_name='products')
+    # maker = db.ReferenceProperty(Maker, collection_name='products')
