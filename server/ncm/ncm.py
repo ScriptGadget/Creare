@@ -13,120 +13,22 @@ from gaesessions import get_current_session
 from model import Maker, Product
 
 class MakerForm(djangoforms.ModelForm):
+    """ Auto generate a form for adding and editing a Maker store  """
     class Meta:
         model = Maker
         exclude = ['user']
 
 class ProductForm(djangoforms.ModelForm):
+    """ Auto generate a form for adding and editing a product  """
     class Meta:
         model = Product
         exclude = ['maker']
 
-class MakerPage(webapp.RequestHandler):
-    def get(self):
-        authenticator = Authenticator(self)
-        (user, maker) = authenticator.authenticate()
-        data = MakerForm()
-        template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data}
-        path = os.path.join(os.path.dirname(__file__), "templates/register_maker.html")
-        logging.info("Showing Registration Page")
-        self.response.out.write(template.render(path, template_values))
-
-    def post(self):
-        data = MakerForm(data=self.request.POST)
-        if data.is_valid():
-            # Save the data, and redirect to the view page
-            entity = data.save(commit=False)
-            entity.put()
-            self.redirect('/maker')
-        else:
-            # Reprint the form
-            template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data}
-            path = os.path.join(os.path.dirname(__file__), "templates/register_maker.html")
-            logging.info("Showing Registration Page")
-            self.response.out.write(template.render(path, template_values))
-          
-class ProductPage(webapp.RequestHandler):
-    def get(self):
-        self.response.out.write('<html><body>'
-                                '<form method="POST" '
-                                'action="/product">'
-                                '<table>')
-        self.response.out.write(ProductForm())
-        self.response.out.write('</table>'
-                                '<input type="submit">'
-                                '</form></body></html>')
-
-    def post(self):
-        data = ProductForm(data=self.request.POST)
-        if data.is_valid():
-            logging.info('Valid product entry');
-            # Save the data, and redirect to the view page
-            entity = data.save(commit=False)
-            # entity.user = users.get_current_user()
-            entity.put()
-            self.redirect('/products')
-        else:
-            # Reprint the form
-            self.response.out.write('<html><body>'
-                                    '<form method="POST" '
-                                    'action="/product">'
-                                    '<table>')
-            self.response.out.write(data)
-            self.response.out.write('</table>'
-                                    '<input type="submit">'
-                                    '</form></body></html>')
-
-class ProductsPage(webapp.RequestHandler):
-    def get(self):
-        self.response.out.write('<h2>Products</h2>');
-        query = db.GqlQuery("SELECT * FROM Product ORDER BY description")
-        for product in query:
-            self.response.out.write('<a href="/edit?id=%d">Edit</a> - ' %
-                                    product.key().id())
-            self.response.out.write("%s - $%0.2f<br>" %
-                                    (product.description, product.price))
-
-class EditProductPage(webapp.RequestHandler):
-    def get(self):
-        id = int(self.request.get('id'))
-        product = Product.get(db.Key.from_path('Product', id))
-        self.response.out.write('<html><body>'
-                                '<form method="POST" '
-                                'action="/edit">'
-                                '<table>')
-        self.response.out.write(ProductForm(instance=product))
-        self.response.out.write('</table>'
-                                '<input type="hidden" name="_id" value="%s">'
-                                '<input type="submit">'
-                                '</form></body></html>' % id)
-    def post(self):
-      id = int(self.request.get('_id'))
-      product = Product.get(db.Key.from_path('Product', id))
-      data = ProductForm(data=self.request.POST, instance=product)
-      if data.is_valid():
-          # Save the data, and redirect to the view page
-          entity = data.save(commit=False)
-          #entity.added_by = users.get_current_user()
-          entity.put()
-          self.redirect('/products')
-      else:
-          # Reprint the form
-          self.response.out.write('<html><body>'
-                                  '<form method="POST" '
-                                  'action="/edit">'
-                                  '<table>')
-          self.response.out.write(data)
-          self.response.out.write('</table>'
-                                  '<input type="hidden" name="_id" value="%s">'
-                                  '<input type="submit">'
-                                  '</form></body></html>' % id)
-
 class Authenticator:
     def __init__(self, page):
         self.page = page
-
-    def getMakerForUser(self, user):
+    @staticmethod
+    def getMakerForUser(user):
         """ get the Maker if any associated with this user """
         maker = None
 
@@ -149,6 +51,120 @@ class Authenticator:
             maker = self.getMakerForUser(user)
         return (user, maker)
 
+    @staticmethod
+    def authorized_for(user):
+        return user and user == users.get_current_user()
+
+class MakerPage(webapp.RequestHandler):
+    """ A page for adding a Maker  """
+    def get(self):
+        authenticator = Authenticator(self)
+        (user, maker) = authenticator.authenticate()
+        data = MakerForm()
+        template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data, 'uri': self.request.uri}
+        path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
+        logging.info("Showing Registration Page")
+        self.response.out.write(template.render(path, template_values))
+
+    def post(self):
+        data = MakerForm(data=self.request.POST)
+        if data.is_valid():
+            # Save the data, and redirect to the view page
+            entity = data.save(commit=False)
+            entity.user = users.get_current_user()
+            logging.info('User: ' + str(entity.user) + ' has joined.')
+            entity.put()
+            self.redirect('/')
+        else:
+            # Reprint the form
+            template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data, 'uri': self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
+            logging.info("Showing Registration Page")
+            self.response.out.write(template.render(path, template_values))
+
+class EditMakerPage(webapp.RequestHandler):
+    """ Edit a Maker store """
+    def get(self, id):
+        if not id:
+            logging.info('No id found for EditMakerPage')
+            maker = Authenticator.getMakerForUser(users.get_current_user())
+            if maker:
+                id = maker.key()
+        else:
+            maker = Maker.get(id)
+
+        if maker and Authenticator.authorized_for(maker.user):
+            template_values = { 'form' : MakerForm(instance=maker), 'id' : id, 'uri':self.request.uri, 'maker':maker}
+            path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
+            self.response.out.write(template.render(path, template_values))
+        else:
+            self.redirect('/maker/add')
+
+    def post(self, id):
+      id = self.request.get('_id')
+      maker = Maker.get(id)
+      if not Authenticator.authorized_for(maker.user):
+          self.redirect('/maker/add')
+      else:
+          data = MakerForm(data=self.request.POST, instance=maker)
+          if data.is_valid():
+              # Save the data, and redirect to the view page
+              entity = data.save(commit=False)
+              entity.user = users.get_current_user()
+              entity.put()
+              self.redirect('/')
+          else:
+              # Reprint the form
+              template_values = { 'form' : ProductForm(instance=maker), 'id' : id, 'uri':self.request.uri}
+              path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
+              self.response.out.write(template.render(path, template_values))
+
+class ProductPage(webapp.RequestHandler):
+    """ Add a Product """
+    def get(self):
+        template_values = { 'form' : ProductForm(), 'uri':self.request.uri}
+        path = os.path.join(os.path.dirname(__file__), "templates/product.html")
+        self.response.out.write(template.render(path, template_values))
+
+    def post(self):
+        data = ProductForm(data=self.request.POST)
+        if data.is_valid():
+            logging.info('Valid product entry');
+            # Save the data, and redirect to the view page
+            entity = data.save(commit=False)
+            # entity.user = users.get_current_user()
+            entity.put()
+            self.redirect('/')
+        else:
+            # Reprint the form
+            template_values = { 'form' : data, 'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/product.html")
+            self.response.out.write(template.render(path, template_values))
+
+class EditProductPage(webapp.RequestHandler):
+    """ Edit an existing Product """
+    def get(self, id):
+        product = Product.get(id)
+        template_values = { 'form' : ProductForm(instance=product), 'id' : id, 'uri':self.request.uri}
+        path = os.path.join(os.path.dirname(__file__), "templates/product.html")
+        self.response.out.write(template.render(path, template_values))
+
+    def post(self, id):
+      id = self.request.get('_id')      
+      product = Product.get(id)
+      data = ProductForm(data=self.request.POST, instance=product)
+      if data.is_valid():
+          # Save the data, and redirect to the view page
+          entity = data.save(commit=False)
+          #entity.added_by = users.get_current_user()
+          entity.put()
+          self.redirect('/')
+      else:
+          # Reprint the form
+          template_values = { 'form' : ProductForm(instance=product), 'id' : id, 'uri':self.request.uri}
+          path = os.path.join(os.path.dirname(__file__), "templates/product.html")
+          self.response.out.write(template.render(path, template_values))
+
 class Login(webapp.RequestHandler):
     """ Just authenticates then redirects to the home page """
     def get(self):
@@ -159,9 +175,9 @@ class Login(webapp.RequestHandler):
             session = get_current_session()
             session.start(ssl_only=True)
             session.regenerate_id()
-            self.redirect("/maker_store")
+            self.redirect("/maker/edit")
         else:
-            self.redirect("/maker")
+            self.redirect("/maker/add")
 
 class Logout(webapp.RequestHandler):
     """ Just kills the session and clears authentication tokens  """
@@ -194,13 +210,13 @@ class HomePage(webapp.RequestHandler):
         user = users.get_current_user()
         maker = None
         if user is not None:
-            maker = self.getMakerForUser(user)
+            maker = Authenticator.getMakerForUser(user)
         q = Product.all()
         results = q.fetch(3)
-        stuff = []
+        products = []
         for p in results:
-            stuff.append(p)
-        template_values = { 'title':'Nevada County Makes', 'stuff':stuff, 'maker':maker }
+            products.append(p)
+        template_values = { 'title':'Nevada County Makes', 'products':products, 'maker':maker }
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, template_values))
 
@@ -230,9 +246,12 @@ def main():
     app = webapp.WSGIApplication([
         ('/', HomePage),
         ('/maker', MakerPage),
-        ('/product', ProductPage),
-        ('/products', ProductsPage),
-        ('/edit', EditProductPage),
+        ('/maker/add', MakerPage),
+        ('/maker/edit/(.*)', EditMakerPage),
+        ('/maker/edit', EditMakerPage),
+        ('/product/add', ProductPage),
+        (r'/product/edit/(.*)', EditProductPage),
+        ('/product/edit', EditProductPage),
         ('/home', HomePage),
         ('/privacy', PrivacyPage),
         ('/terms', TermsPage),

@@ -3,7 +3,7 @@
 {% block content %}
 	<dl>
 	{% for product in products %}
-       <dt><a href="/product/{{product.key}}">{{product.description}}</a></dt>
+       <dt>(<a href="/product/edit/{{product.key}}">edit</a>) {{product.description}}</dt>
 	   <dd>${{product.price}}</dd>
     {% endfor %}
     </dl>

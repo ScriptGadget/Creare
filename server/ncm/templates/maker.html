@@ -2,15 +2,21 @@
 
 {% block content %}
     <div id="messagePanel">
-        <p id="line1">Provide a name and description for your new store</p>
+	  {% if id %} 
+        <p id="line1">Update your store information.</p>
+	  {% else %}
+        <p id="line1">Tell us about your new store.</p>
+	  {% endif %}
+
     </div>
 
     <div id="registrationPanel">
-         <form id="register" action="/register_maker" method="POST">
+         <form id="register" action="{{uri}}" method="POST">
 		   <table>
 		   {{ form.as_table }}
 		   </table>
-           <div><input id="submit" class="button"  type="submit" value="Create Store" /></div>
+		   <input type="hidden" name="_id" value="{{ id }}">
+           <div><input id="submit" class="button"  type="submit" {% if id %} value="Update Store" {% else %} value="Create Store" {% endif %} /></div>
          </form>
 	</div>
 {% endblock %}
