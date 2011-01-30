@@ -60,11 +60,18 @@ class MakerPage(webapp.RequestHandler):
     def get(self):
         authenticator = Authenticator(self)
         (user, maker) = authenticator.authenticate()
-        data = MakerForm()
-        template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data, 'uri': self.request.uri}
-        path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
-        logging.info("Showing Registration Page")
-        self.response.out.write(template.render(path, template_values))
+        if user and maker:
+            self.redirect('/maker/edit/' + str(maker.key()))
+            return
+        else:
+            data = MakerForm()
+            template_values = { 'title':'Open Your Store',
+                                'new':True,
+                                'form':data, 
+                                'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
+            logging.info("Showing Registration Page")
+            self.response.out.write(template.render(path, template_values))
 
     def post(self):
         data = MakerForm(data=self.request.POST)
@@ -77,7 +84,9 @@ class MakerPage(webapp.RequestHandler):
             self.redirect('/')
         else:
             # Reprint the form
-            template_values = { 'title':'Open Your Store', 'maker':maker, 'form' : data, 'uri': self.request.uri}
+            template_values = { 'title':'Open Your Store', 
+                                'form' : data, 
+                                'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             logging.info("Showing Registration Page")
             self.response.out.write(template.render(path, template_values))
@@ -94,7 +103,9 @@ class EditMakerPage(webapp.RequestHandler):
             maker = Maker.get(id)
 
         if maker and Authenticator.authorized_for(maker.user):
-            template_values = { 'form' : MakerForm(instance=maker), 'id' : id, 'uri':self.request.uri, 'maker':maker}
+            template_values = { 'form' : MakerForm(instance=maker), 'id' : id, 
+                                'uri':self.request.uri, 'maker':maker,
+                                'title':'Update Store Information'}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, template_values))
         else:
@@ -170,7 +181,7 @@ class Login(webapp.RequestHandler):
     def get(self):
         authenticator = Authenticator(self)
         (user, maker) = authenticator.authenticate()
-        logging.info('Logging in with user: ' + str(user) + ' maker: ' + str(maker));
+
         if maker:
             session = get_current_session()
             session.start(ssl_only=True)
@@ -247,7 +258,7 @@ def main():
         ('/', HomePage),
         ('/maker', MakerPage),
         ('/maker/add', MakerPage),
-        ('/maker/edit/(.*)', EditMakerPage),
+        (r'/maker/edit/(.*)', EditMakerPage),
         ('/maker/edit', EditMakerPage),
         ('/product/add', ProductPage),
         (r'/product/edit/(.*)', EditProductPage),
