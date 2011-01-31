@@ -15,8 +15,9 @@ class Maker(db.Model):
     
 class Product(db.Model):
     """ Something a Maker can sell to a Shopper """
+    maker = db.ReferenceProperty(Maker, collection_name='products')
     name = db.StringProperty(required=True)
     description = db.StringProperty(required=True)
     price = db.FloatProperty(required=True)
     tags = db.CategoryProperty(required=True)
-    # maker = db.ReferenceProperty(Maker, collection_name='products')
+    

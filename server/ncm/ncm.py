@@ -61,7 +61,7 @@ class MakerPage(webapp.RequestHandler):
         authenticator = Authenticator(self)
         (user, maker) = authenticator.authenticate()
         if user and maker:
-            self.redirect('/maker/edit/' + str(maker.key()))
+            self.redirect('/maker_dashboard/' + str(maker.key()))
             return
         else:
             data = MakerForm()
@@ -133,48 +133,78 @@ class EditMakerPage(webapp.RequestHandler):
 class ProductPage(webapp.RequestHandler):
     """ Add a Product """
     def get(self):
-        template_values = { 'form' : ProductForm(), 'uri':self.request.uri}
-        path = os.path.join(os.path.dirname(__file__), "templates/product.html")
-        self.response.out.write(template.render(path, template_values))
-
-    def post(self):
-        data = ProductForm(data=self.request.POST)
-        if data.is_valid():
-            logging.info('Valid product entry');
-            # Save the data, and redirect to the view page
-            entity = data.save(commit=False)
-            # entity.user = users.get_current_user()
-            entity.put()
+        authenticator = Authenticator(self)
+        (user, maker) = authenticator.authenticate()
+        if not user or not maker:
             self.redirect('/')
-        else:
-            # Reprint the form
-            template_values = { 'form' : data, 'uri':self.request.uri}
+            return
+        else:            
+            template_values = { 'form' : ProductForm(), 'maker':maker, 
+                                'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, template_values))
+
+    def post(self):
+        authenticator = Authenticator(self)
+        (user, maker) = authenticator.authenticate()
+        if not user or not maker:
+            self.redirect('/')
+            return
+        else:
+            data = ProductForm(data=self.request.POST)
+            if data.is_valid():
+                entity = data.save(commit=False)
+                entity.maker = maker
+                entity.put()
+                self.redirect('/maker_dashboard/' + str(maker.key()))
+            else:
+                # Reprint the form
+                template_values = { 'form' : data, 'maker':maker, 
+                                    'uri':self.request.uri}
+                path = os.path.join(os.path.dirname(__file__), "templates/product.html")
+                self.response.out.write(template.render(path, template_values))
 
 class EditProductPage(webapp.RequestHandler):
     """ Edit an existing Product """
     def get(self, id):
-        product = Product.get(id)
-        template_values = { 'form' : ProductForm(instance=product), 'id' : id, 'uri':self.request.uri}
-        path = os.path.join(os.path.dirname(__file__), "templates/product.html")
-        self.response.out.write(template.render(path, template_values))
+        authenticator = Authenticator(self)
+        (user, maker) = authenticator.authenticate()
+        if not maker:
+            self.redirect('/')
+            return
+        else:
+            product = Product.get(id)
+            template_values = { 'form' : ProductForm(instance=product), 
+                                'maker' : maker,
+                                'id' : id, 'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/product.html")
+            self.response.out.write(template.render(path, template_values))
 
     def post(self, id):
       id = self.request.get('_id')      
       product = Product.get(id)
-      data = ProductForm(data=self.request.POST, instance=product)
-      if data.is_valid():
-          # Save the data, and redirect to the view page
-          entity = data.save(commit=False)
-          #entity.added_by = users.get_current_user()
-          entity.put()
+      authenticator = Authenticator(self)
+      (user, maker) = authenticator.authenticate()
+      if not maker or maker.key() != product.maker.key():
+          if maker and product.maker:
+              logging.error('Illegal attempt to edit product owned by: ' + product.maker.full_name + ' by ' + maker.full_name + '(' + str(maker.key()) + ' != ' + str(product.maker.key()) + ')')
+          else:
+              logging.error('Illegal attempt to edit product owned by: ' + product.maker.full_name + ' by unauthenticated guest')
           self.redirect('/')
+          return
       else:
-          # Reprint the form
-          template_values = { 'form' : ProductForm(instance=product), 'id' : id, 'uri':self.request.uri}
-          path = os.path.join(os.path.dirname(__file__), "templates/product.html")
-          self.response.out.write(template.render(path, template_values))
+          data = ProductForm(data=self.request.POST, instance=product)
+          if data.is_valid():
+              entity = data.save(commit=False)
+              entity.put()
+              self.redirect('/maker_dashboard/' + str(maker.key()))
+          else:
+              # Reprint the form
+              template_values = { 'form' : ProductForm(instance=product), 
+                                  'maker' : maker,
+                                  'id' : id, 'uri':self.request.uri}
+              path = os.path.join(os.path.dirname(__file__), "templates/product.html")
+              self.response.out.write(template.render(path, template_values))
 
 class Login(webapp.RequestHandler):
     """ Just authenticates then redirects to the home page """
@@ -186,9 +216,9 @@ class Login(webapp.RequestHandler):
             session = get_current_session()
             session.start(ssl_only=True)
             session.regenerate_id()
-            self.redirect("/maker/edit")
+            self.redirect('/maker/maker_dashboard/' + str(maker.key()))
         else:
-            self.redirect("/maker/add")
+            self.redirect('/maker/add')
 
 class Logout(webapp.RequestHandler):
     """ Just kills the session and clears authentication tokens  """
@@ -196,24 +226,6 @@ class Logout(webapp.RequestHandler):
         session = get_current_session()
         session.terminate()
         self.redirect(users.create_login_url('/'))
-
-class MakerDashboard(webapp.RequestHandler):
-    """ Renders a page for Makers to view and manage their catalog and sales """
-    def get(self, maker_id):
-
-        (user, maker) = self.authenticate()
-
-        if not maker or not maker.key() == maker_id:
-            self.redirect("/maker_store/" + maker_id)
-
-        session = get_current_session()
-        # if session.is_active():
-        c = session.get('counter', 0)
-        session['counter'] = c + 1
-
-        template_values = { 'title':'Maker Dashboard', 'maker':maker}
-        path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
-        self.response.out.write(template.render(path, template_values))
 
 class HomePage(webapp.RequestHandler):
     """ Renders the home page template. """
@@ -244,6 +256,21 @@ class TermsPage(webapp.RequestHandler):
         template_values = { 'title':'Terms and Conditions'}
         path = os.path.join(os.path.dirname(__file__), "templates/terms.html")
         self.response.out.write(template.render(path, template_values))
+
+class MakerDashboard(webapp.RequestHandler):
+    """ Renders a page for Makers to view and manage their catalog and sales """
+    def get(self, maker_id):
+        authenticator = Authenticator(self)
+        (user, maker) = authenticator.authenticate()
+
+        if not maker or not str(maker.key()) == maker_id:
+            logging.info('=== MakerDashboard.get(): ' + str(maker.key()) + ' does not equal ' + maker_id)
+            self.redirect("/maker_store/" + maker_id)            
+            return
+        else:
+            template_values = { 'title':'Maker Dashboard', 'maker':maker}
+            path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
+            self.response.out.write(template.render(path, template_values))
 
 class MakerStorePage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
