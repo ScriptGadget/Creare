@@ -4,7 +4,7 @@
 	<dl>
 	{% for product in products %}
        <dt>(<a href="/product/edit/{{product.key}}">edit</a>) {{product.description}}</dt>
-	   <dd>${{product.price}}</dd>
+	   <dd>${{product.price|floatformat:2}}</dd>
     {% endfor %}
     </dl>
 {% endblock  %}
