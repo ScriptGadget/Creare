@@ -225,7 +225,7 @@ class Logout(webapp.RequestHandler):
     def get(self):
         session = get_current_session()
         session.terminate()
-        self.redirect(users.create_login_url('/'))
+        self.redirect(users.create_logout_url('/'))
 
 class HomePage(webapp.RequestHandler):
     """ Renders the home page template. """
