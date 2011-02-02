@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div id="productPanel">
+	<div id="product_image_panel">
+	  {{upload_form}}
+	</div>
+    <div id="product_panel">
          <form id="register" action="{{ uri }}" method="POST">
 		   <table>
 		   {{ form.as_table }}

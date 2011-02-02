@@ -1,6 +1,7 @@
 # !/usr/bin/env python
 import os
 import logging
+from google.appengine.api import images
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
@@ -8,9 +9,10 @@ from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext.db import djangoforms
+
 from gaesessions import get_current_session
 
-from model import Maker, Product
+from model import Maker, Product, ProductImage
 
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
@@ -22,7 +24,7 @@ class ProductForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a product  """
     class Meta:
         model = Product
-        exclude = ['maker']
+        exclude = ['maker', 'thumb']
 
 class Authenticator:
     def __init__(self, page):
@@ -132,14 +134,25 @@ class EditMakerPage(webapp.RequestHandler):
 
 class ProductPage(webapp.RequestHandler):
     """ Add a Product """
+    def buildImageUploadForm(self, ):
+        return """
+          <form action="/upload_product_image" enctype="multipart/form-data" method="post">
+            <div><label>Product Image:</label></div>
+            <div><input type="file" name="img"/></div>
+            <div><input type="submit" value="Upload Image"></div>
+          </form>
+        </body>
+      </html>"""
+
     def get(self):
         authenticator = Authenticator(self)
         (user, maker) = authenticator.authenticate()
         if not user or not maker:
             self.redirect('/')
             return
-        else:            
+        else:
             template_values = { 'form' : ProductForm(), 'maker':maker, 
+                                'upload_form': self.buildImageUploadForm(), 
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, template_values))
@@ -159,10 +172,32 @@ class ProductPage(webapp.RequestHandler):
                 self.redirect('/maker_dashboard/' + str(maker.key()))
             else:
                 # Reprint the form
-                template_values = { 'form' : data, 'maker':maker, 
+                template_values = { 'form' : data, 'maker':maker,
+                                    'upload_form': self.buildImageUploadForm(),
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/product.html")
                 self.response.out.write(template.render(path, template_values))
+
+class UploadProductImage(webapp.RequestHandler):
+    def post(self):
+        upload = ProductImage()
+        bits = self.request.get("img")
+        try:
+            upload.image = images.resize(self.request.get("img"), 240, 240)
+            upload.put()
+            self.redirect('/product_images/'+str(upload.key()))
+        except images.NotImageError:
+            # Have to come up with a much better way of handling this
+            self.redirect('/')
+
+class DisplayImage(webapp.RequestHandler):
+    def get(self, image_id):
+        productImage = db.get(image_id)
+        if productImage.image:
+            self.response.headers['Content-Type'] = "image/png"
+            self.response.out.write(productImage.image)
+        else:
+            self.error(404)
 
 class EditProductPage(webapp.RequestHandler):
     """ Edit an existing Product """
@@ -297,6 +332,8 @@ def main():
         ('/logout', Logout),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
+        (r'/product_images/(.*)', DisplayImage),
+        ('/upload_product_image', UploadProductImage), 
         ], debug=True)
     util.run_wsgi_app(app)
 

@@ -21,6 +21,11 @@ class Product(db.Model):
     price = db.FloatProperty(required=True)
     tags = db.CategoryProperty(required=True)
 
+class ProductImage(db.Model):
+    """ An Image of a Product """
+    product = db.ReferenceProperty(Product, collection_name='product_images')
+    image = db.BlobProperty()
+
 # Transactons represent a point in time, so they keep
 # a copy of all the information they need.
 # This needs more thought. Is there  transaction for an entire shopping
