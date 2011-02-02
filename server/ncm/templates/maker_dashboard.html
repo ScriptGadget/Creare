@@ -6,8 +6,14 @@
 	  <p>{{maker.location}}</p>
 	  <p>Products: <a href="/product/add">Add Product</a></p>
 	  <dl>
-		{% for product in maker.products %}
-		<dt><a href="/product/edit/{{product.key}}">{{product.name}}</a></dt>
+		{% for product in maker.products %}		
+		<dt>
+		 <div id='product_image_panel'>
+		   {% for product_image in product.product_images %}
+		   <img src="/product_images/{{product_image.key}}" border="0" /></br>
+           {% endfor%}
+         </div>
+		 <a href="/product/edit/{{product.key}}">{{product.name}}</a></dt>
 		<dd>{{product.description}} - ${{product.price|floatformat:2}}</dd>
 		{% endfor %}
       </dl>

@@ -3,7 +3,13 @@
 {% block content %}
 	<dl>
 	{% for product in products %}
-       <dt>(<a href="/product/edit/{{product.key}}">edit</a>) {{product.description}}</dt>
+       <dt>
+		 <div id='product_image_panel'>
+		   {% for product_image in product.product_images %}
+		   <img src="/product_images/{{product_image.key}}" border="0" /></br>
+           {% endfor%}
+         </div>
+         (<a href="/product/edit/{{product.key}}">edit</a>) {{product.description}}</dt>
 	   <dd>${{product.price|floatformat:2}}</dd>
     {% endfor %}
     </dl>

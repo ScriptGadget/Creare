@@ -1,11 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-	<div id="product_image_panel">
-	  {{upload_form}}
-	</div>
     <div id="product_panel">
-         <form id="register" action="{{ uri }}" method="POST">
+         <form id="product_form" enctype="multipart/form-data" action="{{ uri }}" method="POST">
+		   <div id="image_upload_panel">
+			 {% if product %}
+			   {% for product_image in product.product_images %}
+			   <img src="/product_images/{{product_image.key}}" border="0" /></br>
+			   {% endfor%}
+			 {% endif %}
+			 {{ upload_form }}
+		   </div>
 		   <table>
 		   {{ form.as_table }}
 		   </table>

@@ -136,13 +136,8 @@ class ProductPage(webapp.RequestHandler):
     """ Add a Product """
     def buildImageUploadForm(self, ):
         return """
-          <form action="/upload_product_image" enctype="multipart/form-data" method="post">
             <div><label>Product Image:</label></div>
-            <div><input type="file" name="img"/></div>
-            <div><input type="submit" value="Upload Image"></div>
-          </form>
-        </body>
-      </html>"""
+            <div><input type="file" name="img"/></div> """
 
     def get(self):
         authenticator = Authenticator(self)
@@ -169,6 +164,15 @@ class ProductPage(webapp.RequestHandler):
                 entity = data.save(commit=False)
                 entity.maker = maker
                 entity.put()
+                upload = ProductImage()
+                try:
+                    upload.product = entity
+                    upload.image = images.resize(self.request.get("img"), 240, 240)
+                    upload.put()
+                except images.NotImageError:
+                    pass
+                    # Have to come up with a much better way of handling this
+                    # self.redirect('/')
                 self.redirect('/maker_dashboard/' + str(maker.key()))
             else:
                 # Reprint the form
@@ -201,6 +205,12 @@ class DisplayImage(webapp.RequestHandler):
 
 class EditProductPage(webapp.RequestHandler):
     """ Edit an existing Product """
+
+    def buildImageUploadForm(self, ):
+        return """
+            <div><label>Product Image:</label></div>
+            <div><input type="file" name="img"/></div> """
+
     def get(self, id):
         authenticator = Authenticator(self)
         (user, maker) = authenticator.authenticate()
@@ -210,8 +220,10 @@ class EditProductPage(webapp.RequestHandler):
         else:
             product = Product.get(id)
             template_values = { 'form' : ProductForm(instance=product), 
-                                'maker' : maker,
-                                'id' : id, 'uri':self.request.uri}
+                                'maker' : maker, 
+                                'upload_form': self.buildImageUploadForm(),
+                                'product':product, 'id' : id, 
+                                'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, template_values))
 
@@ -232,6 +244,17 @@ class EditProductPage(webapp.RequestHandler):
           if data.is_valid():
               entity = data.save(commit=False)
               entity.put()
+              for product_image in entity.product_images:
+                  product_image.delete()
+              upload = ProductImage()
+              try:
+                  upload.product = entity
+                  upload.image = images.resize(self.request.get("img"), 240, 240)
+                  upload.put()
+              except images.NotImageError:
+                  pass
+                  # Have to come up with a much better way of handling this
+                  # self.redirect('/')
               self.redirect('/maker_dashboard/' + str(maker.key()))
           else:
               # Reprint the form
