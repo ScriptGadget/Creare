@@ -12,7 +12,7 @@ from google.appengine.ext.db import djangoforms
 
 from gaesessions import get_current_session
 
-from model import Maker, Product, ProductImage
+from model import Maker, Product, ProductImage, ShoppingCartItem
 
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
@@ -272,7 +272,7 @@ class Login(webapp.RequestHandler):
 
         if maker:
             session = get_current_session()
-            session.start(ssl_only=True)
+            # session.start(ssl_only=True)
             session.regenerate_id()
             self.redirect('/maker/maker_dashboard/' + str(maker.key()))
         else:
@@ -297,7 +297,20 @@ class HomePage(webapp.RequestHandler):
         products = []
         for p in results:
             products.append(p)
-        template_values = { 'title':'Nevada County Makes', 'products':products, 'maker':maker }
+
+        template_values = { 'title':'Nevada County Makes', 
+                            'products':products, 'maker':maker}
+
+        session = get_current_session()        
+        items = session.get('ShoppingCartItems', [])
+        logging.info('home page cart items: ' + str(items))
+        if items != ():
+            template_values['cartItems'] = items            
+            for item in items:
+                logging.info('Item in cart: ' + item.product);
+        else:
+            logging.info('Nothing in the cart')
+        
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, template_values))
 
@@ -338,6 +351,27 @@ class MakerStorePage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
         self.response.out.write(template.render(path, template_values))
 
+class AddToShoppingCart(webapp.RequestHandler):
+    """ Add an item to a shoppers cart """
+    def get(self, product_id):
+        session = get_current_session()
+        if not session.is_active():
+            # session.start(ssl_only=True)
+            session.regenerate_id()
+        items = session.get('ShoppingCartItems', [])
+        
+        for item in items:
+            if item.product == product_id:
+                item.count += 1;
+                break
+        else:
+            newItem = ShoppingCartItem(product=product_id, count=1)
+            logging.info('New item: ' + str(newItem.product))
+            items.append(newItem)
+        logging.info('items: ' + str(items))
+        session['ShoppingCartItems'] = items
+        self.redirect('/')
+
 def main():
     app = webapp.WSGIApplication([
         ('/', HomePage),
@@ -346,6 +380,7 @@ def main():
         (r'/maker/edit/(.*)', EditMakerPage),
         ('/maker/edit', EditMakerPage),
         ('/product/add', ProductPage),
+        (r'/product/buy/(.*)', AddToShoppingCart),
         (r'/product/edit/(.*)', EditProductPage),
         ('/product/edit', EditProductPage),
         ('/home', HomePage),

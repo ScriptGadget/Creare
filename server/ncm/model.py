@@ -26,6 +26,12 @@ class ProductImage(db.Model):
     product = db.ReferenceProperty(Product, collection_name='product_images')
     image = db.BlobProperty()
 
+class ShoppingCartItem:
+    def __init__(self, product = '', count = 0):
+        self.product = product
+        self.count = count
+    
+
 # Transactons represent a point in time, so they keep
 # a copy of all the information they need.
 # This needs more thought. Is there  transaction for an entire shopping

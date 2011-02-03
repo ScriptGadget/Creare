@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block content %}    
+    <div id="ShoppingCartWidget">
+	  <p>Shopping Cart</p>
+	  {% for item in cartItems %}
+	    <p class="CartItem">{{item.count}}: {{item.product}}</p>
+	  {% endfor%}
+	</div>
+
 	<dl>
 	{% for product in products %}
        <dt>
@@ -9,7 +16,7 @@
 		   <img src="/product_images/{{product_image.key}}" border="0" /></br>
            {% endfor%}
          </div>
-         (<a href="/product/edit/{{product.key}}">edit</a>) {{product.description}}</dt>
+         (<a href="/product/edit/{{product.key}}">edit</a>) {{product.description}}<br/><a href="/product/buy/{{product.key}}">Add to Shopping Cart</a></dt>
 	   <dd>${{product.price|floatformat:2}}</dd>
     {% endfor %}
     </dl>
