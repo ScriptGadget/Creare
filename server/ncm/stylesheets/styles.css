@@ -3,7 +3,6 @@ body { background-color: white; }
 .text { color: black; }
 
 #banner { 
-    font-weight: italic;
     padding: 0 0 0 5px;
     height: 180px;
     width: 100%;
@@ -32,8 +31,6 @@ body { background-color: white; }
 }
 
 #sidebar { 
-    font-size: normal;
-    font-weight: normal;
     width: 190px;
 	padding: 2px;       
 	margin-top: 10px;
@@ -42,7 +39,6 @@ body { background-color: white; }
 
 #sidebar h2 {
 	font-size: small;
-	font-weight: strong;
 }
 
 #sidebar h3 {
@@ -55,7 +51,7 @@ body { background-color: white; }
 #menu { position:relative; float:right; right:50%; font-size: large; margin-top: -1em;}
 #menu li {text-align: left; position: relative; float: left; left: 50%; list-style: none; padding: 3px 5px 3px 5px; margin: 3px 0.5em; border: 0px none #FFF;}
 #menu .current li { background-color: gray; color: black; }
-#menu a { text-decoration: none; background-color: #transparent; color: black;}
+#menu a { text-decoration: none; color: black;}
 #menu a:hover { text-decoration: none; background-color: black; color: white;}
 #menu .current a { text-decoration: none; background-color: gray; color: black;}
 
@@ -65,7 +61,6 @@ body { background-color: white; }
 	display: block;
 	margin-left: 190px;
     text-align: left; 
-    font-weight: italic;
 	font-size: small;
 	padding: 3px 10px; 
 }
