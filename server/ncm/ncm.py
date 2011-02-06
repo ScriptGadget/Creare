@@ -108,8 +108,17 @@ class EditMakerPage(webapp.RequestHandler):
             maker = Authenticator.getMakerForUser(users.get_current_user())
             if maker:
                 id = maker.key()
+            else:
+                self.error(404)
+                self.response.out.write("I don't recognize that maker.")
+                return
         else:
-            maker = Maker.get(id)
+            try:
+                maker = Maker.get(id)
+            except:
+                self.error(404)
+                self.response.out.write("I don't recognize that maker.")
+                return                
 
         if maker and Authenticator.authorized_for(maker.user):
             template_values = { 'form' : MakerForm(instance=maker), 'id' : id, 
@@ -446,6 +455,12 @@ class SiteHomePage(webapp.RequestHandler):
             message += '<p><a href="%s">%s</a></p>' % ('/community/'+str(community.key()),community.name)
         self.response.out.write(message)
 
+class NotFoundErrorHandler(webapp.RequestHandler):
+    """ A site root page """
+    def get(self):
+        self.error(404)
+        self.response.out.write("Opps, that doesn't seem to be a valid page.")
+
 def main():
     app = webapp.WSGIApplication([
         ('/', SiteHomePage),
@@ -468,6 +483,7 @@ def main():
         ('/AddProductToCart', AddProductToCart),
         ('/community/add', AddCommunityPage),
         (r'/community/(.*)', CommunityHomePage),
+        (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)
 

@@ -16,3 +16,5 @@ handlers:
 - url: /.*
   script: ncm.py
 
+error_handlers:
+- file: error.html
