@@ -305,7 +305,13 @@ class Logout(webapp.RequestHandler):
 class CommunityHomePage(webapp.RequestHandler):
     """ Renders the home page template. """
     def get(self, community_id):
-        community = db.get(community_id)
+        try:
+            community = db.get(community_id)
+        except:
+            self.error(404)
+            self.response.out.write("I don't recognize that community")
+            return
+
         user = users.get_current_user()
         maker = None
         if user is not None:
