@@ -354,7 +354,28 @@ class AddProductToCart(webapp.RequestHandler):
     """ Accept a JSON RPC request to add a product to the cart"""
     def post(self):
         logging.info('AddProductToCart: ' + str(self.request))
-        self.response.out.write('{ "message":"Success!" }')
+        product_id = self.request.get('arg0')
+        session = get_current_session()
+        if not session.is_active():
+            # session.start(ssl_only=True)
+            session.regenerate_id()
+        items = session.get('ShoppingCartItems', [])
+
+        for item in items:
+            if item.product == product_id:
+                item.count += 1
+                break
+        else:
+            newItem = ShoppingCartItem(product=product_id, count=1)
+            logging.info('New item: ' + str(newItem.product))
+            items.append(newItem)
+
+        total = 0
+        for item in items:
+            total += item.count
+        session['ShoppingCartItems'] = items
+        count = str(total) + ' items'
+        self.response.out.write("{ \"count\":\"" + count + "\"}")
 
 class AddToShoppingCart(webapp.RequestHandler):
     """ Add an item to a shoppers cart """

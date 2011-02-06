@@ -8,13 +8,13 @@
   }
 
   function updateCartWidget(response){
-    $('ShoppingCartWidget').innerHTML = response["message"];
+    $("ShoppingCartCount").innerHTML = response["count"];
   }
 {% endblock %}
 
 {% block content %}
     <div id="ShoppingCartWidget">
-        <p>Your Shopping Cart: ({% if cartItems %}{{cartItems}} items{% else %}empty{% endif %})</p>
+        <p>Your Shopping Cart: (<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>)</p>
     <div id="alert1"></div>
     </div>
 
