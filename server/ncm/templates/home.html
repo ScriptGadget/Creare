@@ -1,14 +1,24 @@
 {% extends "base.html" %}
 
-{% block content %}    
-    <div id="ShoppingCartWidget">
-	  <p>Shopping Cart</p>
-	  {% for item in cartItems %}
-	    <p class="CartItem">{{item.count}}: {{item.product}}</p>
-	  {% endfor%}
-	</div>
+{% block functions %}
+  InstallFunction(server, 'AddProductToCart', false);
 
-	<dl>
+  function doAddProductToCart(product){
+    server.AddProductToCart(product, updateCartWidget);    
+  }
+
+  function updateCartWidget(response){
+    $('ShoppingCartWidget').innerHTML = response["message"];
+  }
+{% endblock %}
+
+{% block content %}
+    <div id="ShoppingCartWidget">
+        <p>Your Shopping Cart: ({% if cartItems %}{{cartItems}} items{% else %}empty{% endif %})</p>
+    <div id="alert1"></div>
+    </div>
+
+    <dl>
 	{% for product in products %}
        <dt>
 		 <div id='product_image_panel'>
@@ -16,8 +26,8 @@
 		   <img src="/product_images/{{product_image.key}}" border="0" /></br>
            {% endfor%}
          </div>
-         (<a href="/product/edit/{{product.key}}">edit</a>) {{product.description}}<br/><a href="/product/buy/{{product.key}}">Add to Shopping Cart</a></dt>
-	   <dd>${{product.price|floatformat:2}}</dd>
+         {% if maker %}(<a href="/product/edit/{{product.key}}">edit</a>){% endif %} {{product.name}}: {{product.description}}<br/></dt>
+	   <dd>${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </dd>
     {% endfor %}
     </dl>
 {% endblock  %}

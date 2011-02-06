@@ -303,13 +303,12 @@ class HomePage(webapp.RequestHandler):
 
         session = get_current_session()        
         items = session.get('ShoppingCartItems', [])
-        logging.info('home page cart items: ' + str(items))
+        count = 0
         if items != ():
-            template_values['cartItems'] = items            
             for item in items:
-                logging.info('Item in cart: ' + item.product);
-        else:
-            logging.info('Nothing in the cart')
+                count += item.count
+
+        template_values['cartItems'] = count
         
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, template_values))
@@ -350,6 +349,12 @@ class MakerStorePage(webapp.RequestHandler):
         template_values = { 'maker':maker}
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
         self.response.out.write(template.render(path, template_values))
+
+class AddProductToCart(webapp.RequestHandler):
+    """ Accept a JSON RPC request to add a product to the cart"""
+    def post(self):
+        logging.info('AddProductToCart: ' + str(self.request))
+        self.response.out.write('{ "message":"Success!" }')
 
 class AddToShoppingCart(webapp.RequestHandler):
     """ Add an item to a shoppers cart """
@@ -392,6 +397,7 @@ def main():
         (r'/maker_dashboard/(.*)', MakerDashboard),
         (r'/product_images/(.*)', DisplayImage),
         ('/upload_product_image', UploadProductImage), 
+        ('/AddProductToCart', AddProductToCart),
         ], debug=True)
     util.run_wsgi_app(app)
 
