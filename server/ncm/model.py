@@ -1,8 +1,19 @@
 from google.appengine.ext import db
 
+class Community(db.Model):
+    """ A Community of Makers and Crafters  """
+    name = db.StringProperty(required=True)
+
+class CommunityManager(db.Model):
+    """ A Person Who can Approve Makers and Manage a Community Site """
+    community = db.ReferenceProperty(Community, collection_name='community_managers')
+    user = db.UserProperty(required=True)
+    name = db.StringProperty(required=True)    
+
 class Maker(db.Model):
     """ Someone who sells products  """
     user = db.UserProperty()
+    community = db.ReferenceProperty(Community, collection_name='makers')
     store_name = db.StringProperty(required=True)
     store_description = db.StringProperty(required=True)
     full_name = db.StringProperty(required=True)
@@ -30,7 +41,6 @@ class ShoppingCartItem:
     def __init__(self, product = '', count = 0):
         self.product = product
         self.count = count
-    
 
 # Transactons represent a point in time, so they keep
 # a copy of all the information they need.
@@ -53,18 +63,24 @@ class Transaction(db.Model):
 # so we don't bother with a PolyModel
 
 class NewsItem(db.Model):
+    """ Local news relevant to makers  """
+    community = db.ReferenceProperty(Community, collection_name='community_news_items')
     title = db.StringProperty()
     time = db.DateTimeProperty()
     text = db.TextProperty()
     show = db.BooleanProperty()
 
 class EventNotice(db.Model):
+    """ A community event like a sack lunch or a meet and greet """
+    community = db.ReferenceProperty(Community, collection_name='community_event_notice')
     title = db.StringProperty()
     time = db.DateTimeProperty()
     text = db.TextProperty()
     show = db.BooleanProperty()
     
 class TipItem(db.Model):
+    """ A hint or tip about how to use the site or a creative howto  """
+    community = db.ReferenceProperty(Community, collection_name='community_tip_item')
     title = db.StringProperty()
     text = db.TextProperty()
     show = db.BooleanProperty()

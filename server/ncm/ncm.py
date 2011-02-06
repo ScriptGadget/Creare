@@ -12,19 +12,24 @@ from google.appengine.ext.db import djangoforms
 
 from gaesessions import get_current_session
 
-from model import Maker, Product, ProductImage, ShoppingCartItem
+from model import Community, Maker, Product, ProductImage, ShoppingCartItem
 
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
     class Meta:
         model = Maker
-        exclude = ['user']
+        exclude = ['user', 'community']
 
 class ProductForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a product  """
     class Meta:
         model = Product
         exclude = ['maker', 'thumb']
+
+class CommunityForm(djangoforms.ModelForm):
+    """ Auto generate a for for adding a Community  """
+    class Meta:
+        model = Community
 
 class Authenticator:
     def __init__(self, page):
@@ -59,7 +64,7 @@ class Authenticator:
 
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
-    def get(self):
+    def get(self, community_id):
         authenticator = Authenticator(self)
         (user, maker) = authenticator.authenticate()
         if user and maker:
@@ -69,21 +74,23 @@ class MakerPage(webapp.RequestHandler):
             data = MakerForm()
             template_values = { 'title':'Open Your Store',
                                 'new':True,
-                                'form':data, 
+                                'form':data,
+                                'community':community_id,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             logging.info("Showing Registration Page")
             self.response.out.write(template.render(path, template_values))
 
-    def post(self):
+    def post(self, community_id):
         data = MakerForm(data=self.request.POST)
         if data.is_valid():
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
             entity.user = users.get_current_user()
-            logging.info('User: ' + str(entity.user) + ' has joined.')
+            entity.community = Community.get(community_id)
             entity.put()
-            self.redirect('/')
+            logging.info('User: ' + str(entity.user) + ' has joined ' + entity.community.name)
+            self.redirect('/community/' + str(entity.community.key()))
         else:
             # Reprint the form
             template_values = { 'title':'Open Your Store', 
@@ -107,6 +114,7 @@ class EditMakerPage(webapp.RequestHandler):
         if maker and Authenticator.authorized_for(maker.user):
             template_values = { 'form' : MakerForm(instance=maker), 'id' : id, 
                                 'uri':self.request.uri, 'maker':maker,
+                                'community':maker.community,
                                 'title':'Update Store Information'}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, template_values))
@@ -134,7 +142,7 @@ class EditMakerPage(webapp.RequestHandler):
 
 class ProductPage(webapp.RequestHandler):
     """ Add a Product """
-    def buildImageUploadForm(self, ):
+    def buildImageUploadForm(self):
         return """
             <div><label>Product Image:</label></div>
             <div><input type="file" name="img"/></div> """
@@ -266,7 +274,7 @@ class EditProductPage(webapp.RequestHandler):
 
 class Login(webapp.RequestHandler):
     """ Just authenticates then redirects to the home page """
-    def get(self):
+    def get(self, community_id):
         authenticator = Authenticator(self)
         (user, maker) = authenticator.authenticate()
 
@@ -274,9 +282,9 @@ class Login(webapp.RequestHandler):
             session = get_current_session()
             # session.start(ssl_only=True)
             session.regenerate_id()
-            self.redirect('/maker/maker_dashboard/' + str(maker.key()))
+            self.redirect('/community/%s/maker/maker_dashboard/%s' % (community_id, str(maker.key())))
         else:
-            self.redirect('/maker/add')
+            self.redirect('/community/%s/maker/add' % community_id)
 
 class Logout(webapp.RequestHandler):
     """ Just kills the session and clears authentication tokens  """
@@ -285,9 +293,10 @@ class Logout(webapp.RequestHandler):
         session.terminate()
         self.redirect(users.create_logout_url('/'))
 
-class HomePage(webapp.RequestHandler):
+class CommunityHomePage(webapp.RequestHandler):
     """ Renders the home page template. """
-    def get(self):
+    def get(self, community_id):
+        community = db.get(community_id)
         user = users.get_current_user()
         maker = None
         if user is not None:
@@ -298,7 +307,8 @@ class HomePage(webapp.RequestHandler):
         for p in results:
             products.append(p)
 
-        template_values = { 'title':'Nevada County Makes', 
+        template_values = { 'title': community.name + ' Makes', 
+                            'community':community,
                             'products':products, 'maker':maker}
 
         session = get_current_session()        
@@ -338,7 +348,7 @@ class MakerDashboard(webapp.RequestHandler):
             self.redirect("/maker_store/" + maker_id)            
             return
         else:
-            template_values = { 'title':'Maker Dashboard', 'maker':maker}
+            template_values = { 'title':'Maker Dashboard', 'community':maker.community, 'maker':maker}
             path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
             self.response.out.write(template.render(path, template_values))
 
@@ -398,27 +408,66 @@ class AddToShoppingCart(webapp.RequestHandler):
         session['ShoppingCartItems'] = items
         self.redirect('/')
 
+class AddCommunityPage(webapp.RequestHandler):
+    """ A page for adding a Community  """
+    def get(self):
+        authenticator = Authenticator(self)
+        (user, maker) = authenticator.authenticate()
+        if user and users.is_current_user_admin():
+            data = CommunityForm()
+            template_values = { 'title':'Create a Community',
+                                'form':data, 
+                                'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/community.html")
+            logging.info("Showing Community Page")
+            self.response.out.write(template.render(path, template_values))
+
+    def post(self):
+        data = CommunityForm(data=self.request.POST)
+        if data.is_valid():
+            # Save the data, and redirect to the view page
+            entity = data.save(commit=False)
+            entity.put()
+            self.redirect('/')
+        else:
+            # Reprint the form
+            template_values = { 'title':'Create a Community', 
+                                'form' : data, 
+                                'uri': self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/community.html")
+            self.response.out.write(template.render(path, template_values))
+
+class SiteHomePage(webapp.RequestHandler):
+    """ A site root page """
+    def get(self):
+        communities = Community.all()
+        message = '<h2>Please visit one of our communities instead</h2>'
+        for community in communities:
+            message += '<p><a href="%s">%s</a></p>' % ('/community/'+str(community.key()),community.name)
+        self.response.out.write(message)
+
 def main():
     app = webapp.WSGIApplication([
-        ('/', HomePage),
+        ('/', SiteHomePage),
         ('/maker', MakerPage),
-        ('/maker/add', MakerPage),
+        (r'/community/(.*)/maker/add', MakerPage),
         (r'/maker/edit/(.*)', EditMakerPage),
         ('/maker/edit', EditMakerPage),
         ('/product/add', ProductPage),
         (r'/product/buy/(.*)', AddToShoppingCart),
         (r'/product/edit/(.*)', EditProductPage),
         ('/product/edit', EditProductPage),
-        ('/home', HomePage),
         ('/privacy', PrivacyPage),
         ('/terms', TermsPage),
-        ('/login', Login),
+        (r'/community/(.*)/login', Login),
         ('/logout', Logout),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
         (r'/product_images/(.*)', DisplayImage),
         ('/upload_product_image', UploadProductImage), 
         ('/AddProductToCart', AddProductToCart),
+        ('/community/add', AddCommunityPage),
+        (r'/community/(.*)', CommunityHomePage),
         ], debug=True)
     util.run_wsgi_app(app)
 

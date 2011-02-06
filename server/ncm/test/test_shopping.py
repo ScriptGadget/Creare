@@ -1,5 +1,6 @@
 import unittest
-from model import Maker, Product, Shopper
+from google.appengine.api import users
+from model import Maker, Product
 
 class TestShopping(unittest.TestCase):
     """ Test buying Products from one or more Makers """
@@ -7,6 +8,7 @@ class TestShopping(unittest.TestCase):
     def setUp(self):
         """ Setup Tests """
         self.maker = Maker(store_name='Craftorama',
+              user = users.User('test@example.com'),
               store_description="The Crafty Crafter's Place",
               full_name="Maggie Crafter",
               email='maggie@example.com',
@@ -17,17 +19,13 @@ class TestShopping(unittest.TestCase):
               tags='tchotckies, geegaws, jimcracks, cruelty free faux taxidermy')
         self.maker.put()
 
-        self.geegaw = Product(description='Regulation Red GeeGaw', price=9.95, tags='geegaw, red, regulation, squishy', maker=self.maker)
+        self.geegaw = Product(name='geegaw', description='Regulation Red GeeGaw', price=9.95, tags='geegaw, red, regulation, squishy', maker=self.maker)
         self.geegaw.put()
 
-        self.bunny = Product(description='Stuffed Dust Bunny', price=11.99, tags='plush, taxidermy, faux, cruelty free, cute', maker=self.maker)
+        self.bunny = Product(name='Dust Bunny Plushy', description='Stuffed Dust Bunny', price=11.99, tags='plush, taxidermy, faux, cruelty free, cute', maker=self.maker)
         self.bunny.put()
 
-        self.shopper = Shopper(email='test@example.com', name='Nemo')
-        self.shopper.put()
-
     def tearDown(self):
-        self.shopper.delete()
         self.bunny.delete()
         self.geegaw.delete()
         self.maker.delete()
