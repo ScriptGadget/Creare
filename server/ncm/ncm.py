@@ -297,10 +297,10 @@ class Login(webapp.RequestHandler):
 
 class Logout(webapp.RequestHandler):
     """ Just kills the session and clears authentication tokens  """
-    def get(self):
+    def get(self, community_id):
         session = get_current_session()
         session.terminate()
-        self.redirect(users.create_logout_url('/'))
+        self.redirect(users.create_logout_url('/community/'+ community_id))
 
 class CommunityHomePage(webapp.RequestHandler):
     """ Renders the home page template. """
@@ -316,11 +316,12 @@ class CommunityHomePage(webapp.RequestHandler):
         maker = None
         if user is not None:
             maker = Authenticator.getMakerForUser(user)
-        q = Product.all()
-        results = q.fetch(3)
+
+        stuff = Product.all()
         products = []
-        for p in results:
-            products.append(p)
+        for product in stuff:
+            if str(product.maker.community.key()) == community_id:
+                products.append(product)
 
         template_values = { 'title': community.name + ' Makes', 
                             'community':community,
@@ -402,26 +403,33 @@ class AddProductToCart(webapp.RequestHandler):
         count = str(total) + ' items'
         self.response.out.write("{ \"count\":\"" + count + "\"}")
 
-class AddToShoppingCart(webapp.RequestHandler):
-    """ Add an item to a shoppers cart """
-    def get(self, product_id):
+class RemoveProductFromCart(webapp.RequestHandler):
+    """ Accept a JSON RPC request to remove a product from the cart"""
+    def post(self):
+        product_id = self.request.get('arg0')
+        logging.info('RemoveProductFromCart: ' + str(product_id))
         session = get_current_session()
         if not session.is_active():
             # session.start(ssl_only=True)
             session.regenerate_id()
         items = session.get('ShoppingCartItems', [])
-        
+
         for item in items:
             if item.product == product_id:
-                item.count += 1;
+                if item.count > 1:
+                    item.count -= 1
+                else:
+                    items.remove(item)
                 break
-        else:
-            newItem = ShoppingCartItem(product=product_id, count=1)
-            logging.info('New item: ' + str(newItem.product))
-            items.append(newItem)
-        logging.info('items: ' + str(items))
         session['ShoppingCartItems'] = items
-        self.redirect('/')
+        
+        message = '{"products":['
+        for item in items:
+            product = Product.get(item.product)
+            message += "{\"count\":\"%s\",\"key\":\"%s\",\"name\":\"%s\"}," % (item.count, product.key(), product.name)
+        message += ']}'
+        logging.info(message)
+        self.response.out.write(message)
 
 class AddCommunityPage(webapp.RequestHandler):
     """ A page for adding a Community  """
@@ -434,7 +442,6 @@ class AddCommunityPage(webapp.RequestHandler):
                                 'form':data, 
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/community.html")
-            logging.info("Showing Community Page")
             self.response.out.write(template.render(path, template_values))
 
     def post(self):
@@ -461,6 +468,37 @@ class SiteHomePage(webapp.RequestHandler):
             message += '<p><a href="%s">%s</a></p>' % ('/community/'+str(community.key()),community.name)
         self.response.out.write(message)
 
+class CheckoutPage(webapp.RequestHandler):
+    def get(self, community_id):
+        try:
+            community = Community.get(community_id)
+        except:
+            self.error(404)
+            self.respoinse.out.message("I don't recognize that community.")
+            return
+
+        session = get_current_session()
+        if not session.is_active():
+            self.response.out.write("I don't see anything in your cart")
+            return
+        else:
+            items = session.get('ShoppingCartItems', [])
+            products = []
+            for item in items:
+                product = Product.get(item.product)
+                product.count = item.count
+                products.append(product)                
+
+            template_values = { 'title':'Checkout',
+                                'products':products,
+                                'community':community,
+                                'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/checkout.html")
+            self.response.out.write(template.render(path, template_values))
+            
+    def post(self):
+        pass
+
 class NotFoundErrorHandler(webapp.RequestHandler):
     """ A site root page """
     def get(self):
@@ -475,20 +513,21 @@ def main():
         (r'/maker/edit/(.*)', EditMakerPage),
         ('/maker/edit', EditMakerPage),
         ('/product/add', ProductPage),
-        (r'/product/buy/(.*)', AddToShoppingCart),
         (r'/product/edit/(.*)', EditProductPage),
         ('/product/edit', EditProductPage),
         ('/privacy', PrivacyPage),
         ('/terms', TermsPage),
         (r'/community/(.*)/login', Login),
-        ('/logout', Logout),
+        (r'/logout/(.*)', Logout),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
         (r'/product_images/(.*)', DisplayImage),
         ('/upload_product_image', UploadProductImage), 
         ('/AddProductToCart', AddProductToCart),
+        ('/RemoveProductFromCart', RemoveProductFromCart),
         ('/community/add', AddCommunityPage),
         (r'/community/(.*)', CommunityHomePage),
+        (r'/checkout/(.*)', CheckoutPage),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

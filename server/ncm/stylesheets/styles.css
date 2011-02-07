@@ -28,6 +28,12 @@ body { background-color: white; }
 
 .catalog p {
 	font-size: small;
+	height: 1em;
+}
+
+.catalog td {
+	width:10em;
+	vertical-align:text-top;
 }
 
 #sidebar { 

@@ -44,7 +44,7 @@
 		  {% if maker %}
 		  <li><a href="/maker_dashboard/{{maker.key}}">Manage My Store</a></li>
 		  <li><a href="/maker/edit/{{maker.key}}">Account</a></li>
-		  <li><a href="/logout">Logout</a></li>
+		  <li><a href="/logout/{{community.key}}">Logout</a></li>
 		  {% else %}
 		    {% if new %}
 		    <li><a href="/logout">Logout</a></li>
@@ -59,31 +59,6 @@
 	
     <div id="content">
 	  {% block content %}
-	  <table class="catalog">
-      <tr>
-		<td>
-		  <h3>An Item</h3>
-		  <p class="price">Price: $100.00</p>
-		  <p>Lorem ipsum dolor sit amet, ne mauris bis euismod, ullamcorper ymo iustum sed. Secundum singularis duis scisco multo appellatio laoreet, nisl vero imputo wisi dignissim capio illum hendrerit. Esse in eros adsum huic adsum eu, qui quia. Wisi singularis, valetudo letatio illum facilisis autem quibus illum illum facilisis letalis quae. Nutus, ut caecus nimis occuro, duis. Quae facilisi acsi, rusticus luptatum ne vel quia. </p>
-		</td>
-
-		<td>		  
-		  <h3>An Item</h3>
-		  <p class="price">Price: $23.85</p>
-		  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt. Aptent eum letalis, secundum natu tristique voco paulatim saluto commoveo augue accumsan. In, inhibeo si praesent et appellatio abdo odio turpis. Demoveo ne si mara venio iriure nostrud, ut, et consequat. Luptatum capto luptatum, in ut metuo tristique. Vereor dolore odio nullus eu iustum vero reprobo virtus epulae feugait lobortis eros, modo. <p>
-		</td>
-	  </tr>
-	  <tr>
-		<td>
-		  <h3>An Item</h3>
-		  <p class="price">Price: $19.95</p>
-		  <p>Et in ulciscor ut in opes loquor appellatio, nulla tincidunt, ne odio virtus verto importunus. Pagus, vulputate aptent camur, letalis usitas, nostrud, et valde. Tristique aptent suscipit odio illum esca sudo exerci camur. Iaceo esse aliquip enim importunus tristique feugait gemino, persto ibidem capto indoles esse, ut. Dolus illum verto utrum molior in enim proprius. <p>
-		</td>
-		<td>
-		  &nbsp;
-		</td>
-		</tr>
-	  </table>
       {% endblock %}
     </div>
 

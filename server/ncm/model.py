@@ -37,7 +37,7 @@ class ProductImage(db.Model):
     product = db.ReferenceProperty(Product, collection_name='product_images')
     image = db.BlobProperty()
 
-class ShoppingCartItem:
+class ShoppingCartItem():
     def __init__(self, product = '', count = 0):
         self.product = product
         self.count = count

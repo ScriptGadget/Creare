@@ -9,25 +9,28 @@
 
   function updateCartWidget(response){
     $("ShoppingCartCount").innerHTML = response["count"];
+    $("checkout_button").style.display = 'inline';
   }
 {% endblock %}
 
 {% block content %}
     <div id="ShoppingCartWidget">
-        <p>Your Shopping Cart: (<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>)</p>
+        <p>Your Shopping Cart: (<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout/{{community.key}}">Checkout</a></span></p>
     <div id="alert1"></div>
     </div>
-
-    <dl>
+	<table class="catalog">
+    <tr>
 	{% for product in products %}
-       <dt>
+       <td>
 		 <div id='product_image_panel'>
 		   {% for product_image in product.product_images %}
 		   <img src="/product_images/{{product_image.key}}" border="0" /></br>
            {% endfor%}
          </div>
-         {% if maker %}(<a href="/product/edit/{{product.key}}">edit</a>){% endif %} {{product.name}}: {{product.description}}<br/></dt>
-	   <dd>${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </dd>
+         <p>{% if maker %}(<a href="/product/edit/{{product.key}}">edit</a>){% endif %} {{product.name}}</br>{{product.description}}<p/>
+		 <p>${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+	   </td>
     {% endfor %}
-    </dl>
+    </table>
+	</div>
 {% endblock  %}
