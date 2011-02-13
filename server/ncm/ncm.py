@@ -12,7 +12,7 @@ from google.appengine.ext.db import djangoforms
 
 from gaesessions import get_current_session
 
-from model import Community, Maker, Product, ProductImage, ShoppingCartItem
+from model import Community, Maker, Product, ProductImage, ShoppingCartItem, CartTransaction, MakerTransaction
 
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
@@ -364,7 +364,31 @@ class MakerDashboard(webapp.RequestHandler):
             self.redirect("/maker_store/" + maker_id)            
             return
         else:
-            template_values = { 'title':'Maker Dashboard', 'community':maker.community, 'maker':maker}
+            q = MakerTransaction.gql("WHERE maker = :1", maker.key())
+            maker_transactions = q.fetch(60)
+            sales = []
+            class Sale:
+                pass
+            total_sales = 0.0
+            total_items = 0
+            for transaction in maker_transactions:
+                for entry in transaction.detail:
+                    sale = Sale()                
+                    (product_key, items, amount) = entry.split(':')
+                    sale.product = Product.get(product_key).name
+                    sale.items = int(items)
+                    sale.amount = float(amount)
+                    sales.append(sale)
+                    total_items += sale.items
+                    total_sales += sale.amount * sale.items
+
+                    
+            template_values = { 'title':'Maker Dashboard',
+                                'community':maker.community, 
+                                'sales':sales,
+                                'maker':maker,
+                                'total_sales':total_sales,
+                                'total_items':total_items}
             path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
             self.response.out.write(template.render(path, template_values))
 
@@ -405,6 +429,9 @@ class AddProductToCart(webapp.RequestHandler):
 
 class RemoveProductFromCart(webapp.RequestHandler):
     """ Accept a JSON RPC request to remove a product from the cart"""
+    def get(self):
+        pass
+
     def post(self):
         product_id = self.request.get('arg0')
         logging.info('RemoveProductFromCart: ' + str(product_id))
@@ -474,7 +501,7 @@ class CheckoutPage(webapp.RequestHandler):
             community = Community.get(community_id)
         except:
             self.error(404)
-            self.respoinse.out.message("I don't recognize that community.")
+            self.response.out.message("I don't recognize that community.")
             return
 
         session = get_current_session()
@@ -505,6 +532,51 @@ class NotFoundErrorHandler(webapp.RequestHandler):
         self.error(404)
         self.response.out.write("Opps, that doesn't seem to be a valid page.")
 
+class OrderProductsInCart(webapp.RequestHandler):
+    def get(self):
+        pass
+
+    def post(self):
+        session = get_current_session()
+        if not session.is_active():
+            self.response.out.write("{ \"message\":\"" 
+                                    + "I don't see anything in your cart"
+                                    + "\"}")
+            return
+        else:
+            items = session.get('ShoppingCartItems', [])
+            cart_transaction = CartTransaction(transaction_type='Sale')
+            cart_transaction.put()
+
+            maker_transactions = []
+            for item in items:
+                product = Product.get(item.product)
+                for maker_transaction in maker_transactions:
+                    if maker_transaction.maker.key() == product.maker.key():
+                        entry = "%s:%s:%s" % (str(product.key()), 
+                                              str(item.count), 
+                                              str(product.price))
+                        maker_transaction.detail.append(entry)
+                        break
+                    else:
+                        logging.info(str(maker_transaction.maker.key()) + "!=" + str(product.maker.key()))
+                else:
+                    maker_transaction = MakerTransaction(parent=cart_transaction,
+                                                         maker=product.maker)
+                    entry = "%s:%s:%s" % (str(product.key()), 
+                                          str(item.count), 
+                                          str(product.price))
+                    maker_transaction.detail.append(entry)
+                    maker_transactions.append(maker_transaction)
+
+            db.put(maker_transactions)
+
+            self.response.out.write("{ \"message\":\"" 
+                                    + "Thank you for your order."
+                                    + "\"}")
+            session.pop('ShoppingCartItems')
+            return
+
 def main():
     app = webapp.WSGIApplication([
         ('/', SiteHomePage),
@@ -528,6 +600,7 @@ def main():
         ('/community/add', AddCommunityPage),
         (r'/community/(.*)', CommunityHomePage),
         (r'/checkout/(.*)', CheckoutPage),
+        ('/OrderProductsInCart', OrderProductsInCart),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

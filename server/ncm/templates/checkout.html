@@ -2,9 +2,14 @@
 
 {% block functions %}
   InstallFunction(server, 'RemoveProductFromCart', false);
+  InstallFunction(server, 'OrderProductsInCart', false);
 
   function doRemoveProductFromCart(product){
     server.RemoveProductFromCart(product, updateCartTable);    
+  }
+
+  function doOrderProductsInCart(){
+    server.OrderProductsInCart(displayOrderResult);
   }
 
   function updateCartTable(response){
@@ -17,12 +22,18 @@
           content += "<tr><td>" + products[i].count + button + "</td><td>" + products[i].name + "</td></tr>";
         }
         content += "</table>";
-		content +=  '<div id="PaymentOptions"><input class="button" type="button" value="Order Now" /></div>';
+		content +=  '<div id="PaymentOptions"><input class="button" type="button" value="Order Now" onclick="doOrderProductsInCart()"/></div>';
 	}else{
       content = "<p>(empty)</p>";
     }
     $("ShoppingCartProductList").innerHTML = content;
   }
+
+  function displayOrderResult(response){
+    message = response["message"];
+    $("ShoppingCartProductList").innerHTML = "<p>" + message + "</p>";
+  }
+
 {% endblock %}
 
 {% block content %}
@@ -33,7 +44,7 @@
 	  <tr><td>{{product.count}}<input class="button" type="button" value="-" onclick="doRemoveProductFromCart('{{product.key}}')" /></td><td>{{product.name}}</td></tr>
       {% endfor %}
 	  </table>
-	  {% if products %} <div id="PaymentOptions"><input class="button" type="button" value="Order Now" /></div> {% else  %}<p>(empty)</p>{% endif  %}
+	  {% if products %} <div id="PaymentOptions"><input class="button" type="button" value="Order Now" onclick="doOrderProductsInCart()"/></div> {% else  %}<p>(empty)</p>{% endif  %}
 	</div>
 	
 {% endblock  %}

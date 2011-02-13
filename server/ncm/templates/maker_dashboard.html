@@ -17,5 +17,15 @@
 		<dd>{{product.description}} - ${{product.price|floatformat:2}}</dd>
 		{% endfor %}
       </dl>
+	  <div id="maker_transaction_panel">
+		<h2>Sales</h2>
+		<table>
+		  <tr><th>Product</tdh><th>Items</th><th>Price</th></tr>
+		{% for sale in sales %}
+		  <tr><td>{{sale.product}}</td><td>{{sale.items}}</td><td>${{sale.amount|floatformat:2}}</td></tr>
+		{% endfor %}
+        <tr><th>Totals</th><td>{{total_items}}</td><td>${{total_sales|floatformat:2}}</td></tr>
+		</table>
+	  </div>
     </div>
 {% endblock %}

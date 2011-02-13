@@ -42,21 +42,23 @@ class ShoppingCartItem():
         self.product = product
         self.count = count
 
-# Transactons represent a point in time, so they keep
-# a copy of all the information they need.
-# This needs more thought. Is there  transaction for an entire shopping
-# cart and then a transaction for each Maker with a Product in the shopping
-# cart or is there a transaction for each Product even? Maybe I need a 
-# "Sale" entity that represents the sale of some number of an individual product.
-#  Hmm and how to keys, paths and "parents" figure into this?
-#
-class Transaction(db.Model):
-    """ Money changed hands. """
-    amount = db.FloatProperty(required=True)
+class CartTransaction(db.Model):
+    """ Represents an entire shopping cart, potentially with multiple
+    Products by multiple Makers. The data is only valid for a moment in
+    time, so it keeps a copy of prices and counts as they were at the moment
+    of purchase."""
     timestamp = db.DateTimeProperty(auto_now_add=True)
     transaction_type = db.CategoryProperty(['Sale', 'Payout', 'Refund'])
     note = db.TextProperty()
     authorization = db.StringProperty()
+
+class MakerTransaction(db.Model):
+    """ Represents a single Maker's portion of a transaction. """
+    maker = db.ReferenceProperty(Maker, 
+                                 collection_name="maker_transaction", 
+                                 required=True)    
+    detail = db.StringListProperty()
+
 
 # NewsItems, EventNotices and TipItems  are similar
 # but they are never logically managed together

@@ -47,7 +47,7 @@
 		  <li><a href="/logout/{{community.key}}">Logout</a></li>
 		  {% else %}
 		    {% if new %}
-		    <li><a href="/logout">Logout</a></li>
+		    <li><a href="/logout/{{community.key}}">Logout</a></li>
 			{% else %}
 		    <li><a href="/community/{{community.key}}/login">Login</a></li>
 		    {% endif %}
