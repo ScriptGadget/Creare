@@ -14,22 +14,7 @@ from gaesessions import get_current_session
 
 from model import Community, Maker, Product, ProductImage, ShoppingCartItem, CartTransaction, MakerTransaction
 
-class MakerForm(djangoforms.ModelForm):
-    """ Auto generate a form for adding and editing a Maker store  """
-    class Meta:
-        model = Maker
-        exclude = ['user', 'community']
-
-class ProductForm(djangoforms.ModelForm):
-    """ Auto generate a form for adding and editing a product  """
-    class Meta:
-        model = Product
-        exclude = ['maker', 'thumb']
-
-class CommunityForm(djangoforms.ModelForm):
-    """ Auto generate a for for adding a Community  """
-    class Meta:
-        model = Community
+from forms import MakerForm, ProductForm, CommunityForm
 
 class Authenticator:
     def __init__(self, page):
@@ -261,17 +246,17 @@ class EditProductPage(webapp.RequestHandler):
           if data.is_valid():
               entity = data.save(commit=False)
               entity.put()
-              for product_image in entity.product_images:
-                  product_image.delete()
-              upload = ProductImage()
-              try:
-                  upload.product = entity
-                  upload.image = images.resize(self.request.get("img"), 240, 240)
-                  upload.put()
-              except images.NotImageError:
-                  pass
-                  # Have to come up with a much better way of handling this
-                  # self.redirect('/')
+              image = self.request.get("img")
+              if image:
+                  upload = ProductImage(parent=entity)
+                  for product_image in entity.product_images:
+                      product_image.delete()
+                  try:
+                      upload.product = entity
+                      upload.image = images.resize(image, 240, 240)
+                      upload.put()
+                  except images.NotImageError:
+                      pass
               self.redirect('/maker_dashboard/' + str(maker.key()))
           else:
               # Reprint the form

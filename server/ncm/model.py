@@ -31,6 +31,7 @@ class Product(db.Model):
     description = db.StringProperty(required=True)
     price = db.FloatProperty(required=True)
     tags = db.CategoryProperty(required=True)
+    inventory = db.IntegerProperty(required=True)
 
 class ProductImage(db.Model):
     """ An Image of a Product """
