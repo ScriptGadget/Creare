@@ -518,7 +518,12 @@ class NotFoundErrorHandler(webapp.RequestHandler):
         self.response.out.write("Opps, that doesn't seem to be a valid page.")
 
 class OrderProductsInCart(webapp.RequestHandler):
+    """ Deduct items from product inventory and create a CartTransaction
+    and MakerTransactions to represent the cart. TBD: inventory changes should be
+    protected by transactions to ensure integrity! """
+
     def get(self):
+        """ Ignore gets. This isn't an idempotent operation. """
         pass
 
     def post(self):
@@ -534,8 +539,12 @@ class OrderProductsInCart(webapp.RequestHandler):
             cart_transaction.put()
 
             maker_transactions = []
+            products = []
             for item in items:
                 product = Product.get(item.product)
+                if product.inventory > 0:
+                    product.inventory -= item.count
+                products.append(product)
                 for maker_transaction in maker_transactions:
                     if maker_transaction.maker.key() == product.maker.key():
                         entry = "%s:%s:%s" % (str(product.key()), 
@@ -555,6 +564,7 @@ class OrderProductsInCart(webapp.RequestHandler):
                     maker_transactions.append(maker_transaction)
 
             db.put(maker_transactions)
+            db.put(products)
 
             self.response.out.write("{ \"message\":\"" 
                                     + "Thank you for your order."
