@@ -82,7 +82,9 @@ class MakerPage(webapp.RequestHandler):
             return
 
         data = MakerForm(data=self.request.POST)
-        if data.is_valid():
+        terms_accepted = self.request.get('term1') and self.request.get('term2') and self.request.get('term2')
+
+        if data.is_valid() and terms_accepted:
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
             entity.user = users.get_current_user()
@@ -91,8 +93,12 @@ class MakerPage(webapp.RequestHandler):
             logging.info('User: ' + str(entity.user) + ' has joined ' + entity.community.name)
             self.redirect('/community/' + community.slug)
         else:
+            if not terms_accepted:
+                errors = ['You must accept the terms and conditions to use this site.']
+
             # Reprint the form
             template_values = { 'title':'Open Your Store', 
+                                'extraErrors':errors,
                                 'form' : data, 
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")

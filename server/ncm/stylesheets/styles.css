@@ -70,3 +70,5 @@ body { background-color: white; }
 	font-size: small;
 	padding: 3px 10px; 
 }
+
+.errorlist { color:red; }

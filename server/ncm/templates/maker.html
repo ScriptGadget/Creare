@@ -11,10 +11,25 @@
     </div>
 
     <div id="registrationPanel">
+	  {% if extraErrors %}
+	  <p class="errorlist">There were errors:</p>
+	    <ul class="errorlist">
+		  {% for error in extraErrors %}
+		  <li>{{error}}</li>
+		  {% endfor %}
+		</ul>
+	  {% endif %}
       <form id="register" action="{{uri}}" method="POST">
 		<table>
 		  {{ form.as_table }}
 		</table>
+
+		<h2>Terms and Conditions</h2>
+
+		<p class="terms"><input id="term1" class="checkbox" name="term1" type="checkbox" value="term1">I will be good.</p>
+		<p class="terms"><input id="term2" class="checkbox" name="term2" type="checkbox" value="term2">I will not be bad.</p>
+		<p class="terms"><input id="term3" class="checkbox" name="term3" type="checkbox" value="term3">I will be reasonable.</p>
+		
 		<input type="hidden" name="_id" value="{{ id }}" />
         <div><input id="submit" class="button"  type="submit" {% if id %} value="Update Store" {% else %} value="Create Store" {% endif %} /></div>
       </form>

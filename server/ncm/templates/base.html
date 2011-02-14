@@ -83,6 +83,7 @@
 
 	<div id="footer">
 	  {% block footer %}
+	  {% if not maker %} <p>Are you a local maker? <input type="button" id="join_button" onclick="window.location='/community/{{community.slug}}/login'" value ="join us!"></p> {% endif %}
 	  <p>Powered by ScriptGadget - <a href="/privacy">Privacy Policy</a> &nbsp; <a href="/terms">Terms and Conditions</a> &nbsp; <a href="">Copyright and D.M.C.A. Policy</a></p>
 	  {% endblock %}
 	</div>
