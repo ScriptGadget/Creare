@@ -19,7 +19,7 @@
         content = "<table>";
         for(var i = 0; i < products.length; i++){
 	      button = "<input class='button' type='button' value='-' onclick='doRemoveProductFromCart(\"" + products[i].key + "\")' />";
-          content += "<tr><td>" + products[i].count + button + "</td><td>" + products[i].name + "</td></tr>";
+          content += "<tr><td>" + products[i].count + button + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  + "</td></tr>";
         }
         content += "</table>";
 		content +=  '<div id="PaymentOptions"><input class="button" type="button" value="Order Now" onclick="doOrderProductsInCart()"/></div>';
@@ -41,7 +41,7 @@
     <div id="ShoppingCartProductList">
 	  <table>
 	  {% for product in products %}
-	  <tr><td>{{product.count}}<input class="button" type="button" value="-" onclick="doRemoveProductFromCart('{{product.key}}')" /></td><td>{{product.name}}</td></tr>
+	  <tr><td>{{product.count}}<input class="button" type="button" value="-" onclick="doRemoveProductFromCart('{{product.key}}')" /></td><td>{{product.name}}</td><td>${{product.total|floatformat:2}}</td></tr>
       {% endfor %}
 	  </table>
 	  {% if products %} <div id="PaymentOptions"><input class="button" type="button" value="Order Now" onclick="doOrderProductsInCart()"/></div> {% else  %}<p>(empty)</p>{% endif  %}

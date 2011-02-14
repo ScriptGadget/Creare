@@ -516,7 +516,9 @@ class RemoveProductFromCart(webapp.RequestHandler):
         message = '{"products":['
         for item in items:
             product = Product.get(item.product)
-            message += "{\"count\":\"%s\",\"key\":\"%s\",\"name\":\"%s\"}," % (item.count, product.key(), product.name)
+            product.count = item.count
+            product.total = '%3.2f' % (product.price * product.count)
+            message += "{\"count\":\"%s\",\"key\":\"%s\",\"name\":\"%s\",\"total\":\"%s\"}," % (product.count, product.key(), product.name, product.total)
         message += ']}'
         logging.info(message)
         self.response.out.write(message)
@@ -588,6 +590,7 @@ class CheckoutPage(webapp.RequestHandler):
             for item in items:
                 product = Product.get(item.product)
                 product.count = item.count
+                product.total = '%3.2f' % (product.price * product.count)
                 products.append(product)                
 
             template_values = { 'title':'Checkout',
