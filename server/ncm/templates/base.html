@@ -20,19 +20,32 @@
     <div id="sidebar">
 	  {% block sidebar %}
 	  <h2>News</h2>
-	  <h3>A News Item</h3>
-	  <p>News and Info long enough to wrap and need a "more" link. ...(<a href="">more</a>)</p>
+	  {% if newsItems %}
+	    {% for item in newsItems %}
+	      <h3>{{item.title}}</h3>
+	      <p>{{item.summary}}</p>
+	    {% endfor %}
+	  {% else %}
+		<p>No news today.</p>
+	  {% endif %}
 	  <h2>Events</h2>
-	  <h3>An Event</h3>
-	  <p>A short event.</p>
-	  <h3>An Especially Long Event</h3>
-	  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt.  ...(<a href="">more</a>)</p>
+	  {% if events %}
+	    {% for event in events %}
+	      <h3>{{event.title}}</h3>
+	      <p>{{event.summary}}</p>
+	    {% endfor %}
+	  {% else %}
+		<p>No events today.</p>
+	  {% endif %}
 	  <h2>Tips</h2>
-	  <h3>A Tip</h3>
-	  <p>A short tip.</p>
-	  <h3>An Especially Long Tip</h3>
-	  <p>Qui valde si epulae bis eum, in ille suscipit tincidunt.  ...(<a href="">more</a>) </p>
-
+	  {% if tips %}
+	    {% for tip in tips %}
+	      <h3>{{tip.title}}</h3>
+	      <p>{{tip.summary}}</p>
+	    {% endfor %}
+	  {% else %}
+		<p>Watch here for helpful tips.</p>
+	  {% endif %}
       {% endblock %}
     </div>
 
@@ -40,16 +53,16 @@
 	  <div id="menu">
 		{% block menu %}
 		<ul>
-		  <li><a href="/community/{{community.key}}">Home</a></li>
+		  <li><a href="/community/{{community.slug}}">Home</a></li>
 		  {% if maker %}
 		  <li><a href="/maker_dashboard/{{maker.key}}">Manage My Store</a></li>
 		  <li><a href="/maker/edit/{{maker.key}}">Account</a></li>
-		  <li><a href="/logout/{{community.key}}">Logout</a></li>
+		  <li><a href="/logout">Logout</a></li>
 		  {% else %}
 		    {% if new %}
-		    <li><a href="/logout/{{community.key}}">Logout</a></li>
+		    <li><a href="/logout">Logout</a></li>
 			{% else %}
-		    <li><a href="/community/{{community.key}}/login">Login</a></li>
+		    <li><a href="/community/{{community.slug}}/login">Login</a></li>
 		    {% endif %}
 		  {% endif %}
 		</ul>

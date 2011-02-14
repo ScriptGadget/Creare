@@ -19,6 +19,7 @@ from forms import MakerForm, ProductForm, CommunityForm
 class Authenticator:
     def __init__(self, page):
         self.page = page
+
     @staticmethod
     def getMakerForUser(user):
         """ get the Maker if any associated with this user """
@@ -39,6 +40,7 @@ class Authenticator:
 
         if not user:
             self.page.redirect(users.create_login_url(self.page.request.uri))
+            raise AuthenticationException('User must authenticate')
         else:
             maker = self.getMakerForUser(user)
         return (user, maker)
@@ -49,9 +51,15 @@ class Authenticator:
 
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
-    def get(self, community_id):
+    def get(self):
         authenticator = Authenticator(self)
-        (user, maker) = authenticator.authenticate()
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
         if user and maker:
             self.redirect('/maker_dashboard/' + str(maker.key()))
             return
@@ -60,22 +68,29 @@ class MakerPage(webapp.RequestHandler):
             template_values = { 'title':'Open Your Store',
                                 'new':True,
                                 'form':data,
-                                'community':community_id,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             logging.info("Showing Registration Page")
             self.response.out.write(template.render(path, template_values))
 
-    def post(self, community_id):
+    def post(self):
+        session = get_current_session()
+        community = Community.getCommunityForSlug(session.get('community'))
+        
+        if not community:
+            self.error(404)
+            self.response.out.write("I don't recognize that community")
+            return
+
         data = MakerForm(data=self.request.POST)
         if data.is_valid():
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
             entity.user = users.get_current_user()
-            entity.community = Community.get(community_id)
+            entity.community = community
             entity.put()
             logging.info('User: ' + str(entity.user) + ' has joined ' + entity.community.name)
-            self.redirect('/community/' + str(entity.community.key()))
+            self.redirect('/community/' + community.slug)
         else:
             # Reprint the form
             template_values = { 'title':'Open Your Store', 
@@ -115,24 +130,32 @@ class EditMakerPage(webapp.RequestHandler):
         else:
             self.redirect('/maker/add')
 
-    def post(self, id):
-      id = self.request.get('_id')
-      maker = Maker.get(id)
-      if not Authenticator.authorized_for(maker.user):
-          self.redirect('/maker/add')
-      else:
-          data = MakerForm(data=self.request.POST, instance=maker)
-          if data.is_valid():
-              # Save the data, and redirect to the view page
-              entity = data.save(commit=False)
-              entity.user = users.get_current_user()
-              entity.put()
-              self.redirect('/')
-          else:
-              # Reprint the form
-              template_values = { 'form' : ProductForm(instance=maker), 'id' : id, 'uri':self.request.uri}
-              path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
-              self.response.out.write(template.render(path, template_values))
+    def post(self, id):        
+        session = get_current_session()
+        community = Community.getCommunityForSlug(session.get('community'))
+        
+        if not community:
+            self.error(404)
+            self.response.out.write("I don't recognize that community")
+            return
+
+        id = self.request.get('_id')
+        maker = Maker.get(id)
+        if not Authenticator.authorized_for(maker.user):
+            self.redirect('/maker/add')
+        else:
+            data = MakerForm(data=self.request.POST, instance=maker)
+            if data.is_valid():
+                # Save the data, and redirect to the view page
+                entity = data.save(commit=False)
+                entity.user = users.get_current_user()
+                entity.put()
+                self.redirect('/community/' + community.slug)
+            else:
+                # Reprint the form
+                template_values = { 'form' : ProductForm(instance=maker), 'id' : id, 'uri':self.request.uri}
+                path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
+                self.response.out.write(template.render(path, template_values))
 
 class ProductPage(webapp.RequestHandler):
     """ Add a Product """
@@ -143,7 +166,13 @@ class ProductPage(webapp.RequestHandler):
 
     def get(self):
         authenticator = Authenticator(self)
-        (user, maker) = authenticator.authenticate()
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
         if not user or not maker:
             self.redirect('/')
             return
@@ -156,7 +185,13 @@ class ProductPage(webapp.RequestHandler):
 
     def post(self):
         authenticator = Authenticator(self)
-        (user, maker) = authenticator.authenticate()
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
         if not user or not maker:
             self.redirect('/')
             return
@@ -215,12 +250,32 @@ class EditProductPage(webapp.RequestHandler):
 
     def get(self, id):
         authenticator = Authenticator(self)
-        (user, maker) = authenticator.authenticate()
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
         if not maker:
-            self.redirect('/')
+            session = get_current_session()
+            community = Community.getCommunityForSlug(session.get('community'))
+        
+            if not community:
+                self.error(404)
+                self.response.out.write("I don't recognize that community.")
+                return
+
+            self.redirect('/community/' + community.slug)
             return
         else:
             product = Product.get(id)
+
+            if str(product.maker.key()) != str(maker.key()):
+                self.error(403)
+                self.response.out.write("You do not have permission to edit that product.")
+                return
+                
             template_values = { 'form' : ProductForm(instance=product), 
                                 'maker' : maker, 
                                 'upload_form': self.buildImageUploadForm(),
@@ -233,7 +288,13 @@ class EditProductPage(webapp.RequestHandler):
       id = self.request.get('_id')      
       product = Product.get(id)
       authenticator = Authenticator(self)
-      (user, maker) = authenticator.authenticate()
+
+      try:
+          (user, maker) = authenticator.authenticate()
+      except:
+          # Return immediately
+          return
+
       if not maker or maker.key() != product.maker.key():
           if maker and product.maker:
               logging.error('Illegal attempt to edit product owned by: ' + product.maker.full_name + ' by ' + maker.full_name + '(' + str(maker.key()) + ' != ' + str(product.maker.key()) + ')')
@@ -268,34 +329,48 @@ class EditProductPage(webapp.RequestHandler):
 
 class Login(webapp.RequestHandler):
     """ Just authenticates then redirects to the home page """
-    def get(self, community_id):
+    def get(self, community_slug):
         authenticator = Authenticator(self)
-        (user, maker) = authenticator.authenticate()
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
+        session = get_current_session()
+        session['community'] = community_slug
+        # session.start(ssl_only=True)
+        session.regenerate_id()
 
         if maker:
-            session = get_current_session()
-            # session.start(ssl_only=True)
-            session.regenerate_id()
-            self.redirect('/community/%s/maker/maker_dashboard/%s' % (community_id, str(maker.key())))
+            self.redirect('/maker_dashboard/%s' % str(maker.key()) )
         else:
-            self.redirect('/community/%s/maker/add' % community_id)
+            self.redirect('/maker/add')
 
 class Logout(webapp.RequestHandler):
     """ Just kills the session and clears authentication tokens  """
-    def get(self, community_id):
+    def get(self):
         session = get_current_session()
-        session.terminate()
-        self.redirect(users.create_logout_url('/community/'+ community_id))
+        community = session.get('community')
+        session.clear()
+        if community:
+            session['community'] = community
+        self.redirect(users.create_logout_url('/community/'+ community))
 
 class CommunityHomePage(webapp.RequestHandler):
     """ Renders the home page template. """
-    def get(self, community_id):
-        try:
-            community = db.get(community_id)
-        except:
+    def get(self, community_slug):
+        session = get_current_session()
+
+        community = Community.get_current_community(community_slug, session)
+
+        if not community:
             self.error(404)
-            self.response.out.write("I don't recognize that community")
+            self.response.out.write("I don't recognize that community.")
             return
+
+        session['community'] = community.slug
 
         user = users.get_current_user()
         maker = None
@@ -305,14 +380,13 @@ class CommunityHomePage(webapp.RequestHandler):
         stuff = Product.all()
         products = []
         for product in stuff:
-            if str(product.maker.community.key()) == community_id:
+            if str(product.maker.community.key()) == str(community.key()):
                 products.append(product)
 
-        template_values = { 'title': community.name + ' Makes', 
+        template_values = { 'title': community.name, 
                             'community':community,
                             'products':products, 'maker':maker}
 
-        session = get_current_session()        
         items = session.get('ShoppingCartItems', [])
         count = 0
         if items != ():
@@ -342,7 +416,12 @@ class MakerDashboard(webapp.RequestHandler):
     """ Renders a page for Makers to view and manage their catalog and sales """
     def get(self, maker_id):
         authenticator = Authenticator(self)
-        (user, maker) = authenticator.authenticate()
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
 
         if not maker or not str(maker.key()) == maker_id:
             logging.info('=== MakerDashboard.get(): ' + str(maker.key()) + ' does not equal ' + maker_id)
@@ -447,7 +526,13 @@ class AddCommunityPage(webapp.RequestHandler):
     """ A page for adding a Community  """
     def get(self):
         authenticator = Authenticator(self)
-        (user, maker) = authenticator.authenticate()
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
         if user and users.is_current_user_admin():
             data = CommunityForm()
             template_values = { 'title':'Create a Community',
@@ -456,11 +541,17 @@ class AddCommunityPage(webapp.RequestHandler):
             path = os.path.join(os.path.dirname(__file__), "templates/community.html")
             self.response.out.write(template.render(path, template_values))
 
+        else:
+            self.error(403)
+            self.response.out.write('You do not have permission to create a new community.')
+
+
     def post(self):
         data = CommunityForm(data=self.request.POST)
         if data.is_valid():
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
+            entity.slug = Community.getSlugForName(entity.name)
             entity.put()
             self.redirect('/')
         else:
@@ -477,23 +568,22 @@ class SiteHomePage(webapp.RequestHandler):
         communities = Community.all()
         message = '<h2>Please visit one of our communities instead</h2>'
         for community in communities:
-            message += '<p><a href="%s">%s</a></p>' % ('/community/'+str(community.key()),community.name)
+            message += '<p><a href="%s">%s</a></p>' % ('/community/'+community.slug,community.name)
         self.response.out.write(message)
 
 class CheckoutPage(webapp.RequestHandler):
-    def get(self, community_id):
-        try:
-            community = Community.get(community_id)
-        except:
-            self.error(404)
-            self.response.out.message("I don't recognize that community.")
-            return
-
+    def get(self):
         session = get_current_session()
         if not session.is_active():
             self.response.out.write("I don't see anything in your cart")
             return
         else:
+            community = Community.getCommunityForSlug(session.get('community'))        
+            if not community:
+                self.error(404)
+                self.response.out.write("I don't recognize that community")
+                return
+
             items = session.get('ShoppingCartItems', [])
             products = []
             for item in items:
@@ -576,7 +666,7 @@ def main():
     app = webapp.WSGIApplication([
         ('/', SiteHomePage),
         ('/maker', MakerPage),
-        (r'/community/(.*)/maker/add', MakerPage),
+        ('/maker/add', MakerPage),
         (r'/maker/edit/(.*)', EditMakerPage),
         ('/maker/edit', EditMakerPage),
         ('/product/add', ProductPage),
@@ -585,7 +675,7 @@ def main():
         ('/privacy', PrivacyPage),
         ('/terms', TermsPage),
         (r'/community/(.*)/login', Login),
-        (r'/logout/(.*)', Logout),
+        ('/logout', Logout),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
         (r'/product_images/(.*)', DisplayImage),
@@ -594,7 +684,7 @@ def main():
         ('/RemoveProductFromCart', RemoveProductFromCart),
         ('/community/add', AddCommunityPage),
         (r'/community/(.*)', CommunityHomePage),
-        (r'/checkout/(.*)', CheckoutPage),
+        ('/checkout', CheckoutPage),
         ('/OrderProductsInCart', OrderProductsInCart),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)

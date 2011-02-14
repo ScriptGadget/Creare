@@ -19,3 +19,4 @@ class CommunityForm(djangoforms.ModelForm):
     """ Auto generate a for for adding a Community  """
     class Meta:
         model = Community
+        exclude = ['slug']

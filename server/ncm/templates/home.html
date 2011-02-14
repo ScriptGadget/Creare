@@ -15,7 +15,7 @@
 
 {% block content %}
     <div id="ShoppingCartWidget">
-        <p>Your Shopping Cart: (<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout/{{community.key}}">Checkout</a></span></p>
+        <p>Your Shopping Cart: (<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
     <div id="alert1"></div>
     </div>
 	<table class="catalog">

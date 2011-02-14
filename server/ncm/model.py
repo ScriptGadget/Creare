@@ -3,6 +3,33 @@ from google.appengine.ext import db
 class Community(db.Model):
     """ A Community of Makers and Crafters  """
     name = db.StringProperty(required=True)
+    slug = db.StringProperty()
+    
+    @staticmethod
+    def getCommunityForSlug(slug):
+        try:
+            q = Community.gql('WHERE slug = :1', slug)
+            community = q.get()
+            if community:
+                return community
+        except:
+            pass
+
+        return None
+
+    @staticmethod
+    def getSlugForName(name):
+        return name.replace(' ', '_')
+
+    @staticmethod
+    def get_current_community(community_slug, session):
+        if community_slug:
+            community = Community.getCommunityForSlug(community_slug)
+        else:
+            community = Community.getCommunityForSlug(session.get('community',''))
+
+        return community
+        
 
 class CommunityManager(db.Model):
     """ A Person Who can Approve Makers and Manage a Community Site """
@@ -71,6 +98,7 @@ class NewsItem(db.Model):
     title = db.StringProperty()
     time = db.DateTimeProperty()
     text = db.TextProperty()
+    summary = db.StringProperty()
     show = db.BooleanProperty()
 
 class EventNotice(db.Model):
@@ -79,6 +107,7 @@ class EventNotice(db.Model):
     title = db.StringProperty()
     time = db.DateTimeProperty()
     text = db.TextProperty()
+    summary = db.StringProperty()
     show = db.BooleanProperty()
     
 class TipItem(db.Model):
@@ -86,4 +115,8 @@ class TipItem(db.Model):
     community = db.ReferenceProperty(Community, collection_name='community_tip_item')
     title = db.StringProperty()
     text = db.TextProperty()
+    summary = db.StringProperty()
     show = db.BooleanProperty()
+
+class AuthenticationException(Exception):
+    pass
