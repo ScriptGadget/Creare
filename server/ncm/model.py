@@ -6,7 +6,7 @@ class Community(db.Model):
     slug = db.StringProperty()
     
     @staticmethod
-    def getCommunityForSlug(slug):
+    def get_community_for_slug(slug):
         try:
             q = Community.gql('WHERE slug = :1', slug)
             community = q.get()
@@ -18,15 +18,15 @@ class Community(db.Model):
         return None
 
     @staticmethod
-    def getSlugForName(name):
+    def get_slug_for_name(name):
         return name.replace(' ', '_')
 
     @staticmethod
     def get_current_community(community_slug, session):
         if community_slug:
-            community = Community.getCommunityForSlug(community_slug)
+            community = Community.get_community_for_slug(community_slug)
         else:
-            community = Community.getCommunityForSlug(session.get('community',''))
+            community = Community.get_community_for_slug(session.get('community',''))
 
         return community
         

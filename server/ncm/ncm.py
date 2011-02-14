@@ -74,7 +74,7 @@ class MakerPage(webapp.RequestHandler):
 
     def post(self):
         session = get_current_session()
-        community = Community.getCommunityForSlug(session.get('community'))
+        community = Community.get_community_for_slug(session.get('community'))
         
         if not community:
             self.error(404)
@@ -137,7 +137,7 @@ class EditMakerPage(webapp.RequestHandler):
 
     def post(self, id):        
         session = get_current_session()
-        community = Community.getCommunityForSlug(session.get('community'))
+        community = Community.get_community_for_slug(session.get('community'))
         
         if not community:
             self.error(404)
@@ -264,7 +264,7 @@ class EditProductPage(webapp.RequestHandler):
 
         if not maker:
             session = get_current_session()
-            community = Community.getCommunityForSlug(session.get('community'))
+            community = Community.get_community_for_slug(session.get('community'))
         
             if not community:
                 self.error(404)
@@ -558,7 +558,7 @@ class AddCommunityPage(webapp.RequestHandler):
         if data.is_valid():
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
-            entity.slug = Community.getSlugForName(entity.name)
+            entity.slug = Community.get_slug_for_name(entity.name)
             entity.put()
             self.redirect('/')
         else:
@@ -585,7 +585,7 @@ class CheckoutPage(webapp.RequestHandler):
             self.response.out.write("I don't see anything in your cart")
             return
         else:
-            community = Community.getCommunityForSlug(session.get('community'))        
+            community = Community.get_community_for_slug(session.get('community'))        
             if not community:
                 self.error(404)
                 self.response.out.write("I don't recognize that community")
