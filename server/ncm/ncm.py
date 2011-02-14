@@ -12,9 +12,8 @@ from google.appengine.ext.db import djangoforms
 
 from gaesessions import get_current_session
 
-from model import Community, Maker, Product, ProductImage, ShoppingCartItem, CartTransaction, MakerTransaction
-
-from forms import MakerForm, ProductForm, CommunityForm
+from model import *
+from forms import *
 
 class Authenticator:
     def __init__(self, page):
