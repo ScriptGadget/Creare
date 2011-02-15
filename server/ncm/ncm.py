@@ -529,6 +529,70 @@ class RemoveProductFromCart(webapp.RequestHandler):
         logging.info(message)
         self.response.out.write(message)
 
+class EditCommunityPage(webapp.RequestHandler):
+    """ A page for managing community info  """
+    def get(self):
+        authenticator = Authenticator(self)
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            self.error(500)
+            self.response.out.write("Error identifying user.")            
+            # Return immediately
+            return
+
+        if user and users.is_current_user_admin():
+            community = Community.get_community_for_slug(get_current_session().get('community'))
+        
+            if not community:
+                self.error(404)
+                self.response.out.write("I don't recognize that community")
+                return
+
+            data = CommunityForm(instance=community)
+            template_values = { 'title':'Create a Community',
+                                'form':data, 'id':community.key(),
+                                 'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/community.html")
+            self.response.out.write(template.render(path, template_values))
+
+        else:
+            self.error(403)
+            self.response.out.write('You do not have permission to edit this community.')
+            
+    def post(self):
+        authenticator = Authenticator(self)
+            
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            self.error(500)
+            self.response.out.write("Error identifying user.")            
+            # Return immediately
+            return
+
+        if user and users.is_current_user_admin():
+            id = self.request.get('_id')
+            community = Community.get(id)
+            data = CommunityForm(data=self.request.POST, instance=community)
+            if data.is_valid():
+                # Save the data, and redirect to the view page
+                entity = data.save(commit=False)
+                entity.slug = Community.get_slug_for_name(entity.name)
+                entity.put()
+                self.redirect('/community/' + entity.slug)
+            else:
+                # Reprint the form
+                template_values = { 'title':'Create a Community', 
+                                    'form' : data, 
+                                    'uri': self.request.uri}
+                path = os.path.join(os.path.dirname(__file__), "templates/community.html")
+                self.response.out.write(template.render(path, template_values))
+        else:
+            self.error(403)
+            self.response.out.write('You do not have permission to edit this community.')
+
 class AddCommunityPage(webapp.RequestHandler):
     """ A page for adding a Community  """
     def get(self):
@@ -560,7 +624,7 @@ class AddCommunityPage(webapp.RequestHandler):
             entity = data.save(commit=False)
             entity.slug = Community.get_slug_for_name(entity.name)
             entity.put()
-            self.redirect('/')
+            self.redirect('/community/' + entity.slug)
         else:
             # Reprint the form
             template_values = { 'title':'Create a Community', 
@@ -595,9 +659,10 @@ class CheckoutPage(webapp.RequestHandler):
             products = []
             for item in items:
                 product = Product.get(item.product)
-                product.count = item.count
-                product.total = '%3.2f' % (product.price * product.count)
-                products.append(product)                
+                if product:
+                    product.count = item.count
+                    product.total = '%3.2f' % (product.price * product.count)
+                    products.append(product)
 
             template_values = { 'title':'Checkout',
                                 'products':products,
@@ -691,6 +756,7 @@ def main():
         ('/AddProductToCart', AddProductToCart),
         ('/RemoveProductFromCart', RemoveProductFromCart),
         ('/community/add', AddCommunityPage),
+        ('/community/edit', EditCommunityPage),
         (r'/community/(.*)', CommunityHomePage),
         ('/checkout', CheckoutPage),
         ('/OrderProductsInCart', OrderProductsInCart),

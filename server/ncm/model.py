@@ -4,6 +4,8 @@ class Community(db.Model):
     """ A Community of Makers and Crafters  """
     name = db.StringProperty(required=True)
     slug = db.StringProperty()
+    paypal_business_id = db.StringProperty()
+    paypal_email_address = db.StringProperty()
     
     @staticmethod
     def get_community_for_slug(slug):
