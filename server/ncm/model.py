@@ -4,8 +4,23 @@ class Community(db.Model):
     """ A Community of Makers and Crafters  """
     name = db.StringProperty(required=True)
     slug = db.StringProperty()
+    use_sandbox = db.BooleanProperty(default=True)
+
+    # Sandbox stuff
+    paypal_sandbox_business_id = db.StringProperty()
+    paypal_sandbox_email_address = db.StringProperty()
+    paypal_sandbox_api_username = db.StringProperty()
+    paypal_sandbox_api_password = db.StringProperty()
+    paypal_sandbox_api_signature = db.StringProperty()
+    paypal_sandbox_application_id = db.StringProperty()
+
+    # Live Stuff
     paypal_business_id = db.StringProperty()
     paypal_email_address = db.StringProperty()
+    paypal_api_username = db.StringProperty()
+    paypal_api_password = db.StringProperty()
+    paypal_api_signature = db.StringProperty()
+    paypal_application_id = db.StringProperty()
     
     @staticmethod
     def get_community_for_slug(slug):
