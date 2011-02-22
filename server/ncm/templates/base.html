@@ -20,9 +20,9 @@
     <div id="sidebar">
 	  {% block sidebar %}
 	  <h2>News</h2>
-	  {% if newsItems %}
-	    {% for item in newsItems %}
-	      <h3>{{item.title}}</h3>
+	  {% if news_items %}
+	    {% for item in news_items %}
+	      <h3><a href="/news_item/{{item.slug}}">{{item.title}}</a></h3>
 	      <p>{{item.summary}}</p>
 	    {% endfor %}
 	  {% else %}

@@ -4,6 +4,10 @@ from google.appengine.ext import db
 import urllib
 from google.appengine.api import urlfetch
 
+class PaypalPaymentResponse(db.Model):
+    """ parent will be a CartTransaction """
+    response=db.StringProperty(required=True)
+    timestamp = db.DateTimeProperty(auto_now_add=True)
 
 class PaypalButton:
     """ A simple unencrypted paypal button form generator.  """
@@ -132,6 +136,8 @@ class PaypalChainedPayment:
         except Exception as e:
             logging.error("PaypalChainedPayment.execute(): Unexpected Exception %s\n" % str(e))
 
+        if not result:
+            logging.error("PaypalChainedPayment.execute(): No Response from Paypal \n")
         if result.status_code != 200:
                logging.error("PaypalChainedPayment.execute(): Unexpected HTTP Error %d\n" % result.status_code)
         else:

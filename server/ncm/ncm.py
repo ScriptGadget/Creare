@@ -553,6 +553,7 @@ class EditCommunityPage(webapp.RequestHandler):
             else:
                 # Reprint the form
                 template_values = { 'title':'Create a Community', 
+                                    'id' : id,
                                     'form' : data, 
                                     'uri': self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/community.html")
@@ -586,6 +587,13 @@ class AddCommunityPage(webapp.RequestHandler):
 
 
     def post(self):
+        authenticator = Authenticator(self)
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            self.error(403)
+            self.response.out.write('You do not have permission to create a new community.')
+            return
         data = CommunityForm(data=self.request.POST)
         if data.is_valid():
             # Save the data, and redirect to the view page
@@ -605,7 +613,7 @@ class SiteHomePage(webapp.RequestHandler):
     """ A site root page """
     def get(self):
         communities = Community.all()
-        message = '<h2>Please visit one of our communities instead</h2>'
+        message = '<h2>Please visit one of our communities</h2>'
         for community in communities:
             message += '<p><a href="%s">%s</a></p>' % ('/community/'+community.slug,community.name)
         self.response.out.write(message)
@@ -703,9 +711,169 @@ class OrderProductsInCart(webapp.RequestHandler):
             session.pop('ShoppingCartItems')
             return
 
+class ListNewsItems(webapp.RequestHandler):
+    """ Add a new news item. """
+    def get(self):
+        session = get_current_session()
+        community = Community.get_community_for_slug(session.get('community'))
+        
+        if not community:
+            self.error(404)
+            self.response.out.write("I don't recognize that community")
+            return
+
+        q = db.Query(NewsItem)
+
+        q.filter('show =', True).filter('community =', community)
+        news_items = q.fetch(limit=50)
+        logging.info('items :' + str(news_items))
+        template_values = { 'title':'News Items', 'news_items': news_items}
+        path = os.path.join(os.path.dirname(__file__), "templates/news_items.html")
+        self.response.out.write(template.render(path, template_values))
+
+
+class ViewNewsItem(webapp.RequestHandler):
+    """ View an existing item. """
+    def get(self, slug):
+        authenticator = Authenticator(self)
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
+        if user: # Need to authorize community coordinators
+            news_item = NewsItem.get_news_item_for_slug(slug)
+            q = NewsItem.all()
+            q.filter('show =', True)
+            news_items = q.fetch(limit=3)
+            template_values = { 'title':'News',
+                                'news_item':news_item, 
+                                'news_items':news_items,
+                                'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
+            self.response.out.write(template.render(path, template_values))
+
+        else:
+            self.error(403)
+            self.response.out.write('You do not have permission to create a new news item for this community.')
+
+
+class EditNewsItem(webapp.RequestHandler):
+    """ Edit an existing news item. """
+    def get(self, slug):
+        authenticator = Authenticator(self)
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
+        if user: # Need to authorize community coordinators
+            news_item = NewsItem.get_news_item_for_slug(slug)
+            id = news_item.key()
+            data = NewsItemForm(instance=news_item)
+            q = NewsItem.all()
+            q.filter('show =', True)
+            news_items = q.fetch(limit=3)
+            template_values = { 'title':'News',
+                                'form':data, 
+                                'id':id,
+                                'news_items':news_items,
+                                'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
+            self.response.out.write(template.render(path, template_values))
+
+        else:
+            self.error(403)
+            self.response.out.write('You do not have permission to create a new news item for this community.')
+
+    def post(self, slug):
+        authenticator = Authenticator(self)
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            self.error(403)
+            self.response.out.write('You do not have permission to create a new community.')
+            return
+
+        id = self.request.get('_id')
+        news_item = NewsItem.get(id)
+        data = NewsItemForm(data=self.request.POST, instance=news_item)
+
+        if data.is_valid():
+            entity = data.save(commit=False)
+            entity.slug = NewsItem.get_slug_for_title(entity.title)
+            entity.put()
+            self.redirect('/news_items')
+        else:
+            # Reprint the form
+            template_values = { 'title':'Create a NewsItem', 
+                                'form' : data, 
+                                'id': id,
+                                'uri': self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
+            self.response.out.write(template.render(path, template_values))
+
+class AddNewsItem(webapp.RequestHandler):
+    """ Add a new news item. """
+    def get(self):
+        authenticator = Authenticator(self)
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
+        if user: # Need to authorize community coordinators
+            data = NewsItemForm()
+            template_values = { 'title':'Create a News Item',
+                                'form':data, 
+                                'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
+            self.response.out.write(template.render(path, template_values))
+
+        else:
+            self.error(403)
+            self.response.out.write('You do not have permission to create a new news item for this community.')
+
+
+    def post(self):
+        authenticator = Authenticator(self)
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            self.error(403)
+            self.response.out.write('You do not have permission to create a new community.')
+            return
+
+        data = NewsItemForm(data=self.request.POST)
+        if data.is_valid():
+            entity = data.save(commit=False)
+            session = get_current_session()
+            community = Community.get_community_for_slug(session.get('community'))
+        
+            if not community:
+                self.error(404)
+                self.response.out.write("I don't recognize that community")
+                return
+            entity.community = community
+            entity.slug = NewsItem.get_slug_for_title(entity.title)
+            entity.put()
+            self.redirect('/news_items')
+        else:
+            # Reprint the form
+            template_values = { 'title':'Create a NewsItem', 
+                                'form' : data, 
+                                'id' : id,
+                                'uri': self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/news_items.html")
+            self.response.out.write(template.render(path, template_values))
+
 def main():
     app = webapp.WSGIApplication([
         ('/', SiteHomePage),
+        ('/communities', SiteHomePage),
         ('/maker', MakerPage),
         ('/maker/add', MakerPage),
         (r'/maker/edit/(.*)', EditMakerPage),
@@ -728,6 +896,10 @@ def main():
         (r'/community/(.*)', CommunityHomePage),
         ('/checkout', CheckoutPage),
         ('/OrderProductsInCart', OrderProductsInCart),
+        ('/news_items', ListNewsItems),
+        ('/news_item/add', AddNewsItem),
+        (r'/news_item/edit/(.*)', EditNewsItem),
+        (r'/news_item/(.*)', ViewNewsItem),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

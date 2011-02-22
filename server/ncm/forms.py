@@ -1,7 +1,7 @@
 from google.appengine.ext import db
 from google.appengine.ext.db import djangoforms
 
-from model import Community, Maker, Product
+from model import *
 
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
@@ -16,7 +16,13 @@ class ProductForm(djangoforms.ModelForm):
         exclude = ['maker', 'thumb']
 
 class CommunityForm(djangoforms.ModelForm):
-    """ Auto generate a for for adding a Community  """
+    """ Auto generate a form for adding a Community  """
     class Meta:
         model = Community
         exclude = ['slug']
+
+class NewsItemForm(djangoforms.ModelForm):
+    """ Auto generate a form for adding a NewsItem  """
+    class Meta:
+        model = NewsItem
+        exclude = ['published', 'community', 'slug']

@@ -83,6 +83,7 @@ class ProductImage(db.Model):
     image = db.BlobProperty()
 
 class ShoppingCartItem():
+    """ This is not a Model and does not persist! """
     def __init__(self, product = '', count = 0):
         self.product = product
         self.count = count
@@ -113,10 +114,27 @@ class NewsItem(db.Model):
     """ Local news relevant to makers  """
     community = db.ReferenceProperty(Community, collection_name='community_news_items')
     title = db.StringProperty()
-    time = db.DateTimeProperty()
+    slug = db.StringProperty()
+    created = db.DateTimeProperty(auto_now_add=True)
     text = db.TextProperty()
     summary = db.StringProperty()
     show = db.BooleanProperty()
+
+    @staticmethod
+    def get_news_item_for_slug(slug):
+        try:
+            q = NewsItem.gql('WHERE slug = :1', slug)
+            news_item = q.get()
+            if news_item:
+                return news_item
+        except:
+            pass
+
+        return None
+
+    @staticmethod
+    def get_slug_for_title(title):
+        return title.replace(' ', '_')
 
 class EventNotice(db.Model):
     """ A community event like a sack lunch or a meet and greet """

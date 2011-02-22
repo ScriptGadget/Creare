@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div id="messagePanel">
+	  {% if id %} 
+        <p id="line1">Update news.</p>
+	  {% else %}
+		{% if form %}
+        <p id="line1">Create a news item.</p>
+		{% endif %}
+	  {% endif %}
+
+    </div>
+
+    <div id="newsPanel">
+	  {% if form  %}
+      <form id="news" action="{{uri}}" method="POST">
+		<table>
+		  {{ form.as_table }}
+		</table>
+		<input type="hidden" name="_id" value="{{ id }}">
+        <div><input id="submit" class="button"  type="submit" {% if id %} value="Update News Item" {% else %} value="Create News Item" {% endif %} /></div>
+      </form>
+	  {% else %}
+	  {%  if news_item %}
+	  <h2>{{news_item.title}}</h2>
+	  <p>{{news_item.created|date:"M d"|upper}} - {{news_item.summary}}</p>
+	  <p>{{news_item.text}}</p>
+	  {% endif %}
+	  {% endif %}
+	</div>
+{% endblock %}
