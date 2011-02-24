@@ -440,7 +440,7 @@ class MakerStorePage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
     def get(self, maker_slug):
         maker = Maker.get_maker_for_slug(maker_slug)
-        template_values = { 'maker':maker}
+        template_values = { 'maker':maker, 'products':maker.products}
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
         self.response.out.write(template.render(path, template_values))
 
