@@ -3,6 +3,7 @@ import os
 import logging
 from google.appengine.api import images
 
+import urllib
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp import util
@@ -14,6 +15,7 @@ from gaesessions import get_current_session
 
 from model import *
 from forms import *
+from payment import *
 from authentication import Authenticator
 
 class MakerPage(webapp.RequestHandler):
@@ -471,7 +473,6 @@ class RemoveProductFromCart(webapp.RequestHandler):
 
     def post(self):
         product_id = self.request.get('arg0')
-        logging.info('RemoveProductFromCart: ' + str(product_id))
         session = get_current_session()
         if not session.is_active():
             # session.start(ssl_only=True)
@@ -485,17 +486,58 @@ class RemoveProductFromCart(webapp.RequestHandler):
                 else:
                     items.remove(item)
                 break
+
         session['ShoppingCartItems'] = items
-        
-        message = '{"products":['
-        for item in items:
-            product = Product.get(item.product)
-            product.count = item.count
-            product.total = '%3.2f' % (product.price * product.count)
-            message += "{\"count\":\"%s\",\"key\":\"%s\",\"name\":\"%s\",\"total\":\"%s\"}," % (product.count, product.key(), product.name, product.total)
-        message += ']}'
-        logging.info(message)
-        self.response.out.write(message)
+        self.response.out.write('{"result":"success"}')
+
+class GetOrderNowButton(webapp.RequestHandler):
+    """ Accept a JSON RPC request to provide information for a paypal payment button"""
+    def get(self):
+        session = get_current_session()
+        if not session.is_active():
+            self.response.out.write('{"button_available":"false"}')
+        else:
+            community = Community.get_community_for_slug(session.get('community'))
+            if community.use_sandbox:
+                email = community.paypal_sandbox_email_address
+                action_url = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
+            else:
+                email = community.paypal_email_address
+                action_url = 'https://www.paypal.com/cgi-bin/webscr'
+            item_name = 'Shopping Cart'
+            item_number = '123'
+            items = session.get('ShoppingCartItems', [])
+            return_url = 'http://nevadacountymakes.com/return'
+            cancel_url = 'http://nevadacountymakes.com/cancel'
+            transaction_id = 'abc'
+            
+            message = '{'
+            message += '"products":['
+            amount = 0.0
+            for item in items:
+                product = Product.get(item.product)
+                if product:
+                    message += '{"count":"' + str(item.count) + '",'
+                    message += '"name":"' + product.name + '",'
+                    message += '"key":"' + str(product.key()) + '",'
+                    message += '"total":"' + '%3.2f' % (product.price * item.count)+ '"},'
+                    amount += (product.price * item.count)
+            message += ']'
+            message += ',"amount":"' + '%3.2f' % amount + '"'
+            message += ',"button_available":"true"'
+            message += ',"action_url":"' + action_url + '"'
+            message += ',"email":"' + email + '"'
+            message += ',"item_name":"' + item_name + '"'
+            message += ',"item_number":"' + item_number + '"'
+            message += ',"return_url":"' + return_url + '"'
+            message += ',"cancel_url":"' + cancel_url + '"'
+            message += ',"transaction_id":"' + transaction_id + '"'
+            message += '}'
+
+            self.response.out.write(message)
+
+    def post(self):
+        pass
 
 class EditCommunityPage(webapp.RequestHandler):
     """ A page for managing community info  """
@@ -639,7 +681,6 @@ class CheckoutPage(webapp.RequestHandler):
                     product.count = item.count
                     product.total = '%3.2f' % (product.price * product.count)
                     products.append(product)
-
             template_values = { 'title':'Checkout',
                                 'products':products,
                                 'community':community,
@@ -891,6 +932,7 @@ def main():
         ('/upload_product_image', UploadProductImage), 
         ('/AddProductToCart', AddProductToCart),
         ('/RemoveProductFromCart', RemoveProductFromCart),
+        ('/GetOrderNowButton', GetOrderNowButton),
         ('/community/add', AddCommunityPage),
         ('/community/edit', EditCommunityPage),
         (r'/community/(.*)', CommunityHomePage),

@@ -1,50 +1,120 @@
 {% extends "base.html" %}
 
 {% block functions %}
-  InstallFunction(server, 'RemoveProductFromCart', false);
   InstallFunction(server, 'OrderProductsInCart', false);
+  InstallFunction(server, 'GetOrderNowButton', true);
+  InstallFunction(server, 'RemoveProductFromCart', false);
+  InstallFunction(server, 'AddProductToCart', false);
 
   function doRemoveProductFromCart(product){
-    server.RemoveProductFromCart(product, updateCartTable);    
+    server.RemoveProductFromCart(product, doGetOrderNowButton);
+  }
+
+  function doAddProductToCart(product){
+    server.AddProductToCart(product, doGetOrderNowButton);
   }
 
   function doOrderProductsInCart(){
     server.OrderProductsInCart(displayOrderResult);
   }
 
+  function doGetOrderNowButton(){
+    server.GetOrderNowButton(updateCartTable);
+  }
+
+  function buildHiddenElement(name, value){
+	  element = document.createElement("input");
+	  element.setAttribute("name",name);
+	  element.setAttribute("type", "hidden");
+	  element.setAttribute("value", value);
+	  return element;
+  }
+
   function updateCartTable(response){
     products = response["products"];
+	amount = response["amount"];
     content = "";
     if(products.length > 0) {
         content = "<table>";
         for(var i = 0; i < products.length; i++){
-	      button = "<input class='button' type='button' value='-' onclick='doRemoveProductFromCart(\"" + products[i].key + "\")' />";
-          content += "<tr><td>" + products[i].count + button + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  + "</td></tr>";
+	      removeButton = "<input class='button' type='button' value='-' onclick='doRemoveProductFromCart(\"" + products[i].key + "\")' />";
+	      addButton = "<input class='button' type='button' value='+' onclick='doAddProductToCart(\"" + products[i].key + "\")' />";
+          content += "<tr><td>" + removeButton + products[i].count + addButton + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  + "</td></tr>";
         }
         content += "</table>";
-		content +=  '<div id="PaymentOptions"><input class="button" type="button" value="Order Now" onclick="doOrderProductsInCart()"/></div>';
+		content += '<p id="cart_total">$' + amount + '</p>';
+		$("ShoppingCartProductList").innerHTML = content;
+
+		// Paypal variables
+		action_url = response["action_url"];
+		email = response["email"];
+		item_name = response["item_name"];
+		item_number = response["item_number"];
+		return_url = response["return_url"];
+		cancel_url = response["cancel_url"];
+		transaction_id = response["transaction_id"];
+
+		payForm = document.createElement("form");
+		payForm.setAttribute("id","paypal_button_form");
+		payForm.setAttribute("action",action_url);
+		payForm.setAttribute("method","post");
+
+		payForm.appendChild(buildHiddenElement("cmd", "_xclick"));
+		payForm.appendChild(buildHiddenElement("business", email));
+		payForm.appendChild(buildHiddenElement("lc", "US"));
+		payForm.appendChild(buildHiddenElement("item_name", item_name));
+		payForm.appendChild(buildHiddenElement("item_number", item_number));
+		payForm.appendChild(buildHiddenElement("amount", amount));
+		payForm.appendChild(buildHiddenElement("button_subtype", "sevices"));
+		payForm.appendChild(buildHiddenElement("no_notice", "0"));
+		payForm.appendChild(buildHiddenElement("cn", "Add special instructions to the seller"));
+		payForm.appendChild(buildHiddenElement("no_shipping", "2"));
+		payForm.appendChild(buildHiddenElement("rm", "1"));
+		payForm.appendChild(buildHiddenElement("return", return_url));
+		payForm.appendChild(buildHiddenElement("cancel", cancel_url));
+		payForm.appendChild(buildHiddenElement("bn", "PP-BuyNowBF:btn_buynow_SM.gif:NonHosted"));
+		payForm.appendChild(buildHiddenElement("transaction_id", transaction_id));
+
+		image = document.createElement("img");
+		image.setAttribute("alt", "");
+		image.setAttribute("border", "0");
+		image.setAttribute("src", "https://www.paypal.com/en_US/i/scr/pixel.gif");
+		image.setAttribute("width", "1");
+		image.setAttribute("height", "1");
+		payForm.appendChild(image);
+
+		button = document.createElement("input");
+		button.setAttribute("type", "image");
+		button.setAttribute("src", "https://www.paypal.com/en_US/i/btn/btn_buynow_SM.gif");
+		button.setAttribute("border", "0");
+		button.setAttribute("name", "submit");
+		button.setAttribute("alt", "PayPal - The safer, easier way to pay online!");
+		payForm.appendChild(button);
+		$("PaymentOptions").innerHTML="";
+		$("PaymentOptions").appendChild(payForm);
 	}else{
-      content = "<p>(empty)</p>";
+		$("ShoppingCartProductList").innerHTML = "<p>(empty)</p>";
+		$("PaymentOptions").innerHTML="";
     }
-    $("ShoppingCartProductList").innerHTML = content;
+
+
   }
 
   function displayOrderResult(response){
     message = response["message"];
     $("ShoppingCartProductList").innerHTML = "<p>" + message + "</p>";
   }
-
+  
+  function tangram_init(){
+    doGetOrderNowButton();
+  }
 {% endblock %}
 
 {% block content %}
     <div id="alert1"></div>
     <div id="ShoppingCartProductList">
-	  <table>
-	  {% for product in products %}
-	  <tr><td>{{product.count}}<input class="button" type="button" value="-" onclick="doRemoveProductFromCart('{{product.key}}')" /></td><td>{{product.name}}</td><td>${{product.total|floatformat:2}}</td></tr>
-      {% endfor %}
-	  </table>
-	  {% if products %} <div id="PaymentOptions"><input class="button" type="button" value="Order Now" onclick="doOrderProductsInCart()"/></div> {% else  %}<p>(empty)</p>{% endif  %}
 	</div>
+    <div id="PaymentOptions"></div> 
+
 	
 {% endblock  %}

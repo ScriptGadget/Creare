@@ -6,14 +6,16 @@
       <script type="text/javascript" src="/static/async_utils.js"></script>
       <script type="text/javascript">
 		{% block functions  %}
+		  function tangram_init(){ 
+		    alert("init"); 
+		  }
 		{% endblock %}
       </script>
 	</head>
 
-    <body>
+    <body onload="tangram_init()">
     <div id="banner">
 	  {% block banner %}
-	  <H1> {{ title  }} </H1>
       {% endblock %}
 	</div>
 
@@ -28,6 +30,8 @@
 	  {% else %}
 		<p>No news today.</p>
 	  {% endif %}
+	  <!-- Coming Soon -->
+	  <!--
 	  <h2>Events</h2>
 	  {% if events %}
 	    {% for event in events %}
@@ -47,6 +51,7 @@
 		<p>Watch here for helpful tips.</p>
 	  {% endif %}
       {% endblock %}
+	  -->
     </div>
 
 	<div id="menubar">
