@@ -1,4 +1,17 @@
+import re
+from unicodedata import normalize
 from google.appengine.ext import db
+
+_punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
+
+def slugify(text, delim=u'-'):
+    """Generates an slightly worse ASCII-only slug."""
+    result = []
+    for word in _punct_re.split(text.lower()):
+        word = normalize('NFKD', word).encode('ascii', 'ignore')
+        if word:
+            result.append(word)
+    return unicode(delim.join(result))
 
 class Community(db.Model):
     """ A Community of Makers and Crafters  """
@@ -36,7 +49,7 @@ class Community(db.Model):
 
     @staticmethod
     def get_slug_for_name(name):
-        return name.replace(' ', '_')
+        return slugify(name)
 
     @staticmethod
     def get_current_community(community_slug, session):
@@ -59,6 +72,7 @@ class Maker(db.Model):
     user = db.UserProperty()
     community = db.ReferenceProperty(Community, collection_name='makers')
     store_name = db.StringProperty(required=True)
+    slug = db.StringProperty()
     store_description = db.StringProperty(required=True)
     full_name = db.StringProperty(required=True)
     email = db.EmailProperty(required=True)
@@ -68,14 +82,47 @@ class Maker(db.Model):
     mailing_address = db.PostalAddressProperty(required=True)
     tags = db.CategoryProperty(required=True)
     
+    @staticmethod
+    def get_maker_for_slug(slug):
+        try:
+            q = Maker.gql('WHERE slug = :1', slug)
+            maker = q.get()
+            if maker:
+                return maker
+        except:
+            pass
+
+        return None
+
+    @staticmethod
+    def get_slug_for_store_name(store_name):
+        return slugify(store_name)
+
 class Product(db.Model):
     """ Something a Maker can sell to a Shopper """
     maker = db.ReferenceProperty(Maker, collection_name='products')
     name = db.StringProperty(required=True)
+    slug = db.StringProperty()
     description = db.StringProperty(required=True)
     price = db.FloatProperty(required=True)
     tags = db.CategoryProperty(required=True)
     inventory = db.IntegerProperty(required=True)
+
+    @staticmethod
+    def get_product_for_slug(slug):
+        try:
+            q = Product.gql('WHERE slug = :1', slug)
+            product = q.get()
+            if product:
+                return product
+        except:
+            pass
+
+        return None
+
+    @staticmethod
+    def get_slug_for_name(name):
+        return slugify(name)
 
 class ProductImage(db.Model):
     """ An Image of a Product """
@@ -134,7 +181,7 @@ class NewsItem(db.Model):
 
     @staticmethod
     def get_slug_for_title(title):
-        return title.replace(' ', '_')
+        return slugify(title)
 
 class EventNotice(db.Model):
     """ A community event like a sack lunch or a meet and greet """

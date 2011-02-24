@@ -30,7 +30,7 @@ class MakerPage(webapp.RequestHandler):
             return
 
         if user and maker:
-            self.redirect('/maker_dashboard/' + str(maker.key()))
+            self.redirect('/maker_dashboard/' + maker.slug)
             return
         else:
             data = MakerForm()
@@ -59,6 +59,7 @@ class MakerPage(webapp.RequestHandler):
             entity = data.save(commit=False)
             entity.user = users.get_current_user()
             entity.community = community
+            entity.slug = Maker.get_slug_for_store_name(entity.store_name)
             entity.put()
             logging.info('User: ' + str(entity.user) + ' has joined ' + entity.community.name)
             self.redirect('/community/' + community.slug)
@@ -77,26 +78,27 @@ class MakerPage(webapp.RequestHandler):
 
 class EditMakerPage(webapp.RequestHandler):
     """ Edit a Maker store """
-    def get(self, id):
-        if not id:
+    def get(self, maker_slug):
+        if not maker_slug:
             logging.info('No id found for EditMakerPage')
             maker = Authenticator.getMakerForUser(users.get_current_user())
             if maker:
-                id = maker.key()
+                maker_slug = maker.slug
             else:
                 self.error(404)
                 self.response.out.write("I don't recognize that maker.")
                 return
         else:
             try:
-                maker = Maker.get(id)
+                maker = Maker.get_maker_for_slug(maker_slug)
             except:
                 self.error(404)
                 self.response.out.write("I don't recognize that maker.")
                 return                
 
         if maker and Authenticator.authorized_for(maker.user):
-            template_values = { 'form' : MakerForm(instance=maker), 'id' : id, 
+            template_values = { 'form' : MakerForm(instance=maker), 
+                                'id' : maker.key(), 
                                 'uri':self.request.uri, 'maker':maker,
                                 'community':maker.community,
                                 'title':'Update Store Information'}
@@ -124,6 +126,7 @@ class EditMakerPage(webapp.RequestHandler):
                 # Save the data, and redirect to the view page
                 entity = data.save(commit=False)
                 entity.user = users.get_current_user()
+                entity.slug = Maker.get_slug_for_store_name(entity.store_name)
                 entity.put()
                 self.redirect('/community/' + community.slug)
             else:
@@ -175,6 +178,7 @@ class ProductPage(webapp.RequestHandler):
             if data.is_valid():
                 entity = data.save(commit=False)
                 entity.maker = maker
+                entity.slug = Product.get_slug_for_name(entity.name)
                 entity.put()
                 upload = ProductImage()
                 try:
@@ -185,7 +189,7 @@ class ProductPage(webapp.RequestHandler):
                     pass
                     # Have to come up with a much better way of handling this
                     # self.redirect('/')
-                self.redirect('/maker_dashboard/' + str(maker.key()))
+                self.redirect('/maker_dashboard/' + maker.slug)
             else:
                 # Reprint the form
                 template_values = { 'form' : data, 'maker':maker,
@@ -223,7 +227,7 @@ class EditProductPage(webapp.RequestHandler):
             <div><label>Product Image:</label></div>
             <div><input type="file" name="img"/></div> """
 
-    def get(self, id):
+    def get(self, product_slug):
         authenticator = Authenticator(self)
 
         try:
@@ -244,7 +248,7 @@ class EditProductPage(webapp.RequestHandler):
             self.redirect('/community/' + community.slug)
             return
         else:
-            product = Product.get(id)
+            product = Product.get_product_for_slug(product_slug)
 
             if str(product.maker.key()) != str(maker.key()):
                 self.error(403)
@@ -254,14 +258,14 @@ class EditProductPage(webapp.RequestHandler):
             template_values = { 'form' : ProductForm(instance=product), 
                                 'maker' : maker, 
                                 'upload_form': self.buildImageUploadForm(),
-                                'product':product, 'id' : id, 
+                                'product':product, 'id' : product.key(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, template_values))
 
-    def post(self, id):
-      id = self.request.get('_id')      
-      product = Product.get(id)
+    def post(self, product_slug):
+      _id = self.request.get('_id')      
+      product = Product.get(_id)
       authenticator = Authenticator(self)
 
       try:
@@ -281,6 +285,7 @@ class EditProductPage(webapp.RequestHandler):
           data = ProductForm(data=self.request.POST, instance=product)
           if data.is_valid():
               entity = data.save(commit=False)
+              entity.slug = Product.get_slug_for_name(entity.name)
               entity.put()
               image = self.request.get("img")
               if image:
@@ -293,7 +298,7 @@ class EditProductPage(webapp.RequestHandler):
                       upload.put()
                   except images.NotImageError:
                       pass
-              self.redirect('/maker_dashboard/' + str(maker.key()))
+              self.redirect('/maker_dashboard/' + maker.slug)
           else:
               # Reprint the form
               template_values = { 'form' : ProductForm(instance=product), 
@@ -319,7 +324,7 @@ class Login(webapp.RequestHandler):
         session.regenerate_id()
 
         if maker:
-            self.redirect('/maker_dashboard/%s' % str(maker.key()) )
+            self.redirect('/maker_dashboard/%s' % maker.slug)
         else:
             self.redirect('/maker/add')
 
@@ -389,7 +394,7 @@ class TermsPage(webapp.RequestHandler):
 
 class MakerDashboard(webapp.RequestHandler):
     """ Renders a page for Makers to view and manage their catalog and sales """
-    def get(self, maker_id):
+    def get(self, maker_slug):
         authenticator = Authenticator(self)
 
         try:
@@ -398,9 +403,9 @@ class MakerDashboard(webapp.RequestHandler):
             # Return immediately
             return
 
-        if not maker or not str(maker.key()) == maker_id:
-            logging.info('=== MakerDashboard.get(): ' + str(maker.key()) + ' does not equal ' + maker_id)
-            self.redirect("/maker_store/" + maker_id)            
+        if not maker or not maker.slug == maker_slug:
+            logging.info('=== MakerDashboard.get(): ' + maker.slug + ' does not equal ' + maker_slug)
+            self.redirect("/maker_store/" + maker_slug)            
             return
         else:
             q = MakerTransaction.gql("WHERE maker = :1", maker.key())
@@ -433,8 +438,8 @@ class MakerDashboard(webapp.RequestHandler):
 
 class MakerStorePage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
-    def get(self, maker_id):
-        maker = Maker.get(maker_id)
+    def get(self, maker_slug):
+        maker = Maker.get_maker_for_slug(maker_slug)
         template_values = { 'maker':maker}
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
         self.response.out.write(template.render(path, template_values))

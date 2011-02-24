@@ -27,7 +27,7 @@
 		   <img src="/product_images/{{product_image.key}}" border="0" /></br>
            {% endfor%}
          </div>
-         <p>{% if maker %}(<a href="/product/edit/{{product.key}}">edit</a>){% endif %} {{product.name}}</br>{{product.description}}</p>
+         <p>{% if maker %}(<a href="/product/edit/{{product.slug}}">edit</a>){% endif %} {{product.name}}</br>{{product.description}}</p>
 		 <p/>
 		 <p>{{product.inventory}} remaining</p>
 		 <p>${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>

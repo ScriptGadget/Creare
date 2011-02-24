@@ -13,7 +13,7 @@
 		   <img src="/product_images/{{product_image.key}}" border="0" /></br>
            {% endfor%}
          </div>
-		 <a href="/product/edit/{{product.key}}">{{product.name}}</a></dt>
+		 <a href="/product/edit/{{product.slug}}">{{product.name}}</a></dt>
 		<dd>{{product.description}} - ${{product.price|floatformat:2}}</dd>
 		{% endfor %}
       </dl>
