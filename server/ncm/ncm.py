@@ -307,6 +307,29 @@ class EditProductPage(webapp.RequestHandler):
               path = os.path.join(os.path.dirname(__file__), "templates/product.html")
               self.response.out.write(template.render(path, template_values))
 
+class ViewProductPage(webapp.RequestHandler):
+    """ View a Product """
+    def get(self, product_slug):
+        session = get_current_session()
+        community = Community.get_community_for_slug(session.get('community'))
+        
+        if not community:
+            self.error(404)
+            self.response.out.write("I don't recognize that community.")
+            return
+
+        user = users.get_current_user()
+        maker = None
+        if user is not None:
+            maker = Authenticator.getMakerForUser(user)
+
+        product = Product.get_product_for_slug(product_slug)
+        
+        template_values = { 'maker' : maker, 
+                            'product':product}
+        path = os.path.join(os.path.dirname(__file__), "templates/view_product.html")
+        self.response.out.write(template.render(path, template_values))
+
 class Login(webapp.RequestHandler):
     """ Just authenticates then redirects to the home page """
     def get(self, community_slug):
@@ -504,6 +527,8 @@ class GetOrderNowButton(webapp.RequestHandler):
             self.response.out.write('{"button_available":"false"}')
         else:
             community = Community.get_community_for_slug(session.get('community'))
+            email = "";
+            action_url = "";
             if community.use_sandbox:
                 email = community.paypal_sandbox_email_address
                 action_url = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
@@ -928,6 +953,7 @@ def main():
         ('/product/add', ProductPage),
         (r'/product/edit/(.*)', EditProductPage),
         ('/product/edit', EditProductPage),
+        (r'/product/(.*)', ViewProductPage),
         ('/privacy', PrivacyPage),
         ('/terms', TermsPage),
         (r'/community/(.*)/login', Login),

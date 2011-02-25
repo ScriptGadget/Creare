@@ -29,7 +29,7 @@
            {% endfor%}
          </div>
 		 <div class="product_info">
-           <p>{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.slug}}">edit</a>){% endifequal %}{% endif %} {{product.name}}</p> <p class="product_info"> {{product.description}}</p>
+           <p>{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <a href="/product/{{product.slug}}">{{product.name}}</a></p> <p class="product_info"> {{product.short_description}}</p>
 		   <p/>
 		   <p>{{product.inventory}} remaining</p>
 		 </div>

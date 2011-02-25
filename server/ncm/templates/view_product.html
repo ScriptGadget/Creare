@@ -1,0 +1,15 @@
+{% extends "base.html"  %}
+
+{% block content %}
+   <div id='product_image_panel'>
+	 {% for product_image in product.product_images %}
+	 <img src="/product_images/{{product_image.key}}" border="0" /></br>
+     {% endfor%}
+   </div>
+   <div class="product_info">
+     <p>{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <a href="/product/{{product.slug}}">{{product.name}}</a></p> <p class="product_info"> {{product.short_description}}</p> <p class="product_info"> {{product.description}}</p>
+	 <p/>
+	 <p>{{product.inventory}} remaining</p>
+   </div>
+   <p class="price">${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+{% endblock content %}
