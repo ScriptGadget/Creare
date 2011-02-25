@@ -25,10 +25,11 @@
        <td>
 		 <div id='product_image_panel'>
 		   {% for product_image in product.product_images %}
-		   <img src="/product_images/{{product_image.key}}" border="0" /></br>
+		   <a href="/product/{{product.slug}}"><img src="/product_images/{{product_image.key}}" border="0" /></a>
            {% endfor%}
          </div>
 		 <div class="product_info">
+		 <p class="store_name"><a href="/maker_store/{{product.maker.slug}}">{{product.maker.store_name}}</a></p>
            <p>{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <a href="/product/{{product.slug}}">{{product.name}}</a></p> <p class="product_info"> {{product.short_description}}</p>
 		   <p/>
 		   <p>{{product.inventory}} remaining</p>

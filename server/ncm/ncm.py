@@ -326,6 +326,7 @@ class ViewProductPage(webapp.RequestHandler):
         product = Product.get_product_for_slug(product_slug)
         
         template_values = { 'maker' : maker, 
+                            'community': community,
                             'product':product}
         path = os.path.join(os.path.dirname(__file__), "templates/view_product.html")
         self.response.out.write(template.render(path, template_values))
@@ -449,11 +450,20 @@ class MakerDashboard(webapp.RequestHandler):
                     total_items += sale.items
                     total_sales += sale.amount * sale.items
 
-                    
+            class Advertisement:
+                pass
+
+            ad = Advertisement()
+            ad.img = '/static/images/Banner-fade-750-180.jpg'
+            ad.url = '/community/'+maker.community.slug
+            ad.height = 160
+            ad.width = 750
+
             template_values = { 'title':'Maker Dashboard',
                                 'community':maker.community, 
                                 'sales':sales,
                                 'maker':maker,
+                                'ad':ad,
                                 'products':maker.products,
                                 'total_sales':total_sales,
                                 'total_items':total_items}

@@ -1,7 +1,8 @@
 {% extends "catalog.html" %}
 
 {% block content %}
-	<p>{{maker.full_name}}'s <em>{{maker.store_name}}</em></p>
+	<h1>{{maker.store_name}}</h1>
+    <p class="byline">by {{maker.full_name}}</p>
 	<p>{{maker.store_description}}</p>
 	<p>{{maker.location}}</p>
 	<p>Products:</p>

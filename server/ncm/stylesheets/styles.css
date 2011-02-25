@@ -89,3 +89,21 @@ body { background-color: white; }
 
 .errorlist { color:red; }
 
+.byline { 
+	font-size: normal; 
+	font-style: italic;
+}
+
+.dashboard_offer {
+	height: 160px;
+	width: 750px;
+	padding: 5px;
+	margin: auto;
+}
+
+.offer_tag{
+	text-align: center;
+	vertical-align: bottom;
+	font-size: small;
+	color: gray;
+}

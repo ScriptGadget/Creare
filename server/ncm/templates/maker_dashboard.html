@@ -2,14 +2,13 @@
 {% block cart_widget %} {% endblock %}
 {% block content %}
 
-    <div id="dashboard_offer" class="offers">Advertisement</div>
+    <div class="dashboard_offer" class="offers">
+	  <a href="{{ad.url}}"><img src="{{ad.img}}" border="0" height="{{ad.height}}" width="{{ad.width}}" /></a>
+	</div>
+    <div class="offer_tag">advertisement</div>
 
     <div id="makerDashboardPanel">
-	  <p>{{maker.full_name}}'s <em>{{maker.store_name}}</em></p>
-	  <p>{{maker.store_description}}</p>
-	  <p>{{maker.location}}</p>
-	  <p>Products: <a href="/product/add">Add Product</a></p>
-
+	  <h1>{{maker.store_name}}: dashboard</h1>
 	  <div id="maker_transaction_panel">
 		<h2>Sales</h2>
 		<table>
@@ -20,6 +19,8 @@
         <tr><th>Totals</th><td>{{total_items}}</td><td>${{total_sales|floatformat:2}}</td></tr>
 		</table>
 	  </div>
+	  <h2>Products</h2>
+	  <p>(<a href="/product/add">Add Product</a>)</p>
 	  {{ block.super }}
     </div>
 {% endblock %}
