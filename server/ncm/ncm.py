@@ -185,9 +185,9 @@ class ProductPage(webapp.RequestHandler):
                     upload.image = images.resize(self.request.get("img"), 240, 240)
                     upload.put()
                 except images.NotImageError:
-                    pass
-                    # Have to come up with a much better way of handling this
-                    # self.redirect('/')
+                    self.response.out.write("That doesn't seem to be a valid image.");
+                    return
+
                 self.redirect('/maker_dashboard/' + maker.slug)
             else:
                 # Reprint the form
@@ -555,6 +555,7 @@ class GetOrderNowButton(webapp.RequestHandler):
                     message += '{"count":"' + str(item.count) + '",'
                     message += '"name":"' + product.name + '",'
                     message += '"key":"' + str(product.key()) + '",'
+                    message += '"price":"' + '%3.2f' % product.price + '",'
                     message += '"total":"' + '%3.2f' % (product.price * item.count)+ '"},'
                     amount += (product.price * item.count)
             message += ']'
@@ -715,7 +716,7 @@ class CheckoutPage(webapp.RequestHandler):
                 if product:
                     product.count = item.count
                     product.total = '%3.2f' % (product.price * product.count)
-                    products.append(product)
+                    products.append(product)                    
             template_values = { 'title':'Checkout',
                                 'products':products,
                                 'community':community,
