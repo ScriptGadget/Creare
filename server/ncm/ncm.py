@@ -431,6 +431,7 @@ class MakerDashboard(webapp.RequestHandler):
                                 'community':maker.community, 
                                 'sales':sales,
                                 'maker':maker,
+                                'products':maker.products,
                                 'total_sales':total_sales,
                                 'total_items':total_items}
             path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
