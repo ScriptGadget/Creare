@@ -205,14 +205,16 @@ class AuthenticationException(Exception):
     pass
 
 class Advertisement(db.Model):
+    """ An advertisement. """
     community = db.ReferenceProperty(Community, collection_name='community_advertisements')
+    created = db.DateTimeProperty(auto_now_add=True)
     name = db.StringProperty()
     slug = db.StringProperty()
     contact_name = db.StringProperty()
     contact_email = db.EmailProperty()
     hover_text = db.StringProperty()
     url = db.LinkProperty()
-    # rotation = db.CategoryProperty(['High', 'Medium', 'Low'])
+    rotation = db.CategoryProperty(['High', 'Medium', 'Low'], default='High')
     notes = db.StringProperty()
 
     @staticmethod

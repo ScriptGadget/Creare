@@ -31,4 +31,4 @@ class AdvertisementForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing an advertisment  """
     class Meta:
         model = Advertisement
-        exclude = ['slug', 'community']
+        exclude = ['slug', 'community', 'rotation', 'created']
