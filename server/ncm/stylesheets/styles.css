@@ -3,6 +3,8 @@ body { background-color: white; }
 .text { color: black; }
 
 #banner { 
+	background-image: url('/static/images/Banner-fade-750-180.jpg');
+	background-repeat:no-repeat;
     padding: 0 0 0 5px;
     height: 180px;
     width: 100%;
@@ -34,6 +36,19 @@ body { background-color: white; }
 .catalog td {
 	width:10em;
 	vertical-align:text-top;
+	padding: 10px;
+}
+
+.product_info p {
+	display: block;
+	font-size: small; 
+	padding: 0px;
+	margin: 5px;
+}
+
+#ShoppingCartWidget { 
+	font-size: small;
+	color: blue;
 }
 
 #sidebar { 
@@ -72,3 +87,4 @@ body { background-color: white; }
 }
 
 .errorlist { color:red; }
+
