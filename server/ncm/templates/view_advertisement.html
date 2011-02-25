@@ -1,0 +1,9 @@
+{% extends "base.html"  %}
+
+{% block content %}
+   <div id='advertisement_image_panel'>
+	 {% for advertisement_image in advertisement.advertisement_images %}
+	 <img src="/advertisement_image/{{advertisement_image.key}}" border="0" /></br>
+     {% endfor%}
+   </div>
+{% endblock content %}

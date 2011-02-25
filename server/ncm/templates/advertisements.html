@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div id="adListPanel">
+	  {% for ad in ads  %}
+	     {% for image in ad.advertisement_images %}
+	       <p class="ad"><a href="/advertisement/{{ad.slug}}"><img src="/advertisement_image/{{image.key}}" border="0" title="{{ad.hover_text}}" alt="{{ad.hover_text}}"></a></p>
+	     {% endfor %}
+	  {% endfor %}
+	</div>
+{% endblock %}

@@ -203,3 +203,35 @@ class TipItem(db.Model):
 
 class AuthenticationException(Exception):
     pass
+
+class Advertisement(db.Model):
+    community = db.ReferenceProperty(Community, collection_name='community_advertisements')
+    name = db.StringProperty()
+    slug = db.StringProperty()
+    contact_name = db.StringProperty()
+    contact_email = db.EmailProperty()
+    hover_text = db.StringProperty()
+    url = db.LinkProperty()
+    # rotation = db.CategoryProperty(['High', 'Medium', 'Low'])
+    notes = db.StringProperty()
+
+    @staticmethod
+    def get_slug_for_name(name):
+        return slugify(name)
+
+    @staticmethod
+    def get_advertisement_for_slug(slug):
+        try:
+            q = Advertisement.gql('WHERE slug = :1', slug)
+            advertisement = q.get()
+            if advertisement:
+                return advertisement
+        except:
+            pass
+
+        return None
+
+class AdvertisementImage(db.Model):
+    """ An Image associated with an Advertisement """
+    advertisement = db.ReferenceProperty(Advertisement, collection_name='advertisement_images')
+    image = db.BlobProperty()

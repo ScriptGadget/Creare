@@ -26,3 +26,9 @@ class NewsItemForm(djangoforms.ModelForm):
     class Meta:
         model = NewsItem
         exclude = ['published', 'community', 'slug']
+
+class AdvertisementForm(djangoforms.ModelForm):
+    """ Auto generate a form for adding and editing an advertisment  """
+    class Meta:
+        model = Advertisement
+        exclude = ['slug', 'community']

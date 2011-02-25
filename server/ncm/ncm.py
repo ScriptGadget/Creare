@@ -9,7 +9,6 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext import db
-from google.appengine.ext.db import djangoforms
 
 from gaesessions import get_current_session
 
@@ -450,15 +449,10 @@ class MakerDashboard(webapp.RequestHandler):
                     total_items += sale.items
                     total_sales += sale.amount * sale.items
 
-            class Advertisement:
-                pass
-
-            ad = Advertisement()
-            ad.img = '/static/images/Banner-fade-750-180.jpg'
-            ad.url = '/community/'+maker.community.slug
+            ad = Advertisement.get_advertisement_for_slug('new-ad')
+            ad.img = '/advertisement_image/' + str(ad.advertisement_images[0].key())
             ad.height = 160
             ad.width = 750
-
             template_values = { 'title':'Maker Dashboard',
                                 'community':maker.community, 
                                 'sales':sales,
@@ -794,7 +788,7 @@ class OrderProductsInCart(webapp.RequestHandler):
             return
 
 class ListNewsItems(webapp.RequestHandler):
-    """ Add a new news item. """
+    """ List news items. """
     def get(self):
         session = get_current_session()
         community = Community.get_community_for_slug(session.get('community'))
@@ -952,6 +946,200 @@ class AddNewsItem(webapp.RequestHandler):
             path = os.path.join(os.path.dirname(__file__), "templates/news_items.html")
             self.response.out.write(template.render(path, template_values))
 
+class AdvertisementPage(webapp.RequestHandler):
+    """ Add a Advertisement """
+    def buildImageUploadForm(self):
+        return """
+            <div><label>Advertisement Image:</label></div>
+            <div> <input type="file" name="img"/> </div>"""
+
+    def get(self):
+        authenticator = Authenticator(self)
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
+        if not user or not maker:
+            self.redirect('/')
+            return
+        else:
+            template_values = { 'form' : AdvertisementForm(), 'maker':maker, 
+                                'upload_form': self.buildImageUploadForm(), 
+                                'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
+            self.response.out.write(template.render(path, template_values))
+
+    def post(self):
+        authenticator = Authenticator(self)
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
+        if not user or not maker:
+            self.redirect('/')
+            return
+        else:
+            session = get_current_session()
+            community = Community.get_community_for_slug(session.get('community'))
+
+            data = AdvertisementForm(data=self.request.POST)
+            if data.is_valid():
+                entity = data.save(commit=False)
+                entity.community = community
+                entity.slug = Advertisement.get_slug_for_name(entity.name)
+                entity.put()
+                upload = AdvertisementImage()
+                try:
+                    upload.advertisement = entity
+                    upload.image = images.resize(self.request.get("img"), 750, 160)
+                    upload.put()
+                except images.NotImageError:
+                    pass
+                    # Have to come up with a much better way of handling this
+                    # self.redirect('/')
+                self.redirect('/advertisement/'+entity.slug)
+            else:
+                # Reprint the form
+                template_values = { 'form' : data, 'maker':maker,
+                                    'upload_form': self.buildImageUploadForm(),
+                                    'uri':self.request.uri}
+                path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
+                self.response.out.write(template.render(path, template_values))
+
+class EditAdvertisementPage(webapp.RequestHandler):
+    """ Edit an existing Advertisement """
+
+    def buildImageUploadForm(self, ):
+        return """
+            <div><label>Advertisement Image:</label></div>
+            <div><input type="file" name="img"/></div> """
+
+    def get(self, advertisement_slug):
+        authenticator = Authenticator(self)
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
+        if not user or not users.is_current_user_admin():
+            session = get_current_session()
+            community = Community.get_community_for_slug(session.get('community'))
+        
+            if not community:
+                self.error(404)
+                self.response.out.write("I don't recognize that community.")
+                return
+
+            self.redirect('/community/' + community.slug)
+            return
+        else:
+            advertisement = Advertisement.get_advertisement_for_slug(advertisement_slug)
+
+            template_values = { 'form' : AdvertisementForm(instance=advertisement), 
+                                'maker' : maker, 
+                                'upload_form': self.buildImageUploadForm(),
+                                'advertisement':advertisement, 'id' : advertisement.key(),
+                                'uri':self.request.uri}
+            path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
+            self.response.out.write(template.render(path, template_values))
+
+    def post(self, advertisement_slug):
+      _id = self.request.get('_id')      
+      advertisement = Advertisement.get(_id)
+      authenticator = Authenticator(self)
+
+      try:
+          (user, maker) = authenticator.authenticate()
+      except:
+          # Return immediately
+          return
+
+      if not user or not users.is_current_user_admin():
+          if maker:
+              logging.error('Illegal attempt to edit advertisement by: ' + advertisement.slug + ' by ' + maker.full_name )
+          else:              
+              logging.error('Illegal attempt to edit advertisement: ' + advertisement.slug + ' by unauthenticated guest')
+          self.error(403)
+          self.response.out.write("You do not have permission to edit that product.")
+          return
+      else:
+          data = AdvertisementForm(data=self.request.POST, instance=advertisement)
+          if data.is_valid():
+              entity = data.save(commit=False)
+              entity.slug = Advertisement.get_slug_for_name(entity.name)
+              entity.put()
+              image = self.request.get("img")
+              if image:
+                  upload = AdvertisementImage(parent=entity)
+                  for advertisement_image in entity.advertisement_images:
+                      advertisement_image.delete()
+                  try:
+                      upload.advertisement = entity
+                      upload.image = images.resize(image, 750, 160)
+                      upload.put()
+                  except images.NotImageError:
+                      pass
+              self.redirect('/maker_dashboard/' + maker.slug)
+          else:
+              # Reprint the form
+              template_values = { 'form' : AdvertisementForm(instance=advertisement), 
+                                  'maker' : maker,
+                                  'id' : id, 
+                                  'uri':self.request.uri}
+              path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
+              self.response.out.write(template.render(path, template_values))
+
+class ViewAdvertisementPage(webapp.RequestHandler):
+    """ View a Advertisement """
+    def get(self, advertisement_slug):
+        session = get_current_session()
+        community = Community.get_community_for_slug(session.get('community'))
+        
+        if not community:
+            self.error(404)
+            self.response.out.write("I don't recognize that community.")
+            return
+
+        user = users.get_current_user()
+        maker = None
+        if user is not None:
+            maker = Authenticator.getMakerForUser(user)
+
+        advertisement = Advertisement.get_advertisement_for_slug(advertisement_slug)
+        if not advertisement:
+            self.error(404)
+            self.response.out.write("I don't recognize that advertisement.")
+            return
+            
+        template_values = { 'maker' : maker, 
+                            'community': community,
+                            'advertisement':advertisement}
+        path = os.path.join(os.path.dirname(__file__), "templates/view_advertisement.html")
+        self.response.out.write(template.render(path, template_values))
+
+class ListAdvertisements(webapp.RequestHandler):
+    """ List news items. """
+    def get(self):
+        session = get_current_session()
+        community = Community.get_community_for_slug(session.get('community'))
+        
+        if not community:
+            self.error(404)
+            self.response.out.write("I don't recognize that community")
+            return
+
+        template_values = { 'title':'Ads', 'ads': community.community_advertisements}
+        path = os.path.join(os.path.dirname(__file__), "templates/advertisements.html")
+        self.response.out.write(template.render(path, template_values))
+
 def main():
     app = webapp.WSGIApplication([
         ('/', SiteHomePage),
@@ -984,6 +1172,11 @@ def main():
         ('/news_item/add', AddNewsItem),
         (r'/news_item/edit/(.*)', EditNewsItem),
         (r'/news_item/(.*)', ViewNewsItem),
+        ('/advertisement/add', AdvertisementPage),
+        (r'/advertisement/edit/(.*)', EditAdvertisementPage),
+        (r'/advertisement_image/(.*)', DisplayImage),
+        (r'/advertisement/(.*)', ViewAdvertisementPage),
+        ('/advertisements/', ListAdvertisements),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)
