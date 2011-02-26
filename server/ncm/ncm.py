@@ -450,9 +450,11 @@ class MakerDashboard(webapp.RequestHandler):
                     total_sales += sale.amount * sale.items
 
             ad = Advertisement.get_advertisement_for_slug('new-ad')
-            ad.img = '/advertisement_image/' + str(ad.advertisement_images[0].key())
-            ad.height = 160
-            ad.width = 750
+            if ad:
+                ad.img = '/advertisement_image/' + str(ad.advertisement_images[0].key())
+                ad.height = 160
+                ad.width = 750
+
             template_values = { 'title':'Maker Dashboard',
                                 'community':maker.community, 
                                 'sales':sales,
