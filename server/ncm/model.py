@@ -140,11 +140,14 @@ class CartTransaction(db.Model):
     """ Represents an entire shopping cart, potentially with multiple
     Products by multiple Makers. The data is only valid for a moment in
     time, so it keeps a copy of prices and counts as they were at the moment
-    of purchase."""
+    of purchase. """
     timestamp = db.DateTimeProperty(auto_now_add=True)
     transaction_type = db.CategoryProperty(['Sale', 'Payout', 'Refund'])
-    note = db.TextProperty()
+    transaction_status = db.CategoryProperty([ 'Requested', 'Payment Token Received', 'Confirmed', 'Shipping Details Received', 'Shipped', 'Refund Requested', 'Refund Complete', 'Payment Requested', 'Paid', 'Error'])
+    error_details = db.StringProperty()
     authorization = db.StringProperty()
+    note = db.StringProperty()
+    transaction_history = db.TextProperty()
 
 class MakerTransaction(db.Model):
     """ Represents a single Maker's portion of a transaction. """

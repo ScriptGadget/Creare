@@ -9,6 +9,33 @@ class PaypalPaymentResponse(db.Model):
     response=db.TextProperty(required=True)
     timestamp = db.DateTimeProperty(auto_now_add=True)
 
+class PaypalExpressCheckoutButton:
+    """ A simple unencrypted Paypal Express Checkout form generator. """    
+    def __init__(self):
+        self.button_img =  """<img src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif" align="left" style="margin-right:7px;">"""
+
+class SetExpressCheckoutFailed(Exception):
+    pass
+
+class PaypalExpressCheckoutProcessor:
+    """ Handles the steps of the PayPal Express Checkout API. """
+
+    def SetExpressCheckout():
+        """ Call Paypal SetExpressCheckoutInvoke API and return a valid redirect 
+        URL or raise an SetExpressCheckoutFailed exception. """
+        redirect_url = ''
+        return redirect_url
+
+    def GetExpressCheckoutDetails():
+        """ Call PayPal GetExpressCheckoutDetails API for shipping information
+        and Payer ID """
+        pass
+
+    def DoExpressCheckoutPayment():
+        """ Call the PayPal DoExpressCheckoutPayment API to confirm
+        shipment and finalize payment. """
+        pass
+
 class PaypalButton:
     """ A simple unencrypted paypal button form generator.  """
 
