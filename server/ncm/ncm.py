@@ -17,6 +17,22 @@ from forms import *
 from payment import *
 from authentication import Authenticator
 
+def add_base_values(template_values):
+    session = get_current_session()
+    community = Community.get_community_for_slug(session.get('community'))
+
+    if community:
+        template_values['community'] = community
+        q = db.Query(NewsItem)
+        q.filter('show =', True).filter('community =', community)
+        news_items = q.fetch(limit=50)
+        template_values["news_items"] = news_items
+
+    template_values["user"] = users.get_current_user()
+    template_values["admin"] = users.is_current_user_admin()
+
+    return template_values;
+
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
     def get(self):
@@ -40,7 +56,7 @@ class MakerPage(webapp.RequestHandler):
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             logging.info("Showing Registration Page")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
     def post(self):
         session = get_current_session()
@@ -74,7 +90,7 @@ class MakerPage(webapp.RequestHandler):
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             logging.info("Showing Registration Page")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class EditMakerPage(webapp.RequestHandler):
     """ Edit a Maker store """
@@ -104,7 +120,7 @@ class EditMakerPage(webapp.RequestHandler):
                                 'user':users.get_current_user(), 
                                 'title':'Update Store Information'}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
         else:
             self.redirect('/maker/add')
 
@@ -137,7 +153,7 @@ class EditMakerPage(webapp.RequestHandler):
                                     'uri':self.request.uri, 
                                     'user':users.get_current_user() }
                 path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
-                self.response.out.write(template.render(path, template_values))
+                self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class ProductPage(webapp.RequestHandler):
     """ Add a Product """
@@ -164,7 +180,7 @@ class ProductPage(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
     def post(self):
         authenticator = Authenticator(self)
@@ -202,7 +218,7 @@ class ProductPage(webapp.RequestHandler):
                                     'upload_form': self.buildImageUploadForm(),
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/product.html")
-                self.response.out.write(template.render(path, template_values))
+                self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class UploadProductImage(webapp.RequestHandler):
     def post(self):
@@ -268,7 +284,7 @@ class EditProductPage(webapp.RequestHandler):
                                 'product':product, 'id' : product.key(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
     def post(self, product_slug):
       _id = self.request.get('_id')      
@@ -311,7 +327,7 @@ class EditProductPage(webapp.RequestHandler):
                                   'id' : id, 
                                   'uri':self.request.uri}
               path = os.path.join(os.path.dirname(__file__), "templates/product.html")
-              self.response.out.write(template.render(path, template_values))
+              self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class ViewProductPage(webapp.RequestHandler):
     """ View a Product """
@@ -336,7 +352,7 @@ class ViewProductPage(webapp.RequestHandler):
                             'community': community,
                             'product':product}
         path = os.path.join(os.path.dirname(__file__), "templates/view_product.html")
-        self.response.out.write(template.render(path, template_values))
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class Login(webapp.RequestHandler):
     """ Just authenticates then redirects to the home page """
@@ -393,6 +409,7 @@ class CommunityHomePage(webapp.RequestHandler):
         
         template_values = { 'title': community.name, 
                             'user': user,
+                            'admin': users.is_current_user_admin(),
                             'maker': Authenticator.getMakerForUser(user),
                             'community':community,
                             'products':products}
@@ -406,7 +423,7 @@ class CommunityHomePage(webapp.RequestHandler):
         template_values['cartItems'] = count
         
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
-        self.response.out.write(template.render(path, template_values))
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class PrivacyPage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
@@ -414,7 +431,7 @@ class PrivacyPage(webapp.RequestHandler):
         template_values = { 'title':'Privacy Policy',
                             'user':users.get_current_user() }
         path = os.path.join(os.path.dirname(__file__), "templates/privacy.html")
-        self.response.out.write(template.render(path, template_values))
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class TermsPage(webapp.RequestHandler):
     """ Renders the terms and conditions page. """
@@ -422,7 +439,7 @@ class TermsPage(webapp.RequestHandler):
         template_values = { 'title':'Terms and Conditions', 
                             'user':users.get_current_user()}
         path = os.path.join(os.path.dirname(__file__), "templates/terms.html")
-        self.response.out.write(template.render(path, template_values))
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class MakerDashboard(webapp.RequestHandler):
     """ Renders a page for Makers to view and manage their catalog and sales """
@@ -477,7 +494,7 @@ class MakerDashboard(webapp.RequestHandler):
                                 'total_sales':total_sales,
                                 'total_items':total_items}
             path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class MakerStorePage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
@@ -485,7 +502,7 @@ class MakerStorePage(webapp.RequestHandler):
         maker = Maker.get_maker_for_slug(maker_slug)
         template_values = { 'maker':maker, 'products':maker.products, 'user':users.get_current_user()}
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
-        self.response.out.write(template.render(path, template_values))
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class AddProductToCart(webapp.RequestHandler):
     """ Accept a JSON RPC request to add a product to the cart"""
@@ -627,7 +644,7 @@ class EditCommunityPage(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                  'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/community.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
         else:
             self.error(403)
@@ -662,7 +679,7 @@ class EditCommunityPage(webapp.RequestHandler):
                                     'user':users.get_current_user(),
                                     'uri': self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/community.html")
-                self.response.out.write(template.render(path, template_values))
+                self.response.out.write(template.render(path, add_base_values(template_values)))
         else:
             self.error(403)
             self.response.out.write('You do not have permission to edit this community.')
@@ -685,7 +702,7 @@ class AddCommunityPage(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/community.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
         else:
             self.error(403)
@@ -714,7 +731,7 @@ class AddCommunityPage(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/community.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class SiteHomePage(webapp.RequestHandler):
     """ A site root page """
@@ -752,7 +769,7 @@ class CheckoutPage(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/checkout.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
             
     def post(self):
         pass
@@ -836,35 +853,22 @@ class ListNewsItems(webapp.RequestHandler):
         logging.info('items :' + str(news_items))
         template_values = { 'title':'News Items', 'news_items': news_items, 'user':users.get_current_user()}
         path = os.path.join(os.path.dirname(__file__), "templates/news_items.html")
-        self.response.out.write(template.render(path, template_values))
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 
 class ViewNewsItem(webapp.RequestHandler):
     """ View an existing item. """
     def get(self, slug):
-        authenticator = Authenticator(self)
-        try:
-            (user, maker) = authenticator.authenticate()
-        except:
-            # Return immediately
-            return
-
-        if user: # Need to authorize community coordinators
-            news_item = NewsItem.get_news_item_for_slug(slug)
-            q = NewsItem.all()
-            q.filter('show =', True)
-            news_items = q.fetch(limit=3)
-            template_values = { 'title':'News',
-                                'news_item':news_item, 
-                                'news_items':news_items,
-                                'user':users.get_current_user(),
-                                'uri':self.request.uri}
-            path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
-            self.response.out.write(template.render(path, template_values))
-
-        else:
-            self.error(403)
-            self.response.out.write('You do not have permission to create a new news item for this community.')
+        news_item = NewsItem.get_news_item_for_slug(slug)
+        q = NewsItem.all()
+        q.filter('show =', True)
+        news_items = q.fetch(limit=3)
+        template_values = { 'title':'News',
+                            'news_item':news_item, 
+                            'news_items':news_items,
+                            'uri':self.request.uri}
+        path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 
 class EditNewsItem(webapp.RequestHandler):
@@ -891,7 +895,7 @@ class EditNewsItem(webapp.RequestHandler):
                                 'news_items':news_items,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
         else:
             self.error(403)
@@ -922,7 +926,7 @@ class EditNewsItem(webapp.RequestHandler):
                                 'id': id,
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class AddNewsItem(webapp.RequestHandler):
     """ Add a new news item. """
@@ -941,7 +945,7 @@ class AddNewsItem(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/news_item.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
         else:
             self.error(403)
@@ -979,7 +983,7 @@ class AddNewsItem(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/news_items.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class AdvertisementPage(webapp.RequestHandler):
     """ Add a Advertisement """
@@ -1001,7 +1005,7 @@ class AdvertisementPage(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
     def post(self):
         authenticator = Authenticator(self)
@@ -1042,7 +1046,7 @@ class AdvertisementPage(webapp.RequestHandler):
                                     'user':users.get_current_user(),
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
-                self.response.out.write(template.render(path, template_values))
+                self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class EditAdvertisementPage(webapp.RequestHandler):
     """ Edit an existing Advertisement """
@@ -1066,7 +1070,7 @@ class EditAdvertisementPage(webapp.RequestHandler):
                                 'user':users.get_current_user(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
-            self.response.out.write(template.render(path, template_values))
+            self.response.out.write(template.render(path, add_base_values(template_values)))
 
     def post(self, advertisement_slug):
       _id = self.request.get('_id')      
@@ -1101,7 +1105,7 @@ class EditAdvertisementPage(webapp.RequestHandler):
                                   'id' : id, 
                                   'uri':self.request.uri}
               path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
-              self.response.out.write(template.render(path, template_values))
+              self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class ViewAdvertisementPage(webapp.RequestHandler):
     """ View a Advertisement """
@@ -1130,7 +1134,7 @@ class ViewAdvertisementPage(webapp.RequestHandler):
                             'user':users.get_current_user(),
                             'advertisement':advertisement}
         path = os.path.join(os.path.dirname(__file__), "templates/view_advertisement.html")
-        self.response.out.write(template.render(path, template_values))
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class ListAdvertisements(webapp.RequestHandler):
     """ List news items. """
@@ -1147,7 +1151,7 @@ class ListAdvertisements(webapp.RequestHandler):
                             'ads': community.community_advertisements, 
                             'user':users.get_current_user() }
         path = os.path.join(os.path.dirname(__file__), "templates/advertisements.html")
-        self.response.out.write(template.render(path, template_values))
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 def main():
     app = webapp.WSGIApplication([

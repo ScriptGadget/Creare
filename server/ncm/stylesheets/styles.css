@@ -115,3 +115,26 @@ body { background-color: white; }
 	border-style: inset;
 	border-width: 1px;
 }
+
+#admin_menu{
+	font-size:small;
+}
+#admin_menu ul {
+	margin:0;
+	padding:0;
+}
+
+#admin_menu li {
+	list-style: none;
+	margin-left: 0px;
+}
+/*
+#admin_menu a {
+	color:yellow;
+	background-color:gray;
+	border-color:gray;
+	border-style: outset;
+	text-decoration: none;
+	padding: 2px;
+}
+*/

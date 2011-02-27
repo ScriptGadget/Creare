@@ -22,13 +22,26 @@
 
     <div id="sidebar">
 	  {% block sidebar %}
-    <div id="ShoppingCartWidget">
+	  {% if admin %}
+	  {% block admin%}
+	  <div id="admin_menu">
+	  <h2>Community Coordination</h2>
+	  <ul>
+		<li><a href="/community/edit">Settings</a></li>
+		<li><a href="/makers">Makers</a></li>
+		<li><a href="/payment">Payments</a></li>
+	  </ul>
+	  </div>
+	  {% endblock admin %}
+	  {% else %}
 	  {% block cart_widget %}
+    <div id="ShoppingCartWidget">
         <p>Your Shopping Cart: <br/>(<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
-	  {% endblock %}
 	</div>
+	  {% endblock cart_widget %}
+	  {% endif %}
     <div id="alert1"></div>
-	  <h2>News</h2>
+	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
 	  {% if news_items %}
 	    {% for item in news_items %}
 	      <h3><a href="/news_item/{{item.slug}}">{{item.title}}</a></h3>
@@ -39,7 +52,7 @@
 	  {% endif %}
 	  <!-- Coming Soon -->
 	  <!--
-	  <h2>Events</h2>
+	  <h2>Events {% if admin %}(<a href="/events">edit</a>){% endif %}</h2>
 	  {% if events %}
 	    {% for event in events %}
 	      <h3>{{event.title}}</h3>
@@ -48,7 +61,7 @@
 	  {% else %}
 		<p>No events today.</p>
 	  {% endif %}
-	  <h2>Tips</h2>
+	  <h2>Tips {% if admin %}(<a href="/tips">edit</a>){% endif %}</h2>
 	  {% if tips %}
 	    {% for tip in tips %}
 	      <h3>{{tip.title}}</h3>

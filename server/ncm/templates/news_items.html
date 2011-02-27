@@ -1,15 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div id="messagePanel">
-	  {% if id %} 
-        <p id="line1">Update news.</p>
-	  {% else %}
-        <p id="line1">Create a news item.</p>
-	  {% endif %}
-
-    </div>
-
+<h1>News</h1>
+<a href="/news_item/add">Add an item</a>
     <div id="newsListPanel">
 	  {% for item in news_items  %}
 	  <p class="news_item"><a href="/news_item/{{item.slug}}">{{item.title}}</a> - {{item.summary}}</p>
