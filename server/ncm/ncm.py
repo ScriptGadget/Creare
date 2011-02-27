@@ -472,7 +472,7 @@ class MakerDashboard(webapp.RequestHandler):
                                 'community':maker.community, 
                                 'sales':sales,
                                 'maker':maker,
-                                'user':users.get_get_current_user(),
+                                'user':users.get_current_user(),
                                 'ad':ad,
                                 'products':maker.products,
                                 'total_sales':total_sales,
