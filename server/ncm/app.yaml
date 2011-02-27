@@ -1,4 +1,4 @@
-application: get
+application: ncm
 version: 1
 runtime: python
 api_version: 1
@@ -18,6 +18,13 @@ handlers:
 - url: /static
   static_dir: static
 
+- url: /remote_api
+  script: $PYTHON_LIB/google/appengine/ext/remote_api/handler.py
+  login: admin
+
+- url: /cleanup_sessions
+  script: cleanup_sessions.py
+
 - url: /test.*
   script: gaeunit.py
 
@@ -26,3 +33,9 @@ handlers:
 
 error_handlers:
 - file: error.html
+
+cron:
+- description: daily session cleanup
+  url: /cleanup_sessions
+  schedule: every 24 hours
+

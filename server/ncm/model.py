@@ -211,6 +211,7 @@ class Advertisement(db.Model):
     """ An advertisement. """
     community = db.ReferenceProperty(Community, collection_name='community_advertisements')
     created = db.DateTimeProperty(auto_now_add=True)
+    last_shown = db.DateTimeProperty(auto_now=True)
     name = db.StringProperty()
     slug = db.StringProperty()
     contact_name = db.StringProperty()
@@ -218,6 +219,7 @@ class Advertisement(db.Model):
     hover_text = db.StringProperty()
     url = db.LinkProperty()
     rotation = db.CategoryProperty(['High', 'Medium', 'Low'], default='High')
+    show = db.BooleanProperty(default=False)
     notes = db.StringProperty()
 
     @staticmethod

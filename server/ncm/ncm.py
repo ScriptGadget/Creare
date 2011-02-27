@@ -449,8 +449,11 @@ class MakerDashboard(webapp.RequestHandler):
                     total_items += sale.items
                     total_sales += sale.amount * sale.items
 
-            ad = Advertisement.get_advertisement_for_slug('new-ad')
+            q = db.Query(Advertisement)
+            q.filter('show =', True).filter('community =', maker.community).order('last_shown')
+            ad = q.get()
             if ad:
+                ad.put() # to update the last_shown
                 ad.img = '/advertisement_image/' + str(ad.advertisement_images[0].key())
                 ad.height = 160
                 ad.width = 750
@@ -959,17 +962,12 @@ class AdvertisementPage(webapp.RequestHandler):
     def get(self):
         authenticator = Authenticator(self)
 
-        try:
-            (user, maker) = authenticator.authenticate()
-        except:
-            # Return immediately
-            return
 
-        if not user or not maker:
-            self.redirect('/')
+        if not users.is_current_user_admin():
+            self.response.out.write("You do not have permission to add advertisements")
             return
         else:
-            template_values = { 'form' : AdvertisementForm(), 'maker':maker, 
+            template_values = { 'form' : AdvertisementForm(), 
                                 'upload_form': self.buildImageUploadForm(), 
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
@@ -984,8 +982,8 @@ class AdvertisementPage(webapp.RequestHandler):
             # Return immediately
             return
 
-        if not user or not maker:
-            self.redirect('/')
+        if not users.is_current_user_admin():
+            self.response.out.write("You do not have permission to add advertisements")
             return
         else:
             session = get_current_session()
@@ -1002,14 +1000,14 @@ class AdvertisementPage(webapp.RequestHandler):
                     upload.advertisement = entity
                     upload.image = images.resize(self.request.get("img"), 750, 160)
                     upload.put()
-                except images.NotImageError:
-                    pass
-                    # Have to come up with a much better way of handling this
-                    # self.redirect('/')
+                except:
+                    entity.delete()
+                    self.response.out.write("That doesn't look like a valid ad image. It should be 750 pixels wide by 160 pixels high and be a jpg or png image. Use your back button and try again.");
+                    return
                 self.redirect('/advertisement/'+entity.slug)
             else:
                 # Reprint the form
-                template_values = { 'form' : data, 'maker':maker,
+                template_values = { 'form' : data, 
                                     'upload_form': self.buildImageUploadForm(),
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
@@ -1024,30 +1022,14 @@ class EditAdvertisementPage(webapp.RequestHandler):
             <div><input type="file" name="img"/></div> """
 
     def get(self, advertisement_slug):
-        authenticator = Authenticator(self)
-
-        try:
-            (user, maker) = authenticator.authenticate()
-        except:
-            # Return immediately
-            return
-
-        if not user or not users.is_current_user_admin():
-            session = get_current_session()
-            community = Community.get_community_for_slug(session.get('community'))
-        
-            if not community:
-                self.error(404)
-                self.response.out.write("I don't recognize that community.")
-                return
-
-            self.redirect('/community/' + community.slug)
+        if not users.is_current_user_admin():
+            self.error(403)
+            self.response.out.write('You do not have permission to edit advertisements.')
             return
         else:
             advertisement = Advertisement.get_advertisement_for_slug(advertisement_slug)
 
             template_values = { 'form' : AdvertisementForm(instance=advertisement), 
-                                'maker' : maker, 
                                 'upload_form': self.buildImageUploadForm(),
                                 'advertisement':advertisement, 'id' : advertisement.key(),
                                 'uri':self.request.uri}
@@ -1057,19 +1039,9 @@ class EditAdvertisementPage(webapp.RequestHandler):
     def post(self, advertisement_slug):
       _id = self.request.get('_id')      
       advertisement = Advertisement.get(_id)
-      authenticator = Authenticator(self)
 
-      try:
-          (user, maker) = authenticator.authenticate()
-      except:
-          # Return immediately
-          return
-
-      if not user or not users.is_current_user_admin():
-          if maker:
-              logging.error('Illegal attempt to edit advertisement by: ' + advertisement.slug + ' by ' + maker.full_name )
-          else:              
-              logging.error('Illegal attempt to edit advertisement: ' + advertisement.slug + ' by unauthenticated guest')
+      if not users.is_current_user_admin():
+          logging.error('Illegal attempt to edit advertisement: ' + advertisement.slug)
           self.error(403)
           self.response.out.write("You do not have permission to edit that product.")
           return
@@ -1090,11 +1062,10 @@ class EditAdvertisementPage(webapp.RequestHandler):
                       upload.put()
                   except images.NotImageError:
                       pass
-              self.redirect('/maker_dashboard/' + maker.slug)
+              self.redirect('/advertisements')
           else:
               # Reprint the form
               template_values = { 'form' : AdvertisementForm(instance=advertisement), 
-                                  'maker' : maker,
                                   'id' : id, 
                                   'uri':self.request.uri}
               path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
@@ -1179,7 +1150,7 @@ def main():
         (r'/advertisement/edit/(.*)', EditAdvertisementPage),
         (r'/advertisement_image/(.*)', DisplayImage),
         (r'/advertisement/(.*)', ViewAdvertisementPage),
-        ('/advertisements/', ListAdvertisements),
+        ('/advertisements', ListAdvertisements),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

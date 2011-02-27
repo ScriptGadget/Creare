@@ -3,7 +3,7 @@
 {% block content %}
    <div id='advertisement_image_panel'>
 	 {% for advertisement_image in advertisement.advertisement_images %}
-	 <img src="/advertisement_image/{{advertisement_image.key}}" border="0" /></br>
+	 <a href="{{advertisment.url}}"><img src="/advertisement_image/{{advertisement_image.key}}" border="0" title="{{advertisement.hover_text}}" alt="{{advertisement.hover_text}}"/></a></br>
      {% endfor%}
    </div>
 {% endblock content %}
