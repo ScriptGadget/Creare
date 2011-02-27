@@ -482,6 +482,12 @@ class AddProductToCart(webapp.RequestHandler):
     def post(self):
         logging.info('AddProductToCart: ' + str(self.request))
         product_id = self.request.get('arg0')
+        try:
+            product = Product.get(product_id)
+        except:
+            self.response.out.write('{"alert1":"Product Not Found"}')
+            return
+            
         session = get_current_session()
         if not session.is_active():
             # session.start(ssl_only=True)
@@ -490,8 +496,12 @@ class AddProductToCart(webapp.RequestHandler):
 
         for item in items:
             if item.product == product_id:
-                item.count += 1
-                break
+                if product.inventory <= item.count:
+                    self.response.out.write('{"alert1":"No More " + product.name + " In Stock"}')
+                    return
+                else:
+                    item.count += 1
+                    break
         else:
             newItem = ShoppingCartItem(product=product_id, count=1)
             logging.info('New item: ' + str(newItem.product))

@@ -8,8 +8,12 @@
   }
 
   function updateCartWidget(response){
-    $("ShoppingCartCount").innerHTML = response["count"];
-    $("checkout_button").style.display = 'inline';
+    if(response["alert1"]){
+       $("alert1").innerHTML = response["alert1"];
+    }else{
+       $("ShoppingCartCount").innerHTML = response["count"];
+       $("checkout_button").style.display = 'inline';
+    }
   }
 {% endblock functions%}
 

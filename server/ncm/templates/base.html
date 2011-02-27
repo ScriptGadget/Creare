@@ -27,6 +27,7 @@
         <p>Your Shopping Cart: <br/>(<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
 	  {% endblock %}
 	</div>
+    <div id="alert1"></div>
 	  <h2>News</h2>
 	  {% if news_items %}
 	    {% for item in news_items %}
@@ -87,14 +88,8 @@
       {% endblock %}
     </div>
 
-    <div id="alert1"></div>
     </div>
 
-    <div id="alerts">
-	  {% block alerts %}
-      <p id="alert">{{ alerts }}</p>        
-	  {% endblock %}
-    </div>
 
 	<div id="footer">
 	  {% block join %}
