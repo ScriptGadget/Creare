@@ -13,8 +13,10 @@ body { background-color: white; }
 
 #content { 
 	display: block; 
-	margin-left: 190px;
-	padding: 3px 10px; 
+	margin-left: auto;
+	margin-right: auto;
+	padding: 3px 10px;
+	width: 750;
 }
 
 .catalog h3 {
@@ -71,6 +73,10 @@ body { background-color: white; }
 	color: blue;
 }
 
+#sidebar a {
+	text-decoration: none;
+}
+
 #menubar { display: block; height: 2em; padding: 1px; }
 #menu { position:relative; float:right; right:50%; font-size: large; margin-top: -1em;}
 #menu li {text-align: left; position: relative; float: left; left: 50%; list-style: none; padding: 3px 5px 3px 5px; margin: 3px 0.5em; border: 0px none #FFF;}
@@ -81,9 +87,11 @@ body { background-color: white; }
 
 #alertPanel { color: red; padding: 10px; }
 
-#footer { 
-	display: block;
-	margin-left: 190px;
+#footer {
+	width: 750px;
+	margin-top: 2em;
+	margin-left: auto;
+	margin-right: auto;
     text-align: left; 
 	font-size: small;
 	padding: 3px 10px; 
@@ -128,13 +136,19 @@ body { background-color: white; }
 	list-style: none;
 	margin-left: 0px;
 }
-/*
-#admin_menu a {
-	color:yellow;
-	background-color:gray;
-	border-color:gray;
-	border-style: outset;
-	text-decoration: none;
-	padding: 2px;
+.product_image {
+	width:240px;
+	border-width: 1px;
+	border-color: gray;
+	-moz-box-shadow: 3px 3px 4px #000;
+	-webkit-box-shadow: 3px 3px 4px #000;
+	box-shadow: 3px 3px 4px #000;
+	/* For IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+	/* For IE 5.5 - 7 */
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
 }
-*/
+
+#join_link{
+	font-size:small;
+}

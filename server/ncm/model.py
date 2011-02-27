@@ -1,6 +1,7 @@
 import re
 from unicodedata import normalize
 from google.appengine.ext import db
+from gaesessions import get_current_session
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
@@ -52,10 +53,12 @@ class Community(db.Model):
         return slugify(name)
 
     @staticmethod
-    def get_current_community(community_slug, session):
+    def get_current_community(community_slug=None, session=None):
         if community_slug:
             community = Community.get_community_for_slug(community_slug)
         else:
+            if not session:
+                session = get_current_session();
             community = Community.get_community_for_slug(session.get('community',''))
 
         return community

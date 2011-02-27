@@ -3,7 +3,7 @@
 {% block content %}
    <div id='product_image_panel'>
 	 {% for product_image in product.product_images %}
-	 <img src="/product_images/{{product_image.key}}" border="0" /></br>
+	 <img class="product_image" src="/product_images/{{product_image.key}}" alt="{{product.name}}" title="{{product.name}}"/></br>
      {% endfor%}
    </div>
    <div class="product_info">

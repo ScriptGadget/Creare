@@ -39,6 +39,9 @@
         <p>Your Shopping Cart: <br/>(<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
 	</div>
 	  {% endblock cart_widget %}
+	  {% block join %}
+	  {% if not user %} <p id="join_link">Local maker? <a href="/community/{{community.slug}}/login">Join Up</a>!</p> {% endif %}
+	  {% endblock %}
 	  {% endif %}
     <div id="alert1"></div>
 	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
@@ -106,9 +109,6 @@
 
 
 	<div id="footer">
-	  {% block join %}
-	  {% if not maker %} <p>Are you a local maker? <input type="button" id="join_button" onclick="window.location='/community/{{community.slug}}/login'" value ="join us!"></p> {% endif %}
-	  {% endblock %}
 	  {% block footer %}
 	  <p>Powered by ScriptGadget - <a href="/privacy">Privacy Policy</a> &nbsp; <a href="/terms">Terms and Conditions</a> &nbsp; <a href="">Copyright and D.M.C.A. Policy</a></p>
 	  {% endblock %}
