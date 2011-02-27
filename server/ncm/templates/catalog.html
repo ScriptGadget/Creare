@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block functions %}
+  {{ block.super }}
   InstallFunction(server, 'AddProductToCart', false);
 
   function doAddProductToCart(product){

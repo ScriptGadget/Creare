@@ -67,15 +67,16 @@
 		<ul>
 		  <li><a href="/community/{{community.slug}}">Home</a></li>
 		  {% if maker %}
+		  {% ifequal maker.key  user.key %}
 		  <li><a href="/maker_dashboard/{{maker.slug}}">Manage My Store</a></li>
 		  <li><a href="/maker/edit/{{maker.slug}}">Account</a></li>
+		  {% endifequal %}
+		  {% endif %}
+
+		  {% if user %}
 		  <li><a href="/logout">Logout</a></li>
 		  {% else %}
-		    {% if new %}
-		    <li><a href="/logout">Logout</a></li>
-			{% else %}
-		    <li><a href="/community/{{community.slug}}/login">Login</a></li>
-		    {% endif %}
+		  <li><a href="/community/{{community.slug}}/login">Login</a></li>
 		  {% endif %}
 		</ul>
 		{% endblock %}
