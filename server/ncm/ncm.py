@@ -101,7 +101,7 @@ class EditMakerPage(webapp.RequestHandler):
                                 'id' : maker.key(), 
                                 'uri':self.request.uri, 'maker':maker,
                                 'community':maker.community,
-                                'user':users.get_get_current_user(), 
+                                'user':users.get_current_user(), 
                                 'title':'Update Store Information'}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, template_values))
@@ -135,7 +135,7 @@ class EditMakerPage(webapp.RequestHandler):
                 template_values = { 'form' : ProductForm(instance=maker), 
                                     'id' : id, 
                                     'uri':self.request.uri, 
-                                    'user':users.get_get_current_user() }
+                                    'user':users.get_current_user() }
                 path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
                 self.response.out.write(template.render(path, template_values))
 
@@ -263,7 +263,7 @@ class EditProductPage(webapp.RequestHandler):
                 
             template_values = { 'form' : ProductForm(instance=product), 
                                 'maker' : maker,
-                                'user':users.get_get_current_user(),
+                                'user':users.get_current_user(),
                                 'upload_form': self.buildImageUploadForm(),
                                 'product':product, 'id' : product.key(),
                                 'uri':self.request.uri}
@@ -307,8 +307,9 @@ class EditProductPage(webapp.RequestHandler):
               # Reprint the form
               template_values = { 'form' : ProductForm(instance=product), 
                                   'maker' : maker,
-                                  'user':users.get_get_current_user(), 
-                                  'id' : id, 'uri':self.request.uri}
+                                  'user':users.get_current_user(), 
+                                  'id' : id, 
+                                  'uri':self.request.uri}
               path = os.path.join(os.path.dirname(__file__), "templates/product.html")
               self.response.out.write(template.render(path, template_values))
 
