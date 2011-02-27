@@ -97,7 +97,10 @@ body { background-color: white; }
 	padding: 3px 10px; 
 }
 
-.errorlist { color:red; }
+.errorlist { 
+	font-size: small;
+	color:red; 
+}
 
 .byline { 
 	font-size: medium; 
