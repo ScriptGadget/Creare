@@ -15,4 +15,4 @@ class TestCommunity(unittest.TestCase):
     def testSlugs(self):
         name = 'name with a space'
         slug = Community.get_slug_for_name(name)
-        self.assertTrue(slug == 'name_with_a_space')
+        self.assertTrue(slug == 'name-with-a-space')
