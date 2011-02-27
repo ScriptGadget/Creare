@@ -383,20 +383,18 @@ class CommunityHomePage(webapp.RequestHandler):
         session['community'] = community.slug
 
         user = users.get_current_user()
-        maker = None
-        if user is not None:
-            maker = Authenticator.getMakerForUser(user)
 
         stuff = Product.all()
         products = []
         for product in stuff:
             if str(product.maker.community.key()) == str(community.key()):
                 products.append(product)
-
+        
         template_values = { 'title': community.name, 
-                            'user':users.get_current_user(),
+                            'user': user,
+                            'maker': Authenticator.getMakerForUser(user),
                             'community':community,
-                            'products':products, 'maker':maker}
+                            'products':products}
 
         items = session.get('ShoppingCartItems', [])
         count = 0

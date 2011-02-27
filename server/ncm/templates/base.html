@@ -67,7 +67,7 @@
 		<ul>
 		  <li><a href="/community/{{community.slug}}">Home</a></li>
 		  {% if maker %}
-		  {% ifequal maker.key  user.key %}
+		  {% ifequal maker.user.key user.key %}
 		  <li><a href="/maker_dashboard/{{maker.slug}}">Manage My Store</a></li>
 		  <li><a href="/maker/edit/{{maker.slug}}">Account</a></li>
 		  {% endifequal %}

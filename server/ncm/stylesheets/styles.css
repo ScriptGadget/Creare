@@ -56,7 +56,9 @@ body { background-color: white; }
     width: 190px;
 	padding: 2px;       
 	margin-top: 10px;
-    position: absolute; left: 5px; top:180px
+    position: absolute; 
+	left: 5px; 
+	top:180px;
 }
 
 #sidebar h2 {
@@ -106,4 +108,10 @@ body { background-color: white; }
 	vertical-align: bottom;
 	font-size: small;
 	color: gray;
+}
+
+#transaction_table{
+	width:100%;
+	border-style: inset;
+	border-width: 1px;
 }

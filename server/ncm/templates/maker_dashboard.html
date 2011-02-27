@@ -12,8 +12,8 @@
     <div id="makerDashboardPanel">
 	  <h1>{{maker.store_name}}: dashboard</h1>
 	  <div id="maker_transaction_panel">
-		<h2>Sales</h2>
-		<table>
+		<h2>Activity</h2>
+		<table id="transaction_table">
 		  <tr><th>Product</tdh><th>Items</th><th>Price</th></tr>
 		{% for sale in sales %}
 		  <tr><td>{{sale.product}}</td><td>{{sale.items}}</td><td>${{sale.amount|floatformat:2}}</td></tr>

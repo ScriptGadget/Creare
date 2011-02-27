@@ -15,12 +15,14 @@ class Authenticator:
         """ get the Maker if any associated with this user """
         maker = None
 
-        try:
-            makers = Maker.gql("WHERE user = :1", user)
-            maker = makers.get()
-        except db.KindError:
-            maker = None
-            logging.debugging.error("Unexpected db.KindError: " + db.KindError);
+        if user:
+            try:
+                makers = Maker.gql("WHERE user = :1", user)
+                maker = makers.get()
+            except db.KindError:
+                maker = None
+                logging.debugging.error("Unexpected db.KindError: " + db.KindError);
+
         return maker;
 
     def authenticate(self):
