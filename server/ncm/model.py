@@ -77,7 +77,7 @@ class Maker(db.Model):
     store_description = db.StringProperty(required=True)
     full_name = db.StringProperty(required=True)
     email = db.EmailProperty(required=True)
-    paypal = db.EmailProperty()
+    paypal_business_account_email = db.EmailProperty()
     phone_number = db.PhoneNumberProperty(required=True)
     location = db.StringProperty(required=True)
     mailing_address = db.PostalAddressProperty(required=True)
