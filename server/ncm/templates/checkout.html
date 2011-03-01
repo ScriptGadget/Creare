@@ -2,24 +2,24 @@
 
 {% block functions %}
   InstallFunction(server, 'OrderProductsInCart', false);
-  InstallFunction(server, 'GetOrderNowButton', true);
+  InstallFunction(server, 'GetShoppingCart', true);
   InstallFunction(server, 'RemoveProductFromCart', false);
   InstallFunction(server, 'AddProductToCart', false);
 
   function doRemoveProductFromCart(product){
-    server.RemoveProductFromCart(product, doGetOrderNowButton);
+    server.RemoveProductFromCart(product, doGetShoppingCart);
   }
 
   function doAddProductToCart(product){
-    server.AddProductToCart(product, doGetOrderNowButton);
+    server.AddProductToCart(product, doGetShoppingCart);
   }
 
   function doOrderProductsInCart(){
     server.OrderProductsInCart(displayOrderResult);
   }
 
-  function doGetOrderNowButton(){
-    server.GetOrderNowButton(updateCartTable);
+  function doGetShoppingCart(){
+    server.GetShoppingCart(updateCartTable);
   }
 
   function buildHiddenElement(name, value){
@@ -45,53 +45,15 @@
 		content += '<p id="cart_total">$' + amount + ' &lt;-- Grand Total (all prices already include sales tax)</p>';
 		$("ShoppingCartProductList").innerHTML = content;
 
-		// Paypal variables
-		action_url = response["action_url"];
-		email = response["email"];
-		item_name = response["item_name"];
-		item_number = response["item_number"];
-		return_url = response["return_url"];
-		cancel_url = response["cancel_url"];
-		transaction_id = response["transaction_id"];
-
-		payForm = document.createElement("form");
-		payForm.setAttribute("id","paypal_button_form");
-		payForm.setAttribute("action",action_url);
-		payForm.setAttribute("method","post");
-
-		payForm.appendChild(buildHiddenElement("cmd", "_xclick"));
-		payForm.appendChild(buildHiddenElement("business", email));
-		payForm.appendChild(buildHiddenElement("lc", "US"));
-		payForm.appendChild(buildHiddenElement("item_name", item_name));
-		payForm.appendChild(buildHiddenElement("item_number", item_number));
-		payForm.appendChild(buildHiddenElement("amount", amount));
-		payForm.appendChild(buildHiddenElement("button_subtype", "sevices"));
-		payForm.appendChild(buildHiddenElement("no_notice", "0"));
-		payForm.appendChild(buildHiddenElement("cn", "Add special instructions to the seller"));
-		payForm.appendChild(buildHiddenElement("no_shipping", "2"));
-		payForm.appendChild(buildHiddenElement("rm", "1"));
-		payForm.appendChild(buildHiddenElement("return", return_url));
-		payForm.appendChild(buildHiddenElement("cancel", cancel_url));
-		payForm.appendChild(buildHiddenElement("bn", "PP-BuyNowBF:btn_buynow_SM.gif:NonHosted"));
-		payForm.appendChild(buildHiddenElement("transaction_id", transaction_id));
-
-		image = document.createElement("img");
-		image.setAttribute("alt", "");
-		image.setAttribute("border", "0");
-		image.setAttribute("src", "https://www.paypal.com/en_US/i/scr/pixel.gif");
-		image.setAttribute("width", "1");
-		image.setAttribute("height", "1");
-		payForm.appendChild(image);
-
-		button = document.createElement("input");
+		button = document.createElement("img");
 		button.setAttribute("type", "image");
-		button.setAttribute("src", "https://www.paypal.com/en_US/i/btn/btn_buynow_SM.gif");
-		button.setAttribute("border", "0");
-		button.setAttribute("name", "submit");
-		button.setAttribute("alt", "PayPal - The safer, easier way to pay online!");
-		payForm.appendChild(button);
+		button.setAttribute("src","https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif");
+		button.setAttribute("align", "left");
+		button.setAttribute("style", "margin-right:7px;");
+		button.setAttribute("onclick", "doOrderProductsInCart(" +  amount + ")");
+
 		$("PaymentOptions").innerHTML="";
-		$("PaymentOptions").appendChild(payForm);
+		$("PaymentOptions").appendChild(button);
 	}else{
 		$("ShoppingCartProductList").innerHTML = "<p>(empty)</p>";
 		$("PaymentOptions").innerHTML="";
@@ -106,7 +68,7 @@
   }
   
   function tangram_init(){
-    doGetOrderNowButton();
+    doGetShoppingCart();
   }
 {% endblock %}
 

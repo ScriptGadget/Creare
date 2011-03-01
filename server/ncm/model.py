@@ -133,9 +133,24 @@ class ProductImage(db.Model):
 
 class ShoppingCartItem():
     """ This is not a Model and does not persist! """
-    def __init__(self, product = '', count = 0):
-        self.product = product
+    def __init__(self, product_key, price, count = 0):
+        self.product_key = product_key
+        self.price = price
         self.count = count
+
+    @property
+    def subtotal(self):
+        return self.price * self.count
+
+    @staticmethod
+    def CreatePaymentRecipentList(shopping_cart_items, fee_percentage, fee_minimum):
+        """
+        Build a dict of recipients and amounts from a shopping cart. The dict contains
+        one entry containing a payment id and amount for the primary recipient and a
+        one entry which is a list of tuples of payment ids and amounts for all other
+        recipients.
+        """
+        return {}
 
 class CartTransaction(db.Model):
     """ Represents an entire shopping cart, potentially with multiple

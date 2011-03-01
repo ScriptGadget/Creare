@@ -507,16 +507,15 @@ class AddProductToCart(webapp.RequestHandler):
         items = session.get('ShoppingCartItems', [])
 
         for item in items:
-            if item.product == product_id:
+            if item.product_key == product_id:
                 if product.inventory <= item.count:
-                    self.response.out.write('{"alert1":"No More " + product.name + " In Stock"}')
+                    self.response.out.write('{"alert1":"No More ' + product.name + ' In Stock"}')
                     return
                 else:
                     item.count += 1
                     break
         else:
-            newItem = ShoppingCartItem(product=product_id, count=1)
-            logging.info('New item: ' + str(newItem.product))
+            newItem = ShoppingCartItem(product_key=product_id, price=product.price, count=1)
             items.append(newItem)
 
         total = 0
@@ -540,7 +539,7 @@ class RemoveProductFromCart(webapp.RequestHandler):
         items = session.get('ShoppingCartItems', [])
 
         for item in items:
-            if item.product == product_id:
+            if item.product_key == product_id:
                 if item.count > 1:
                     item.count -= 1
                 else:
@@ -550,7 +549,7 @@ class RemoveProductFromCart(webapp.RequestHandler):
         session['ShoppingCartItems'] = items
         self.response.out.write('{"result":"success"}')
 
-class GetOrderNowButton(webapp.RequestHandler):
+class GetShoppingCart(webapp.RequestHandler):
     """ Accept a JSON RPC request to provide information for a paypal payment button"""
     def get(self):
         session = get_current_session()
@@ -577,24 +576,16 @@ class GetOrderNowButton(webapp.RequestHandler):
             message += '"products":['
             amount = 0.0
             for item in items:
-                product = Product.get(item.product)
+                product = Product.get(item.product_key)
                 if product:
                     message += '{"count":"' + str(item.count) + '",'
                     message += '"name":"' + product.name + '",'
                     message += '"key":"' + str(product.key()) + '",'
-                    message += '"price":"' + '%3.2f' % product.price + '",'
-                    message += '"total":"' + '%3.2f' % (product.price * item.count)+ '"},'
-                    amount += (product.price * item.count)
-            message += ']'
-            message += ',"amount":"' + '%3.2f' % amount + '"'
-            message += ',"button_available":"true"'
-            message += ',"action_url":"' + action_url + '"'
-            message += ',"email":"' + email + '"'
-            message += ',"item_name":"' + item_name + '"'
-            message += ',"item_number":"' + item_number + '"'
-            message += ',"return_url":"' + return_url + '"'
-            message += ',"cancel_url":"' + cancel_url + '"'
-            message += ',"transaction_id":"' + transaction_id + '"'
+                    message += '"price":"' + '%3.2f' % item.price + '",'
+                    message += '"total":"' + '%3.2f' % item.subtotal + '"},'
+                    amount += item.subtotal
+            message += '],'
+            message += '"amount":"' + "%.2f" % amount + '"'
             message += '}'
 
             self.response.out.write(message)
@@ -725,6 +716,9 @@ class SiteHomePage(webapp.RequestHandler):
         self.response.out.write(message)
 
 class CheckoutPage(webapp.RequestHandler):
+    """ Note that we remember the price at the moment the item was added to the
+    shopping cart, not nececarily the price of the product as it is in the datastore
+    at the moment of checkout. """
     def get(self):
         session = get_current_session()
         if not session.is_active():
@@ -740,10 +734,11 @@ class CheckoutPage(webapp.RequestHandler):
             items = session.get('ShoppingCartItems', [])
             products = []
             for item in items:
-                product = Product.get(item.product)
+                product = Product.get(item.product_key)
                 if product:
                     product.count = item.count
-                    product.total = '%3.2f' % (product.price * product.count)
+                    product.price = item.price
+                    product.total = '%3.2f' % item.subtotal
                     products.append(product)                    
             template_values = { 'title':'Checkout',
                                 'products':products,
@@ -783,16 +778,19 @@ class OrderProductsInCart(webapp.RequestHandler):
 
             maker_transactions = []
             products = []
+            maker_business_ids = []
             for item in items:
-                product = Product.get(item.product)
+                product = Product.get(item.product_key)
                 if product.inventory > 0:
                     product.inventory -= item.count
                 products.append(product)
+
+                # TBD Where did these maker_transactions come from?
                 for maker_transaction in maker_transactions:
                     if maker_transaction.maker.key() == product.maker.key():
                         entry = "%s:%s:%s" % (str(product.key()), 
                                               str(item.count), 
-                                              str(product.price))
+                                              str(item.price))
                         maker_transaction.detail.append(entry)
                         break
                     else:
@@ -802,9 +800,29 @@ class OrderProductsInCart(webapp.RequestHandler):
                                                          maker=product.maker)
                     entry = "%s:%s:%s" % (str(product.key()), 
                                           str(item.count), 
-                                          str(product.price))
+                                          str(item.price))
                     maker_transaction.detail.append(entry)
                     maker_transactions.append(maker_transaction)
+                    maker_business_ids.append((product.maker.paypal_business_account_email, 1.00))
+
+            community = Community.get_current_community()
+            base_url = self.request.url.replace(self.request.path, '')
+            fee = 0.00
+
+            #payment = PaypalChainedPayment(
+            logging.info({
+                "primary_recipient":(community.paypal_sandbox_business_id, fee),
+                "additional_recipients":maker_business_ids,
+                "api_username":community.paypal_sandbox_api_username,
+                "api_password":community.paypal_sandbox_api_password,
+                "api_signature":community.paypal_sandbox_application_id,
+                "client_ip":self.request.remote_addr,
+                "cancel_url":base_url+'/cancel',
+                "return_url":base_url+'/return',
+                "sandbox_email":"",
+                })
+            #    )
+
 
             db.put(maker_transactions)
             db.put(products)
@@ -1147,7 +1165,7 @@ def main():
         ('/upload_product_image', UploadProductImage), 
         ('/AddProductToCart', AddProductToCart),
         ('/RemoveProductFromCart', RemoveProductFromCart),
-        ('/GetOrderNowButton', GetOrderNowButton),
+        ('/GetShoppingCart', GetShoppingCart),
         ('/community/add', AddCommunityPage),
         ('/community/edit', EditCommunityPage),
         (r'/community/(.*)', CommunityHomePage),
