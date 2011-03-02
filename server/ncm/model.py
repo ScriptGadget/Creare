@@ -2,6 +2,7 @@ import re
 from unicodedata import normalize
 from google.appengine.ext import db
 from gaesessions import get_current_session
+import logging
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
@@ -33,7 +34,7 @@ class Community(db.Model):
     paypal_api_password = db.StringProperty()
     paypal_api_signature = db.StringProperty()
     paypal_application_id = db.StringProperty()
-    
+
     @staticmethod
     def get_community_for_slug(slug):
         try:
@@ -58,15 +59,13 @@ class Community(db.Model):
             if not session:
                 session = get_current_session();
             community = Community.get_community_for_slug(session.get('community',''))
-
         return community
-        
 
 class CommunityManager(db.Model):
     """ A Person Who can Approve Makers and Manage a Community Site """
     community = db.ReferenceProperty(Community, collection_name='community_managers')
     user = db.UserProperty(required=True)
-    name = db.StringProperty(required=True)    
+    name = db.StringProperty(required=True)
 
 class Maker(db.Model):
     """ Someone who sells products  """
@@ -82,7 +81,7 @@ class Maker(db.Model):
     location = db.StringProperty(required=True)
     mailing_address = db.PostalAddressProperty(required=True)
     tags = db.CategoryProperty(required=True)
-    
+
     @staticmethod
     def get_maker_for_slug(slug):
         try:
@@ -132,7 +131,7 @@ class ProductImage(db.Model):
     image = db.BlobProperty()
 
 class ShoppingCartItem():
-    """ This is not a Model and does not persist! """
+    """ This is not a db.Model and does not persist! """
     def __init__(self, product_key, price, count = 0):
         self.product_key = product_key
         self.price = price
@@ -143,14 +142,38 @@ class ShoppingCartItem():
         return self.price * self.count
 
     @staticmethod
-    def CreatePaymentRecipentList(shopping_cart_items, fee_percentage, fee_minimum):
+    def createReceiverList(community, shopping_cart_items, fee_percentage, fee_minimum, paypal_fee_percentage, paypal_fee_minimum):
         """
         Build a dict of recipients and amounts from a shopping cart. The dict contains
-        one entry containing a payment id and amount for the primary recipient and a
-        one entry which is a list of tuples of payment ids and amounts for all other
-        recipients.
+        one entry containing a tuple which in turn contains the payment id and amount
+        for the primary recipient and one entry which is a list of tuples of payment ids
+        and amounts for all other recipients.
         """
-        return {}
+        total_amount = 0.0
+        makers = {}
+        for item in shopping_cart_items:
+            subtotal = item.count * item.price
+            total_amount += subtotal
+            product = Product.get(item.product_key)
+            if product.maker.key() in makers:
+                (email, amount) = makers[product.maker.key()]
+                makers[product.maker.key()] = (email, amount + subtotal)
+            else:
+                makers[product.maker.key()] = (product.maker.paypal_business_account_email, subtotal)
+
+        combined_fee_factor = (fee_percentage + paypal_fee_percentage) * 0.01
+        combined_fee_minimum = fee_minimum + paypal_fee_minimum
+
+        for key in makers:
+            (email, amount) = makers[key]
+            makers[key] = (email, amount - (amount * combined_fee_factor) - combined_fee_minimum)
+
+        if community.use_sandbox:
+            primary_email = community.paypal_sandbox_business_id
+        else:
+            primary_email = community.paypal_business_id
+
+        return {'primary':(primary_email, total_amount), 'others':makers.values()}
 
 class CartTransaction(db.Model):
     """ Represents an entire shopping cart, potentially with multiple
@@ -167,9 +190,9 @@ class CartTransaction(db.Model):
 
 class MakerTransaction(db.Model):
     """ Represents a single Maker's portion of a transaction. """
-    maker = db.ReferenceProperty(Maker, 
-                                 collection_name="maker_transaction", 
-                                 required=True)    
+    maker = db.ReferenceProperty(Maker,
+                                 collection_name="maker_transaction",
+                                 required=True)
     detail = db.StringListProperty()
 
 
@@ -211,7 +234,7 @@ class EventNotice(db.Model):
     text = db.TextProperty()
     summary = db.StringProperty()
     show = db.BooleanProperty()
-    
+
 class TipItem(db.Model):
     """ A hint or tip about how to use the site or a creative howto  """
     community = db.ReferenceProperty(Community, collection_name='community_tip_item')
