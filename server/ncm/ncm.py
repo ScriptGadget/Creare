@@ -785,7 +785,6 @@ class OrderProductsInCart(webapp.RequestHandler):
                     product.inventory -= item.count
                 products.append(product)
 
-                # TBD Where did these maker_transactions come from?
                 for maker_transaction in maker_transactions:
                     if maker_transaction.maker.key() == product.maker.key():
                         entry = "%s:%s:%s" % (str(product.key()), 
@@ -807,30 +806,49 @@ class OrderProductsInCart(webapp.RequestHandler):
 
             community = Community.get_current_community()
             base_url = self.request.url.replace(self.request.path, '')
-            fee = 0.00
+            
+            receivers = ShoppingCartItem.createReceiverList(community=community,
+                                                            shopping_cart_items=items)
 
-            #payment = PaypalChainedPayment(
-            logging.info({
-                "primary_recipient":(community.paypal_sandbox_business_id, fee),
-                "additional_recipients":maker_business_ids,
-                "api_username":community.paypal_sandbox_api_username,
-                "api_password":community.paypal_sandbox_api_password,
-                "api_signature":community.paypal_sandbox_application_id,
-                "client_ip":self.request.remote_addr,
-                "cancel_url":base_url+'/cancel',
-                "return_url":base_url+'/return',
-                "sandbox_email":"",
-                })
-            #    )
+            try:
+                payment = PaypalChainedPayment( primary_recipient=receivers['primary'],
+                                                additional_recipients=receivers['others'],
+                                                api_username=community.paypal_sandbox_api_username,
+                                                api_password=community.paypal_sandbox_api_password,
+                                                api_signature=community.paypal_sandbox_api_signature,
+                                                application_id=community.paypal_sandbox_application_id,
+                                                client_ip=self.request.remote_addr,
+                                                cancel_url=base_url+'/cancel',
+                                                return_url=base_url+'/return',
+                                                action_url='https://svcs.sandbox.paypal.com/AdaptivePayments/Pay',
+                                                sandbox_email=community.paypal_sandbox_email_address,
+                                                )
+            except TooManyRecipientsException:
+                cart_transaction.delete()
+                self.response.out.write("{ \"message\":\"" 
+                                        + "Paypal allows no more than five different Makers' products in a cart. Please divide your purchase."
+                                        + "\"}")
+                return
 
+            response = payment.execute()
+            paypalPaymentResponse = PaypalPaymentResponse( parent=cart_transaction,
+                                                           response=response.content)
+            paypalPaymentResponse.put();
+            confirmation_url = payment.buildRedirectURL(response=response, sandbox=True)
 
-            db.put(maker_transactions)
-            db.put(products)
-
-            self.response.out.write("{ \"message\":\"" 
-                                    + "Thank you for your order."
+            if response and confirmation_url:
+                db.put(maker_transactions)
+                db.put(products)
+                message = '{ "redirect":"%s" }' % confirmation_url
+                self.response.out.write(message)
+                session.pop('ShoppingCartItems')
+            else:
+                logging.error("A Paypal checkout failed! Here's the cart: " + items)
+                cart_transaction.delete()
+                self.response.out.write("{ \"message\":\"" 
+                                    + "An error occured talking to Paypal. Please try again later. You can also call us or email. We have logged the erorr and will be looking into it right away."
                                     + "\"}")
-            session.pop('ShoppingCartItems')
+                # TBD Generate alert.
             return
 
 class ListNewsItems(webapp.RequestHandler):

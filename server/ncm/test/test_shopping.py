@@ -12,7 +12,11 @@ class TestShopping(unittest.TestCase):
         self.community = Community(name='Test Community',
                                    slug=Community.get_slug_for_name('Test_Community'),
                                    paypal_sandbox_business_id = 'market1@gmail.com',
-                                   use_sandbox=True)
+                                   use_sandbox=True,
+                                   fee_percentage=10.0,
+                                   fee_minimum=0.3,
+                                   paypal_fee_percentage=2.9,
+                                   paypal_fee_minimum=0.3)
         self.community.put()
         self.makers = []
         for i in range(0,7):
@@ -66,11 +70,7 @@ class TestShopping(unittest.TestCase):
             cart_items.append(item)
 
         receivers = ShoppingCartItem.createReceiverList(community=self.community,
-                                                        shopping_cart_items=cart_items,
-                                                        fee_percentage=10.0,
-                                                        fee_minimum=0.3,
-                                                        paypal_fee_percentage=2.9,
-                                                        paypal_fee_minimum=0.3)
+                                                        shopping_cart_items=cart_items)
         self.assertTrue('primary' in receivers)
         self.assertTrue('others' in receivers)
 

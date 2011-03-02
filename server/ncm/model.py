@@ -17,6 +17,10 @@ class Community(db.Model):
     """ A Community of Makers and Crafters  """
     name = db.StringProperty(required=True)
     slug = db.StringProperty()
+    fee_percentage = db.FloatProperty(required=True, default=10.0)
+    fee_minimum = db.FloatProperty(required=True, default=0.30)
+    paypal_fee_percentage = db.FloatProperty(required=True, default=2.9)
+    paypal_fee_minimum = db.FloatProperty(required=True, default=0.30)
     use_sandbox = db.BooleanProperty(default=True)
 
     # Sandbox stuff
@@ -142,7 +146,7 @@ class ShoppingCartItem():
         return self.price * self.count
 
     @staticmethod
-    def createReceiverList(community, shopping_cart_items, fee_percentage, fee_minimum, paypal_fee_percentage, paypal_fee_minimum):
+    def createReceiverList(community, shopping_cart_items):
         """
         Build a dict of recipients and amounts from a shopping cart. The dict contains
         one entry containing a tuple which in turn contains the payment id and amount
@@ -161,8 +165,8 @@ class ShoppingCartItem():
             else:
                 makers[product.maker.key()] = (product.maker.paypal_business_account_email, subtotal)
 
-        combined_fee_factor = (fee_percentage + paypal_fee_percentage) * 0.01
-        combined_fee_minimum = fee_minimum + paypal_fee_minimum
+        combined_fee_factor = (community.fee_percentage + community.paypal_fee_percentage) * 0.01
+        combined_fee_minimum = community.fee_minimum + community.paypal_fee_minimum
 
         for key in makers:
             (email, amount) = makers[key]

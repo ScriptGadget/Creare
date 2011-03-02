@@ -15,7 +15,7 @@
   }
 
   function doOrderProductsInCart(){
-    server.OrderProductsInCart(displayOrderResult);
+    server.OrderProductsInCart(displayOrderResultOrRedirect);
   }
 
   function doGetShoppingCart(){
@@ -58,13 +58,16 @@
 		$("ShoppingCartProductList").innerHTML = "<p>(empty)</p>";
 		$("PaymentOptions").innerHTML="";
     }
-
-
   }
 
-  function displayOrderResult(response){
-    message = response["message"];
-    $("ShoppingCartProductList").innerHTML = "<p>" + message + "</p>";
+  function displayOrderResultOrRedirect(response){
+	if("redirect" in response) {
+	   redirect_url = response["redirect"];	   
+	   window.location.href = redirect_url;
+	}else if("message" in response){	
+	   message = response["message"];
+	   $("ShoppingCartProductList").innerHTML = "<p>" + message + "</p>";
+	}
   }
   
   function tangram_init(){
