@@ -2,6 +2,9 @@
 
 {% block content %}
     <div id="adListPanel">
+	  {% if admin %}
+	  <a href="/advertisement/add">Add Advertisement</a>
+	  {% endif %}
 	  {% for ad in ads  %}
 	     {% for image in ad.advertisement_images %}
 	       <p class="ad"><a href="/advertisement/{{ad.slug}}"><img src="/advertisement_image/{{image.key}}" border="0" title="{{ad.hover_text}}" alt="{{ad.hover_text}}"></a><br/>(<a href="/advertisement/edit/{{ad.slug}}">edit</a>)</p>
