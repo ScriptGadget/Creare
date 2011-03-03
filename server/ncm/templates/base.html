@@ -22,6 +22,7 @@
 
     <div id="sidebar">
 	  {% block sidebar %}
+	  <div id="alert1"></div>
 	  {% if admin %}
 	  {% block admin%}
 	  <div id="admin_menu">
@@ -42,8 +43,7 @@
 	  {% block join %}
 	  {% if not user %} <p id="join_link">Local maker? <a href="/community/{{community.slug}}/login">Join Up</a>!</p> {% endif %}
 	  {% endblock %}
-	  {% endif %}
-    <div id="alert1"></div>
+	  {% endif %}    
 	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
 	  {% if news_items %}
 	    {% for item in news_items %}

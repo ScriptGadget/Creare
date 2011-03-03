@@ -59,6 +59,9 @@ function Request(idempotent, function_name, opt_argv) {
 				} catch (e) {
 					$('alert1').innerHTML = "Error: " + req.responseText;
 				}
+				if ('alert1' in response){
+					$('alert1').innerHTML = response['alert1'];
+				}				
 				callback(response);
 			}
 
