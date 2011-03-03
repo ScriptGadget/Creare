@@ -57,12 +57,21 @@ class Community(db.Model):
 
     @staticmethod
     def get_current_community(community_slug=None, session=None):
+        community = None
+
         if community_slug:
             community = Community.get_community_for_slug(community_slug)
         else:
             if not session:
                 session = get_current_session();
             community = Community.get_community_for_slug(session.get('community',''))
+            if not community:
+                q = db.Query(Community, True)
+                if q:
+                    key = q.get()
+                    if key:
+                        community = Community.get(key)
+
         return community
 
 class CommunityManager(db.Model):

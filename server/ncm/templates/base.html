@@ -13,7 +13,7 @@
 	</head>
 
     <body onload="tangram_init()">
-    <a href="/community/{{community.slug}}">
+    <a href="/">
     <div id="banner">
 	  {% block banner %}
       {% endblock %}
@@ -31,7 +31,7 @@
 		<li><a href="/community/edit">Settings</a></li>
 		<li><a href="/advertisements">Ads</a></li>
 		<li><a href="/makers">Makers</a></li>
-		<li><a href="/payment">Payments</a></li>
+		<li><a href="/payments">Payments</a></li>
 	  </ul>
 	  </div>
 	  {% endblock admin %}
@@ -42,7 +42,7 @@
 	</div>
 	  {% endblock cart_widget %}
 	  {% block join %}
-	  {% if not user %} <p id="join_link">Local maker? <a href="/community/{{community.slug}}/login">Join Up</a>!</p> {% endif %}
+	  {% if not user %} <p id="join_link">Local maker? <a href="/login">Join Up</a>!</p> {% endif %}
 	  {% endblock %}
 	  {% endif %}    
 	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
@@ -82,7 +82,7 @@
 	  <div id="menu">
 		{% block menu %}
 		<ul>
-		  <li><a href="/community/{{community.slug}}">Home</a></li>
+		  <li><a href="/">Home</a></li>
 		  {% if maker %}
 		  {% ifequal maker.user.key user.key %}
 		  <li><a href="/maker_dashboard/{{maker.slug}}">Manage My Store</a></li>
@@ -93,7 +93,7 @@
 		  {% if user %}
 		  <li><a href="/logout">Logout</a></li>
 		  {% else %}
-		  <li><a href="/community/{{community.slug}}/login">Login</a></li>
+		  <li><a href="/login">Login</a></li>
 		  {% endif %}
 		</ul>
 		{% endblock %}
