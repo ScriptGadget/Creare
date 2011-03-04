@@ -3,11 +3,11 @@ body { background-color: white; }
 .text { color: black; }
 
 #banner { 
-	background-image: url('/static/images/Banner-fade-750-180.jpg');
+	background-image: url('/static/images/Banner-fade-750-108.jpg');
 	background-repeat:no-repeat;
     padding: 0 0 0 5px;
 	margin-left: 5px;
-    height: 180px;
+    height: 108px;
     width: 100%;
 	color: black;
 }
@@ -61,7 +61,7 @@ body { background-color: white; }
 	margin-top: 10px;
 	position: absolute; 
 	left: 5px; 
-	top:180px;
+	top:108px;
 }
 
 #sidebar h2 {
@@ -133,6 +133,42 @@ body { background-color: white; }
 	border-width: 1px;
 }
 
+#transaction_table th{
+	text-align: left;
+}
+
+#transaction_table td{
+	border-style: dotted;
+	border-width: 1px;
+}
+
+#transaction_table_controls{
+	display:block;
+	width:100%;
+	text-align:center;
+	margin:auto;
+}
+
+#transaction_table_controls a{
+	text-decoration:none;
+}
+
+#prev_control{
+	width:60%;
+	text-align:left;
+	margin-right:15em;	
+}
+
+#next_control{
+	width:60%;
+	text-align:right;
+	margin-left:15em;
+}
+
+.totals tr{
+	border-style: none;
+}
+
 #admin_menu{
 	font-size:small;
 }
@@ -158,6 +194,25 @@ body { background-color: white; }
 	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
 }
 
+.catalog img{
+	width:75%;
+}
+
 #join_link{
 	font-size:small;
+}
+
+#maker_transaction_panel{
+	display:none;
+}
+
+#maker_product_panel{
+	display:none;
+}
+
+#maker_product_panel img{ width:25%; }
+
+.control { 
+	font-size: small;
+	color: blue; 
 }

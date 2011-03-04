@@ -444,23 +444,35 @@ class MakerDashboard(webapp.RequestHandler):
             self.redirect("/maker_store/" + maker_slug)
             return
         else:
-            q = MakerTransaction.gql("WHERE maker = :1", maker.key())
+            q = db.Query(MakerTransaction)
+            q.filter('maker =', maker.key())
             maker_transactions = q.fetch(60)
             sales = []
             class Sale:
                 pass
             total_sales = 0.0
             total_items = 0
+            total_fees = 0.0
+            total_net = 0.0
+            community = Community.get_current_community()
+            fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
+            fee_minimum = community.paypal_fee_minimum + community.fee_minimum
             for transaction in maker_transactions:
                 for entry in transaction.detail:
                     sale = Sale()
                     (product_key, items, amount) = entry.split(':')
-                    sale.product = Product.get(product_key).name
+                    sale.cart = transaction.parent()
+                    sale.timestamp = sale.cart.timestamp
+                    sale.product = Product.get(product_key)
                     sale.items = int(items)
                     sale.amount = float(amount)
+                    sale.fee = sale.amount * fee_percentage + fee_minimum
+                    sale.net = sale.amount - sale.fee
                     sales.append(sale)
                     total_items += sale.items
                     total_sales += sale.amount * sale.items
+
+            sales.sort(key=lambda sale: sale.timestamp)
 
             q = db.Query(Advertisement)
             q.filter('show =', True).filter('community =', maker.community).order('last_shown')
@@ -499,7 +511,9 @@ class AddProductToCart(webapp.RequestHandler):
         except:
             self.response.out.write('{"alert1":"Product Not Found"}')
             return
-
+        if not product.inventory:
+            self.response.out.write('{"alert1":"No More ' + product.name + ' In Stock"}')
+            return
         session = get_current_session()
         if not session.is_active():
             # session.start(ssl_only=True)
@@ -584,6 +598,8 @@ class GetShoppingCart(webapp.RequestHandler):
                     message += '"price":"' + '%3.2f' % item.price + '",'
                     message += '"total":"' + '%3.2f' % item.subtotal + '"},'
                     amount += item.subtotal
+            if len(items):
+                message = message[:-1] # some browsers don't like trailing commas
             message += '],'
             message += '"amount":"' + "%.2f" % amount + '"'
             message += '}'

@@ -57,7 +57,7 @@ function Request(idempotent, function_name, opt_argv) {
 				try {
 					response = JSON.parse(req.responseText); 
 				} catch (e) {
-					$('alert1').innerHTML = "Error: " + req.responseText;
+					$('alert1').innerHTML = "Error: " + e + req.responseText;
 				}
 				if ('alert1' in response){
 					$('alert1').innerHTML = response['alert1'];
@@ -92,3 +92,12 @@ function $(id){
 	return document.getElementById(id);
 }
 
+function hideOrShow(panel, control){
+	if($(panel).style.display!="block"){
+		$(control).innerHTML="[hide]";
+		$(panel).style.display="block";
+	}else{
+		$(control).innerHTML="[show]";
+		$(panel).style.display="none";
+	}
+}

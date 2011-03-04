@@ -1,28 +1,37 @@
 {% extends "catalog.html" %}
 {% block cart_widget %} {% endblock %}
-{% block content %}
-
+{% block banner %} 
     <div class="dashboard_offer" class="offers">
 	  {% if ad  %}
 	  <a href="{{ad.url}}"><img src="{{ad.img}}" border="0" height="{{ad.height}}" width="{{ad.width}}" alt="{{ad.hover_text}}" title="{{ad.hover_text}}"/></a>
 	  {% endif %}
 	</div>
     <div class="offer_tag">advertisement</div>
+{% endblock banner %}
+
+{% block content %}
+
+    <h1>{{maker.store_name}}: dashboard</h1>
+
 
     <div id="makerDashboardPanel">
-	  <h1>{{maker.store_name}}: dashboard</h1>
+
+		<h2>Activity&nbsp;<a id="transaction_panel_control" class="control" onclick="hideOrShow('maker_transaction_panel', 'transaction_panel_control')">[show]</a></h2>
 	  <div id="maker_transaction_panel">
-		<h2>Activity</h2>
 		<table id="transaction_table">
-		  <tr><th>Product</tdh><th>Items</th><th>Price</th></tr>
+		<div id="transaction_table_controls"><span id="prev_control"><a href="/maker_dashboard/{{maker.slug}}/prev">&lt;-- older</a> </span> <span id="next_control"> <a href="/maker_dashboard/{{maker.slug}}/next">newer --&gt;</a></span></div>
+		  <tr><th>Date</th><th>Product</th><th>Items</th><th>Price</th><th>Fees</th><th>Net</th><th>Status</th></tr>
 		{% for sale in sales %}
-		  <tr><td>{{sale.product}}</td><td>{{sale.items}}</td><td>${{sale.amount|floatformat:2}}</td></tr>
+		  <tr><td>{{sale.timestamp|date}}</td><td><a href="/product/{{sale.product.slug}}">{{sale.product.name}}</a></td><td>{{sale.items}}</td><td>${{sale.amount|floatformat:2}}</td><td>${{sale.fee|floatformat:2}}</td><td>${{sale.net|floatformat:2}}</td><td>{{sale.cart.transaction_status}}</td></tr>
 		{% endfor %}
-        <tr><th>Totals</th><td>{{total_items}}</td><td>${{total_sales|floatformat:2}}</td></tr>
+        <tr class='totals'><th>Volume</th><th></th><td>{{total_items}}</td><td>${{total_sales|floatformat:2}}</td></tr>
 		</table>
+		<div id="transaction_table_controls"><span id="prev_control"><a href="/maker_dashboard/{{maker.slug}}/prev">&lt;-- older</a> </span> <span id="next_control"> <a href="/maker_dashboard/{{maker.slug}}/next">newer --&gt;</a></span></div>
 	  </div>
-	  <h2>Products</h2>
+	  <h2>Products&nbsp;<a id="product_control" class="control" onclick="hideOrShow('maker_product_panel', 'product_control')">[show]</a></h2>
+	  <div id="maker_product_panel">
 	  <p>(<a href="/product/add">Add Product</a>)</p>
 	  {{ block.super }}
+	  </div>
     </div>
 {% endblock %}
