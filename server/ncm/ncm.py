@@ -396,7 +396,7 @@ class CommunityHomePage(webapp.RequestHandler):
         stuff = Product.all()
         products = []
         for product in stuff:
-            if str(product.maker.community.key()) == str(community.key()):
+            if product.maker.approval_status == 'Approved':
                 products.append(product)
 
         template_values = { 'title': community.name,
@@ -975,7 +975,7 @@ class AddNewsItem(webapp.RequestHandler):
             # Return immediately
             return
 
-        if user: # Need to authorize community coordinators
+        if users.is_current_user_admin():
             data = NewsItemForm()
             template_values = { 'title':'Create a News Item',
                                 'form':data,
@@ -1032,6 +1032,7 @@ class AdvertisementPage(webapp.RequestHandler):
 
 
         if not users.is_current_user_admin():
+            self.error(403)
             self.response.out.write("You do not have permission to add advertisements")
             return
         else:
@@ -1051,6 +1052,7 @@ class AdvertisementPage(webapp.RequestHandler):
             return
 
         if not users.is_current_user_admin():
+            self.error(403)
             self.response.out.write("You do not have permission to add advertisements")
             return
         else:
@@ -1183,6 +1185,61 @@ class ListAdvertisements(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/advertisements.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
+class ListMakers(webapp.RequestHandler):
+    """ List makers. """
+    def get(self):
+        authenticator = Authenticator(self)
+
+        try:
+            (user, maker) = authenticator.authenticate()
+        except:
+            # Return immediately
+            return
+
+        if not users.is_current_user_admin():
+            self.error(403)
+            self.response.out.write("You don't have permission to coordinate Makers.")
+            
+        session = get_current_session()
+        community = Community.get_community_for_slug(session.get('community'))
+        
+        if not community:
+            self.error(404)
+            self.response.out.write("I don't recognize that community")
+            return
+
+        q = Maker.all()
+        q.order('-joined')
+        makers = q.fetch(25)
+        template_values = { 
+            'title':'Makers', 
+            'makers':makers,
+            'statusList':Maker.approval_status.choices,
+            }
+        path = os.path.join(os.path.dirname(__file__), "templates/makers.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
+
+class SetApprovalStatus(webapp.RequestHandler):
+    """ Change the approval status of a  maker. """
+    def get(self):
+        self.error(404)
+        self.response.out.write("Not Found")
+
+    def post(self):
+        logging.info("SetApprovalStatus\n")
+        maker_id = self.request.get('arg0')
+        maker = Maker.get(maker_id)
+        if maker:
+            status = self.request.get('arg1').strip('"')
+            maker.approval_status = status
+            maker.put()
+            logging.info("Setting " + maker.full_name + " to " + status)
+            self.response.out.write('{"key":"' + str(maker.key()) +'", "approval_status":"' + status + '"}')            
+        else:
+            logging.error("Attempt to change approval status of a maker which doesn't exist: %s\n", maker_id)
+            self.error(404)
+            
+
 def main():
     app = webapp.WSGIApplication([
         ('/', CommunityHomePage),
@@ -1199,8 +1256,10 @@ def main():
         ('/terms', TermsPage),
         ('/login', Login),
         ('/logout', Logout),
+        ('/makers', ListMakers),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
+        ('/SetApprovalStatus', SetApprovalStatus),
         (r'/product_images/(.*)', DisplayImage),
         ('/upload_product_image', UploadProductImage), 
         ('/AddProductToCart', AddProductToCart),

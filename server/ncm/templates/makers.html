@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block functions %}
+  InstallFunction(server, 'SetApprovalStatus', false);
+
+  function doSetApprovalStatus(maker, status){
+    server.SetApprovalStatus(maker, status, refreshList);
+  }
+
+  function refreshList(response){
+    status_id="" + response["key"] + "-status";
+    $(status_id).innerHTML=response["approval_status"];
+  }
+
+  {{ block.super }}
+{% endblock %}
+
+
+{% block content %}
+<div id="maker_table">
+  <dl>
+{% for maker in makers %}
+	<dt>[<span id="{{maker.key}}-status">{{maker.approval_status}}</span>] {{maker.full_name}} - ({{maker.store_name}}) <a id="{{maker.key}}-control" class="control" onclick="hideOrShow('{{maker.key}}', '{{maker.key}}-control')">[show]</a></dt>
+	<dd id="{{maker.key}}" class="maker_detail">
+	  <div id="approval_buttons">
+		{% for status in statusList %}
+		  <input onclick="doSetApprovalStatus('{{maker.key}}', '{{status}}')" type="radio" name="{{maker.key}}" value="{{status}}" {% ifequal maker.approval_status status %}checked={% endifequal %} /> {{status}}<br/>
+		{% endfor %}
+	  </div>
+	  <p>"{{maker.store_description}}"</p>
+	  <p>Tags: {{maker.tags}}</p>
+      <p>email: <a target="_email" href="https://mail.google.com/?view=cm&fs=1&tf=1&source=mailto&to={{maker.email}}&su=Your%20Application%20To%20%20Nevada%20County%20Makes">{{maker.email}}</a></p>
+	  <p>phone: {{maker.phone_number}}</p>
+	  <p>location: {{maker.location}}</p>
+	  <p>mail: {{maker.mailing_address}}</p>
+	</dd>
+{% endfor %}
+  </dl>
+</div>
+{% endblock %}

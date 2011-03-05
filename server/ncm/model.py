@@ -83,6 +83,8 @@ class CommunityManager(db.Model):
 class Maker(db.Model):
     """ Someone who sells products  """
     user = db.UserProperty()
+    joined = db.DateTimeProperty(auto_now_add=True)
+    approval_status = db.StringProperty(choices=set(['Review','Approved','Rejected_Location', 'Rejected_Other']), default='Review')
     community = db.ReferenceProperty(Community, collection_name='makers')
     store_name = db.StringProperty(required=True)
     slug = db.StringProperty()
@@ -194,8 +196,8 @@ class CartTransaction(db.Model):
     time, so it keeps a copy of prices and counts as they were at the moment
     of purchase. """
     timestamp = db.DateTimeProperty(auto_now_add=True)
-    transaction_type = db.CategoryProperty(['Sale', 'Payout', 'Refund'])
-    transaction_status = db.CategoryProperty([ 'Requested', 'Payment Token Received', 'Confirmed', 'Shipping Details Received', 'Shipped', 'Refund Requested', 'Refund Complete', 'Payment Requested', 'Paid', 'Error'])
+    transaction_type = db.StringProperty(choices=set(['Sale', 'Payout', 'Refund']))
+    transaction_status = db.StringProperty(choices=set([ 'Requested', 'Payment Token Received', 'Confirmed', 'Shipping Details Received', 'Shipped', 'Refund Requested', 'Refund Complete', 'Payment Requested', 'Paid', 'Error']))
     error_details = db.StringProperty()
     authorization = db.StringProperty()
     note = db.StringProperty()

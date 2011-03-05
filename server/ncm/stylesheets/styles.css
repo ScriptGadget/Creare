@@ -216,3 +216,15 @@ body { background-color: white; }
 	font-size: small;
 	color: blue; 
 }
+
+.maker_detail {
+	display:none;
+}
+
+#approval_buttons {
+	border-style: dotted;
+	border-width: 1px;
+	font-size: small;
+	width: 150px;
+	text-align: left;
+}
