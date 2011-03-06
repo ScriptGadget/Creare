@@ -431,9 +431,51 @@ class TermsPage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/terms.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
-class GetMakerActivityTable(webapp.RequestHandler):
-    """ Respond to an RPC call requesting the maker activity table.  """
+class MakerActivityTableHandler(webapp.RequestHandler):
+    """ Base class for pages which handle the Maker Activity Table """
 
+    def buildTransactionRow(self, transaction, fee_percentage, fee_minimum):
+        sale = {}
+        cart = transaction.parent()
+        sale['transaction'] = str(transaction.key())
+        sale['transaction_status'] = cart.transaction_status
+        sale['timestamp'] = str(cart.timestamp)
+        sale['date'] = str(cart.timestamp.date())
+        sale['shipped'] = transaction.shipped
+        products = []
+        sale_amount = 0.0
+        sale_items = 0
+        sale_fee = 0.0
+        additional_sales = 0.0
+        additional_items = 0
+
+        for entry in transaction.detail:
+            product = {}
+            (product_key, items, amount) = entry.split(':')
+            product_amount = float(amount)
+            product_items = int(items)
+            fee = sale_amount * fee_percentage + fee_minimum
+            sale_amount += product_amount
+            sale_items += product_items
+            sale_fee += fee
+            product['product_name'] = Product.get(product_key).name
+            product['items'] = product_items
+            product['amount'] = "%.2f" % product_amount
+            product['fee'] = "%.2f" % fee
+            product['net'] = "%.2f" % (float(product_amount) - float(fee))
+            additional_items += product_items
+            additional_sales += product_amount * product_items
+            sale['product'] = product
+
+        sale['items'] = sale_items
+        sale['fee'] = "%.2f" % sale_fee
+        sale['amount'] = "%.2f" % sale_amount
+        sale['net'] = "%.2f" % (sale_amount - sale_fee)
+
+        return (sale, additional_items, additional_sales)
+
+class GetMakerActivityTable(MakerActivityTableHandler):
+    """ Respond to an RPC call requesting the maker activity table.  """
     def post(self):
         self.error(404)
 
@@ -455,41 +497,11 @@ class GetMakerActivityTable(webapp.RequestHandler):
         community = Community.get_current_community()
         fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
         fee_minimum = community.paypal_fee_minimum + community.fee_minimum
+
         for transaction in maker_transactions:
-            sale = {}
-            cart = transaction.parent()
-            sale['transaction'] = str(transaction.key())
-            sale['transaction_status'] = cart.transaction_status
-            sale['timestamp'] = str(cart.timestamp)
-            sale['date'] = str(cart.timestamp.date())
-            sale['shipped'] = transaction.shipped
-            products = []
-            sale_amount = 0.0
-            sale_items = 0
-            sale_fee = 0.0
-
-            for entry in transaction.detail:
-                product = {}
-                (product_key, items, amount) = entry.split(':')
-                product_amount = float(amount)
-                product_items = int(items)
-                fee = sale_amount * fee_percentage + fee_minimum
-                sale_amount += product_amount
-                sale_items += product_items
-                sale_fee += fee
-                product['product_name'] = Product.get(product_key).name
-                product['items'] = product_items
-                product['amount'] = "%.2f" % product_amount
-                product['fee'] = "%.2f" % fee
-                product['net'] = "%.2f" % (float(product_amount) - float(fee))
-                total_items += product_items
-                total_sales += product_amount * product_items
-                sale['product'] = product
-
-            sale['items'] = sale_items
-            sale['fee'] = "%.2f" % sale_fee
-            sale['amount'] = "%.2f" % sale_amount
-            sale['net'] = "%.2f" % (sale_amount - sale_fee)
+            (sale, additional_items, additional_sales) = self.buildTransactionRow(transaction, fee_percentage, fee_minimum)
+            total_items += additional_items
+            total_sales += additional_sales
             sales.append(sale)
 
         sales.sort(key=lambda sale: sale['timestamp'], reverse=True)
@@ -499,6 +511,34 @@ class GetMakerActivityTable(webapp.RequestHandler):
                   'total_items':total_items}
 
         self.response.out.write(simplejson.dumps(reply))
+
+class SetMakerTransactionShipped(MakerActivityTableHandler):
+    def post(self):
+        maker = Maker.get(self.request.get('arg0'))
+        if not maker and not Authenticator.authorized_for(maker.user):
+            self.error(403)
+            self.response.out.write('{"alert1":"You do not have permission to request that."}')
+            return
+
+        transaction = MakerTransaction.get(self.request.get('arg1'))
+        if not transaction:
+            self.response.out.write('{"alert1":"Transaction not found."}')
+            return
+        transaction.shipped = not transaction.shipped
+        transaction.put()
+
+        community = Community.get_current_community()
+        fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
+        fee_minimum = community.paypal_fee_minimum + community.fee_minimum
+        
+        (sale, additional_items, additional_sales) = self.buildActivityTableRow(transaction, fee_percentage, fee_minimum)
+        reply = {"sale":sale}
+
+        self.response.out.write(simplejson.dumps(reply))
+
+    def get(self):
+        self.error(404)
+        self.response.out.write('{"alert1":"Error, request not idempotent."}')
 
 class MakerDashboard(webapp.RequestHandler):
     """ Renders a page for Makers to view and manage their catalog and sales """
@@ -1337,66 +1377,6 @@ class CompletePurchase(webapp.RequestHandler):
 
     def post(self):
         self.handle()
-
-class SetMakerTransactionShipped(webapp.RequestHandler):
-    def post(self):
-        maker = Maker.get(self.request.get('arg0'))
-        if not maker and not Authenticator.authorized_for(maker.user):
-            self.error(403)
-            self.response.out.write('{"alert1":"You do not have permission to request that."}')
-            return
-
-        transaction = MakerTransaction.get(self.request.get('arg1'))
-        if not transaction:
-            self.response.out.write('{"alert1":"Transaction not found."}')
-            return
-        transaction.shipped = not transaction.shipped
-        transaction.put()
-
-        community = Community.get_current_community()
-        fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
-        fee_minimum = community.paypal_fee_minimum + community.fee_minimum        
-        sale = {}
-        cart = transaction.parent()
-        sale['transaction'] = str(transaction.key())
-        sale['transaction_status'] = cart.transaction_status
-        sale['timestamp'] = str(cart.timestamp)
-        sale['date'] = str(cart.timestamp.date())
-        sale['shipped'] = transaction.shipped
-        products = []
-        sale_amount = 0.0
-        sale_items = 0
-        sale_fee = 0.0
-
-        for entry in transaction.detail:
-            product = {}
-            (product_key, items, amount) = entry.split(':')
-            product_amount = float(amount)
-            product_items = int(items)
-            fee = sale_amount * fee_percentage + fee_minimum
-            sale_amount += product_amount
-            sale_items += product_items
-            sale_fee += fee
-            product['product_name'] = Product.get(product_key).name
-            product['items'] = product_items
-            product['amount'] = "%.2f" % product_amount
-            product['fee'] = "%.2f" % fee
-            product['net'] = "%.2f" % (float(product_amount) - float(fee))
-            sale['product'] = product
-
-        sale['items'] = sale_items
-        sale['fee'] = "%.2f" % sale_fee
-        sale['amount'] = "%.2f" % sale_amount
-        sale['net'] = "%.2f" % (sale_amount - sale_fee)
-
-        reply = {"sale":sale}
-
-        self.response.out.write(simplejson.dumps(reply))
-
-    def get(self):
-        self.error(404)
-        self.response.out.write('{"alert1":"Error, request not idempotent."}')
-
 
 def main():
     app = webapp.WSGIApplication([
