@@ -17,6 +17,9 @@ class Community(db.Model):
     """ A Community of Makers and Crafters  """
     name = db.StringProperty(required=True)
     slug = db.StringProperty()
+    support_email=db.EmailProperty()
+    support_phone=db.PhoneNumberProperty()
+
     fee_percentage = db.FloatProperty(required=True, default=10.0)
     fee_minimum = db.FloatProperty(required=True, default=0.30)
     paypal_fee_percentage = db.FloatProperty(required=True, default=2.9)

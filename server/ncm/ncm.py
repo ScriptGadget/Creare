@@ -168,8 +168,9 @@ class ProductPage(webapp.RequestHandler):
             # Return immediately
             return
 
-        if not user or not maker:
-            self.redirect('/')
+        if not user or not maker or not maker.approval_status == 'Approved':
+            self.error(403)
+            self.response.out.write("You do not have permission to add products.")
             return
         else:
             template_values = { 'form' : ProductForm(), 'maker':maker,
@@ -187,8 +188,9 @@ class ProductPage(webapp.RequestHandler):
             # Return immediately
             return
 
-        if not user or not maker:
-            self.redirect('/')
+        if not user or not maker or not maker.approval_status == 'Approved':
+            self.error(403)
+            self.response.out.write("You do not have permission to add products.")
             return
         else:
             data = ProductForm(data=self.request.POST)
@@ -268,7 +270,7 @@ class EditProductPage(webapp.RequestHandler):
         else:
             product = Product.get_product_for_slug(product_slug)
 
-            if not Authenticator.authorized_for(product.maker.user):
+            if not Authenticator.authorized_for(product.maker.user) or not maker.approval_status == 'Approved':
                 self.error(403)
                 self.response.out.write("You do not have permission to edit that product.")
                 return
@@ -293,7 +295,7 @@ class EditProductPage(webapp.RequestHandler):
           # Return immediately
           return
 
-      if not Authenticator.authorized_for(product.maker.user):
+      if not Authenticator.authorized_for(product.maker.user) or not maker.approval_status == 'Approved':
           logging.error('Illegal attempt to edit product owned by: ' + product.maker.full_name + ' by ' + str(user.get_current_user()))
           self.redirect('/')
           return

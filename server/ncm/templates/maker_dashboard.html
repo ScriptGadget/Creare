@@ -13,7 +13,7 @@
 
     <h1>{{maker.store_name}}: dashboard</h1>
 
-
+	{% ifequal maker.approval_status "Approved" %}
     <div id="makerDashboardPanel">
 
 		<h2>Activity&nbsp;<a id="transaction_panel_control" class="control" onclick="hideOrShow('maker_transaction_panel', 'transaction_panel_control')">[show]</a></h2>
@@ -33,5 +33,14 @@
 	  <p>(<a href="/product/add">Add Product</a>)</p>
 	  {{ block.super }}
 	  </div>
+	  {% else %}
+	  <div id="new_maker_panel">
+		<p>Your application has been submitted.</p> 
+		<p>Once your account has been activated, this is where you will be able to add and manage your product listings and track your sales.</p>
+		<p>We may call or email you if we have any questions about your new store. If you have any questions please don't hesitate to call or email Jerri.</p>	
+		<p><strong>email</strong>: <a href="mailto:nevadacountymakes.com">{{community.support_email}}</a></p>
+		<p><strong>phone</strong>: ({{community.support_phone|slice:":3"}}) {{community.support_phone|slice:"3:6"}}-{{community.support_phone|slice:"6:"}}</p>
+	  </div>
+	  {% endifequal %}
     </div>
 {% endblock %}
