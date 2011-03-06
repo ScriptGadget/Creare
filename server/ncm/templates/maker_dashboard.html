@@ -1,4 +1,66 @@
 {% extends "catalog.html" %}
+{% block functions %}
+  InstallFunction(server, 'GetMakerActivityTable', true);
+  InstallFunction(server, 'SetMakerTransactionShipped', false);
+
+  function doGetMakerActivityTable(start, end){
+    server.GetMakerActivityTable("{{maker.key}}", start, end, updateMakerActivityTable);
+  }
+
+  function doSetMakerTransactionShipped(transaction){
+    server.SetMakerTransactionShipped("{{maker.key}}", transaction, updateChangedRow);
+  }
+
+  function buildSaleRow(sale, cellsOnly){
+      if(sale.transaction_status == null)
+        sale.transaction_status = "Old";
+
+      row = '';
+
+      if(!cellsOnly)
+        row += "<tr id='"+sale.transaction+"'>";
+
+	  row += "<td>"+sale.date+"</td><td>"+sale.items+"</td><td>"+sale.amount+"</td><td>"+sale.fee+"</td><td>"+sale.net+"</td><td>"+sale.transaction_status+"</td>";
+	  row += "<td><input type='checkbox' onclick='doSetMakerTransactionShipped(\"" + sale.transaction + "\", \"" + start + "\", \""  + end + "\")'";
+	  if(sale.shipped){
+	    row += " checked/></td>";
+      }else{
+	    row += " /></td>";
+      }
+
+      if(!cellsOnly)
+	    row += " </tr> ";
+
+      return row;
+  }
+
+  function updateChangedRow(response){
+    sale = response["sale"];
+    if(sale != null){
+      $(sale.transaction).innerHTML = buildSaleRow(sale, true);
+    }
+  }
+
+  function updateMakerActivityTable(response){
+    sales = response["sales"];
+    start = response["start"];
+    end = response["end"];
+    header = "<tr><th>Date</th><th>Items</th><th>Price</th><th>Fees</th><th>Net</th><th>Payment</th><th>Shipped?</th></tr>";
+    rows = " ";
+    for(var i = 0; i < sales.length; i++){
+	  rows += buildSaleRow(sales[i], false);
+    }
+    totals ="<tr class='totals'><th>Volume</th><td>" + response["total_items"] + "</td><td>$" + response["total_sales"] + "</td></tr>";
+    $("transaction_table").innerHTML=header + rows + totals;
+  }
+
+  function tangram_init(){
+    doGetMakerActivityTable("","");
+  }
+
+{% endblock functions %}
+
+
 {% block cart_widget %} {% endblock %}
 {% block banner %} 
     <div class="dashboard_offer" class="offers">
@@ -18,14 +80,11 @@
 
 		<h2>Activity&nbsp;<a id="transaction_panel_control" class="control" onclick="hideOrShow('maker_transaction_panel', 'transaction_panel_control')">[show]</a></h2>
 	  <div id="maker_transaction_panel">
-		<table id="transaction_table">
 		<div id="transaction_table_controls"><span id="prev_control"><a href="/maker_dashboard/{{maker.slug}}/prev">&lt;-- older</a> </span> <span id="next_control"> <a href="/maker_dashboard/{{maker.slug}}/next">newer --&gt;</a></span></div>
-		  <tr><th>Date</th><th>Product</th><th>Items</th><th>Price</th><th>Fees</th><th>Net</th><th>Status</th></tr>
-		{% for sale in sales %}
-		  <tr><td>{{sale.timestamp|date}}</td><td><a href="/product/{{sale.product.slug}}">{{sale.product.name}}</a></td><td>{{sale.items}}</td><td>${{sale.amount|floatformat:2}}</td><td>${{sale.fee|floatformat:2}}</td><td>${{sale.net|floatformat:2}}</td><td>{{sale.cart.transaction_status}}</td></tr>
-		{% endfor %}
-        <tr class='totals'><th>Volume</th><th></th><td>{{total_items}}</td><td>${{total_sales|floatformat:2}}</td></tr>
+
+		<table id="transaction_table">
 		</table>
+
 		<div id="transaction_table_controls"><span id="prev_control"><a href="/maker_dashboard/{{maker.slug}}/prev">&lt;-- older</a> </span> <span id="next_control"> <a href="/maker_dashboard/{{maker.slug}}/next">newer --&gt;</a></span></div>
 	  </div>
 	  <h2>Products&nbsp;<a id="product_control" class="control" onclick="hideOrShow('maker_product_panel', 'product_control')">[show]</a></h2>

@@ -199,8 +199,8 @@ class CartTransaction(db.Model):
     time, so it keeps a copy of prices and counts as they were at the moment
     of purchase. """
     timestamp = db.DateTimeProperty(auto_now_add=True)
-    transaction_type = db.StringProperty(choices=set(['Sale', 'Payout', 'Refund']))
-    transaction_status = db.StringProperty(choices=set([ 'Requested', 'Payment Token Received', 'Confirmed', 'Shipping Details Received', 'Shipped', 'Refund Requested', 'Refund Complete', 'Payment Requested', 'Paid', 'Error']))
+    transaction_type = db.StringProperty(choices=set(['Sale', 'Payout', 'Refund']), default='Sale', required='True')
+    transaction_status = db.StringProperty(choices=set([ 'Created', 'Paid', 'Refund Requested', 'Refund Completed', 'Error']), default='Created', required='True')
     error_details = db.StringProperty()
     authorization = db.StringProperty()
     note = db.StringProperty()
@@ -212,7 +212,7 @@ class MakerTransaction(db.Model):
                                  collection_name="maker_transaction",
                                  required=True)
     detail = db.StringListProperty()
-
+    shipped = db.BooleanProperty(default=False)
 
 # NewsItems, EventNotices and TipItems  are similar
 # but they are never logically managed together

@@ -1,6 +1,7 @@
 # !/usr/bin/env python
 import os
 import logging
+from django.utils import simplejson
 from google.appengine.api import images
 
 import urllib
@@ -430,6 +431,75 @@ class TermsPage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/terms.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
+class GetMakerActivityTable(webapp.RequestHandler):
+    """ Respond to an RPC call requesting the maker activity table.  """
+
+    def post(self):
+        self.error(404)
+
+    def get(self):
+        maker = Maker.get(self.request.get('arg0'))
+        if not maker and not Authenticator.authorized_for(maker.user):
+            self.error(403)
+            self.response.out.write('{"alert1":"You do not have permission to request that."}')
+            return
+
+        q = db.Query(MakerTransaction)
+        q.filter('maker =', maker.key())
+        maker_transactions = q.fetch(60)
+        sales = []
+        total_sales = 0.0
+        total_items = 0
+        total_fees = 0.0
+        total_net = 0.0
+        community = Community.get_current_community()
+        fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
+        fee_minimum = community.paypal_fee_minimum + community.fee_minimum
+        for transaction in maker_transactions:
+            sale = {}
+            cart = transaction.parent()
+            sale['transaction'] = str(transaction.key())
+            sale['transaction_status'] = cart.transaction_status
+            sale['timestamp'] = str(cart.timestamp)
+            sale['date'] = str(cart.timestamp.date())
+            sale['shipped'] = transaction.shipped
+            products = []
+            sale_amount = 0.0
+            sale_items = 0
+            sale_fee = 0.0
+
+            for entry in transaction.detail:
+                product = {}
+                (product_key, items, amount) = entry.split(':')
+                product_amount = float(amount)
+                product_items = int(items)
+                fee = sale_amount * fee_percentage + fee_minimum
+                sale_amount += product_amount
+                sale_items += product_items
+                sale_fee += fee
+                product['product_name'] = Product.get(product_key).name
+                product['items'] = product_items
+                product['amount'] = "%.2f" % product_amount
+                product['fee'] = "%.2f" % fee
+                product['net'] = "%.2f" % (float(product_amount) - float(fee))
+                total_items += product_items
+                total_sales += product_amount * product_items
+                sale['product'] = product
+
+            sale['items'] = sale_items
+            sale['fee'] = "%.2f" % sale_fee
+            sale['amount'] = "%.2f" % sale_amount
+            sale['net'] = "%.2f" % (sale_amount - sale_fee)
+            sales.append(sale)
+
+        sales.sort(key=lambda sale: sale['timestamp'], reverse=True)
+
+        reply = { 'sales':sales,
+                  'total_sales': "%.2f" % total_sales,
+                  'total_items':total_items}
+
+        self.response.out.write(simplejson.dumps(reply))
+
 class MakerDashboard(webapp.RequestHandler):
     """ Renders a page for Makers to view and manage their catalog and sales """
     def get(self, maker_slug):
@@ -474,7 +544,7 @@ class MakerDashboard(webapp.RequestHandler):
                     total_items += sale.items
                     total_sales += sale.amount * sale.items
 
-            sales.sort(key=lambda sale: sale.timestamp)
+            sales.sort(key=lambda sale: sale.timestamp, reverse=True)
 
             q = db.Query(Advertisement)
             q.filter('show =', True).filter('community =', maker.community).order('last_shown')
@@ -566,7 +636,11 @@ class RemoveProductFromCart(webapp.RequestHandler):
         self.response.out.write('{"result":"success"}')
 
 class GetShoppingCart(webapp.RequestHandler):
-    """ Accept a JSON RPC request to provide information for a paypal payment button"""
+    """ 
+    Accept a JSON RPC request to provide information for a shopping cart table and 
+    paypal payment button
+    """
+
     def get(self):
         session = get_current_session()
         if not session.is_active():
@@ -854,13 +928,19 @@ class OrderProductsInCart(webapp.RequestHandler):
                                         + "\"}")
                 return
 
-            response = payment.execute()
-            paypalPaymentResponse = PaypalPaymentResponse( parent=cart_transaction,
-                                                           response=response.content)
-            paypalPaymentResponse.put();
-            confirmation_url = payment.buildRedirectURL(response=response, sandbox=True)
+            try:
+                response = payment.execute()
+                paypalPaymentResponse = PaypalPaymentResponse( parent=cart_transaction,
+                                                               response=response.content)
+                paypalPaymentResponse.put();
+                confirmation_url = payment.buildRedirectURL(response=response, sandbox=True)
+            except Exception as e:
+                logging.Error('Exception handling Paypal transaction: %s',  str(e));
+                response = None
 
             if response and confirmation_url:
+                cart_transaction.transaction_status = 'Paid';
+                cart_transaction.put()
                 db.put(maker_transactions)
                 db.put(products)
                 message = '{ "redirect":"%s" }' % confirmation_url
@@ -868,11 +948,13 @@ class OrderProductsInCart(webapp.RequestHandler):
                 session.pop('ShoppingCartItems')
             else:
                 logging.error("A Paypal checkout failed! Here's the cart: " + items)
-                cart_transaction.delete()
+                cart_transaction.transaction_status = 'Error'
+                cart_transaction.error_details = 'Error Talking to Paypal.'
+                cart_transaction.put()
                 self.response.out.write("{ \"message\":\""
-                                    + "An error occured talking to Paypal. Please try again later. You can also call us or email. We have logged the erorr and will be looking into it right away."
+                                    + "An error occured talking to Paypal. Please try again later. You can also call us or email. We have logged the error and will be looking into it right away."
                                     + "\"}")
-                # TBD Generate alert.
+                # TBD Generate email alert?
             return
 
 class ListNewsItems(webapp.RequestHandler):
@@ -1242,6 +1324,80 @@ class SetApprovalStatus(webapp.RequestHandler):
             self.error(404)
             
 
+class CompletePurchase(webapp.RequestHandler):
+    """ Handle a redirect from Paypal for a successful purchase. """
+    def handle(self):
+        logging.info("Redirect from Paypal: " + str(self.request))
+        template_values = {"message":"Not Yet Implemented."}
+        path = os.path.join(os.path.dirname(__file__), "templates/error.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
+
+    def get(self):
+        self.handle()
+
+    def post(self):
+        self.handle()
+
+class SetMakerTransactionShipped(webapp.RequestHandler):
+    def post(self):
+        maker = Maker.get(self.request.get('arg0'))
+        if not maker and not Authenticator.authorized_for(maker.user):
+            self.error(403)
+            self.response.out.write('{"alert1":"You do not have permission to request that."}')
+            return
+
+        transaction = MakerTransaction.get(self.request.get('arg1'))
+        if not transaction:
+            self.response.out.write('{"alert1":"Transaction not found."}')
+            return
+        transaction.shipped = not transaction.shipped
+        transaction.put()
+
+        community = Community.get_current_community()
+        fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
+        fee_minimum = community.paypal_fee_minimum + community.fee_minimum        
+        sale = {}
+        cart = transaction.parent()
+        sale['transaction'] = str(transaction.key())
+        sale['transaction_status'] = cart.transaction_status
+        sale['timestamp'] = str(cart.timestamp)
+        sale['date'] = str(cart.timestamp.date())
+        sale['shipped'] = transaction.shipped
+        products = []
+        sale_amount = 0.0
+        sale_items = 0
+        sale_fee = 0.0
+
+        for entry in transaction.detail:
+            product = {}
+            (product_key, items, amount) = entry.split(':')
+            product_amount = float(amount)
+            product_items = int(items)
+            fee = sale_amount * fee_percentage + fee_minimum
+            sale_amount += product_amount
+            sale_items += product_items
+            sale_fee += fee
+            product['product_name'] = Product.get(product_key).name
+            product['items'] = product_items
+            product['amount'] = "%.2f" % product_amount
+            product['fee'] = "%.2f" % fee
+            product['net'] = "%.2f" % (float(product_amount) - float(fee))
+            sale['product'] = product
+
+        sale['items'] = sale_items
+        sale['fee'] = "%.2f" % sale_fee
+        sale['amount'] = "%.2f" % sale_amount
+        sale['net'] = "%.2f" % (sale_amount - sale_fee)
+
+        reply = {"sale":sale}
+
+        self.response.out.write(simplejson.dumps(reply))
+
+    def get(self):
+        self.error(404)
+        self.response.out.write('{"alert1":"Error, request not idempotent."}')
+
+
 def main():
     app = webapp.WSGIApplication([
         ('/', CommunityHomePage),
@@ -1267,6 +1423,8 @@ def main():
         ('/AddProductToCart', AddProductToCart),
         ('/RemoveProductFromCart', RemoveProductFromCart),
         ('/GetShoppingCart', GetShoppingCart),
+        ('/GetMakerActivityTable', GetMakerActivityTable),
+        ('/SetMakerTransactionShipped', SetMakerTransactionShipped),
         ('/community/add', AddCommunityPage),
         ('/community/edit', EditCommunityPage),
         ('/checkout', CheckoutPage),
@@ -1280,6 +1438,8 @@ def main():
         (r'/advertisement_image/(.*)', DisplayImage),
         (r'/advertisement/(.*)', ViewAdvertisementPage),
         ('/advertisements', ListAdvertisements),
+        ('/return', CompletePurchase),
+        ('/cancel', CompletePurchase),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)
