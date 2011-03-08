@@ -19,7 +19,7 @@ class TestSandboxPayment(unittest.TestCase):
                 store_name='Test Store #%d' % i,
                 store_description = 'Nothing',
                 full_name = 'Maker %d' % i,
-                email = 'maker%d@example.com',
+                email = 'maker%d@example.com' % i,
                 phone_number = '5305551212',
                 location = 'Test Place',
                 mailing_address = '111 Test Ave, Tester CA, 95945',
@@ -50,7 +50,7 @@ class TestSandboxPayment(unittest.TestCase):
 
         for i in range(5):
             parameters['transaction[%d].status_for_sender_txn' % i] = 'SUCCESS'
-            parameters['transaction[%d].receiver' % i] = 'maker%d@example.com' % i
+            parameters['transaction[%d].receiver' % i] = self.makers[i].email
 
         status = 'COMPLETED'
 
@@ -68,4 +68,4 @@ class TestSandboxPayment(unittest.TestCase):
         q.ancestor(cart)
         maker_transactions = q.fetch(5)
         for transaction in maker_transactions:
-            transaction.status == 'Paid'
+            self.assertTrue(transaction.status == 'Paid')
