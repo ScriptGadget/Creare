@@ -26,6 +26,9 @@ handlers:
   script: cleanup_sessions.py
   login: admin
 
+- url: /ipn
+  script: ipn.py
+
 - url: /test.*
   script: gaeunit.py
 

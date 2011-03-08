@@ -199,10 +199,10 @@ class CartTransaction(db.Model):
     time, so it keeps a copy of prices and counts as they were at the moment
     of purchase. """
     timestamp = db.DateTimeProperty(auto_now_add=True)
-    transaction_type = db.StringProperty(choices=set(['Sale', 'Payout', 'Refund']), default='Sale', required='True')
-    transaction_status = db.StringProperty(choices=set([ 'Created', 'Paid', 'Refund Requested', 'Refund Completed', 'Error']), default='Created', required='True')
+    transaction_type = db.StringProperty(choices=set(['Sale']), default='Sale', required=True)
+    transaction_status = db.StringProperty(choices=set(['UNSUBMITTED', 'CREATED', 'ERROR', 'REVERSALERROR', 'COMPLETED', 'INCOMPLETE']), default='UNSUBMITTED', required=True)
     error_details = db.StringProperty()
-    authorization = db.StringProperty()
+    paypal_pay_key = db.StringProperty()
     note = db.StringProperty()
     transaction_history = db.TextProperty()
 
@@ -211,8 +211,12 @@ class MakerTransaction(db.Model):
     maker = db.ReferenceProperty(Maker,
                                  collection_name="maker_transaction",
                                  required=True)
+    email = db.EmailProperty() #de-normalize for transactions in IPN handling
     detail = db.StringListProperty()
-    shipped = db.BooleanProperty(default=False)
+    shipped = db.BooleanProperty(required=True, default=False)
+    when = db.StringProperty(required=True)
+    status = db.StringProperty(choices=set(['Pending', 'Paid', 'Error']), default='Pending', required=True)
+    messages = db.StringProperty()
 
 # NewsItems, EventNotices and TipItems  are similar
 # but they are never logically managed together

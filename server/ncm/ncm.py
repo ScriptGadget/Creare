@@ -1,10 +1,13 @@
 # !/usr/bin/env python
 import os
 import logging
-from django.utils import simplejson
-from google.appengine.api import images
-
+from datetime import datetime
+import hashlib
 import urllib
+
+from django.utils import simplejson
+
+from google.appengine.api import images
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp import util
@@ -438,8 +441,8 @@ class MakerActivityTableHandler(webapp.RequestHandler):
         sale = {}
         cart = transaction.parent()
         sale['transaction'] = str(transaction.key())
-        sale['transaction_status'] = cart.transaction_status
-        sale['timestamp'] = str(cart.timestamp)
+        sale['transaction_status'] = transaction.status
+        sale['when'] = transaction.when
         sale['date'] = str(cart.timestamp.date())
         sale['shipped'] = transaction.shipped
         products = []
@@ -486,9 +489,20 @@ class GetMakerActivityTable(MakerActivityTableHandler):
             self.response.out.write('{"alert1":"You do not have permission to request that."}')
             return
 
+        cursor = self.request.get('arg1').strip('"')
+        direction = self.request.get('arg2').strip('"')
         q = db.Query(MakerTransaction)
         q.filter('maker =', maker.key())
-        maker_transactions = q.fetch(60)
+        
+        if cursor and cursor != '':
+            if direction and direction == 'older':
+                q.order('-when')
+                q.filter('when <', cursor)
+        else:
+            q.order('-when')
+
+        maker_transactions = q.fetch(15)
+
         sales = []
         total_sales = 0.0
         total_items = 0
@@ -504,7 +518,7 @@ class GetMakerActivityTable(MakerActivityTableHandler):
             total_sales += additional_sales
             sales.append(sale)
 
-        sales.sort(key=lambda sale: sale['timestamp'], reverse=True)
+        sales.sort(key=lambda sale: sale['when'], reverse=True)
 
         reply = { 'sales':sales,
                   'total_sales': "%.2f" % total_sales,
@@ -933,8 +947,12 @@ class OrderProductsInCart(webapp.RequestHandler):
                     else:
                         logging.info(str(maker_transaction.maker.key()) + "!=" + str(product.maker.key()))
                 else:
+                    when = "%s|%s" % (datetime.now(), hashlib.md5(str(product.maker.key())+get_current_session().sid).hexdigest())
                     maker_transaction = MakerTransaction(parent=cart_transaction,
-                                                         maker=product.maker)
+                                                         maker=product.maker,
+                                                         email=product.maker.email,
+                                                         when=when)
+
                     entry = "%s:%s:%s" % (str(product.key()),
                                           str(item.count),
                                           str(item.price))
@@ -956,9 +974,11 @@ class OrderProductsInCart(webapp.RequestHandler):
                                                 api_signature=community.paypal_sandbox_api_signature,
                                                 application_id=community.paypal_sandbox_application_id,
                                                 client_ip=self.request.remote_addr,
-                                                cancel_url=base_url+'/cancel',
-                                                return_url=base_url+'/return',
+                                                cancel_url=base_url+'/cancel?payKey=${payKey}',
+                                                return_url=base_url+'/return?payKey=${payKey}',
                                                 action_url='https://svcs.sandbox.paypal.com/AdaptivePayments/Pay',
+                                                ipn_url=base_url+'/ipn',
+                                                trackingId=str(cart_transaction.key()),
                                                 sandbox_email=community.paypal_sandbox_email_address,
                                                 )
             except TooManyRecipientsException:
@@ -973,13 +993,14 @@ class OrderProductsInCart(webapp.RequestHandler):
                 paypalPaymentResponse = PaypalPaymentResponse( parent=cart_transaction,
                                                                response=response.content)
                 paypalPaymentResponse.put();
-                confirmation_url = payment.buildRedirectURL(response=response, sandbox=True)
+                confirmation_url = payment.buildRedirectURL(response=response, sandbox=community.use_sandbox)
             except Exception as e:
                 logging.Error('Exception handling Paypal transaction: %s',  str(e));
                 response = None
 
             if response and confirmation_url:
-                cart_transaction.transaction_status = 'Paid';
+                cart_transaction.transaction_status = 'Created';
+                cart_transaction.paypal_pay_key = payment.pay_key
                 cart_transaction.put()
                 db.put(maker_transactions)
                 db.put(products)

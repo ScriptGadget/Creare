@@ -5,6 +5,9 @@ from google.appengine.ext import db
 import urllib
 from google.appengine.api import urlfetch
 
+SANDBOX_PP_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+PP_URL = "https://www.paypal.com/cgi-bin/webscr"
+
 class PaypalPaymentResponse(db.Model):
     """ parent will be a CartTransaction """
     response=db.TextProperty(required=True)
@@ -36,7 +39,7 @@ class PaypalChainedPayment:
     """
     def __init__(self, primary_recipient, additional_recipients, api_username, api_password, 
                  api_signature, application_id, client_ip, cancel_url, return_url, action_url, 
-                 sandbox_email=""):
+                 ipn_url, sandbox_email=""):
         """
         Must have at least a primary receiver, additional receivers are optional. 
         Paypal does not currently support chained payments with more than five additional receivers.
@@ -66,6 +69,7 @@ class PaypalChainedPayment:
         self.form_fields = []
         self.form_fields.append(('actionType','PAY'))
         self.form_fields.append(('cancelUrl', cancel_url))
+        self.form_fields.append(('returnUrl', return_url))
 
         #By convention, we will always put the primary first.
         (email, amount) = primary_recipient
@@ -80,7 +84,8 @@ class PaypalChainedPayment:
             self.form_fields.append(("receiverList.receiver(%d).amount" % i, '%.2f' % amount))
             i += 1
 
-        self.form_fields.append(('returnUrl', return_url))
+        self.form_fields.append(('feesPayer', 'PRIMARYRECEIVER'))
+        self.form_fields.append(('ipnNotificationUrl', ipn_url))
         self.form_fields.append(('currencyCode', 'USD'))
         self.form_fields.append(('requestEnvelope.errorLanguage', 'en_US'))
 
@@ -90,7 +95,8 @@ class PaypalChainedPayment:
         try:
             ack = parsed_response['responseEnvelope.ack'][0]
             if ack and ack == 'Success':
-                url = self.redirect_url_template + parsed_response['payKey'][0]
+                self.pay_key = parsed_response['payKey'][0]
+                url = self.redirect_url_template + self.pay_key
 
         except KeyError:
             logging.error('Bad Response from PayPal: %s\n' % response.content)

@@ -33,6 +33,7 @@ class TestPayment(unittest.TestCase):
                 cancel_url='http://example.com/cancel',
                 return_url='http://example.com/return',
                 action_url='http://notreally.sandbox.paypal.com',
+                ipn_url='http://example.com/ipn',
                 )
 
         except TooManyRecipientsException:
@@ -61,6 +62,7 @@ class TestPayment(unittest.TestCase):
                 cancel_url='http://example.com/cancel',
                 return_url='http://example.com/return',
                 action_url='http://notreally.sandbox.paypal.com',
+                ipn_url='http://example.com/ipn',
                 )
 
         except TooManyRecipientsException:

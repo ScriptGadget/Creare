@@ -1,19 +1,31 @@
 {% extends "catalog.html" %}
 {% block functions %}
+  // current first transaction shown
+  var scursor = "";
+  var ecursor = "";
+
   InstallFunction(server, 'GetMakerActivityTable', true);
   InstallFunction(server, 'SetMakerTransactionShipped', false);
 
-  function doGetMakerActivityTable(start, end){
-    server.GetMakerActivityTable("{{maker.key}}", start, end, updateMakerActivityTable);
+  function doGetMakerActivityTable(cursor, direction){
+    server.GetMakerActivityTable("{{maker.key}}", cursor, direction, updateMakerActivityTable);
   }
 
   function doSetMakerTransactionShipped(transaction){
     server.SetMakerTransactionShipped("{{maker.key}}", transaction, updateChangedRow);
   }
 
+  function doGetOlderTransactions(){
+    doGetMakerActivityTable(ecursor, "older");
+  }
+
+  function doGetNewerTransactions(){
+    doGetMakerActivityTable(scursor, "newer");
+  }
+
   function buildSaleRow(sale, cellsOnly){
       if(sale.transaction_status == null)
-        sale.transaction_status = "Old";
+        sale.transaction_status = "Unknown";
 
       row = '';
 
@@ -47,15 +59,23 @@
     end = response["end"];
     header = "<tr><th>Date</th><th>Items</th><th>Price</th><th>Fees</th><th>Net</th><th>Payment</th><th>Shipped?</th></tr>";
     rows = " ";
-    for(var i = 0; i < sales.length; i++){
-	  rows += buildSaleRow(sales[i], false);
-    }
+
+    if(sales.length > 0){
+      scursor = sales[0].when
+      for(var i = 0; i < sales.length; i++){
+	    rows += buildSaleRow(sales[i], false);
+      }
+	  ecursor = sales[i-1].when
+	}else{
+	  rows += "<td>No sales for that date range.</td>"
+	}
+
     totals ="<tr class='totals'><th>Volume</th><td>" + response["total_items"] + "</td><td>$" + response["total_sales"] + "</td></tr>";
     $("transaction_table").innerHTML=header + rows + totals;
   }
 
   function tangram_init(){
-    doGetMakerActivityTable("","");
+    doGetMakerActivityTable("", "newer");
   }
 
 {% endblock functions %}
@@ -80,13 +100,16 @@
 
 		<h2>Activity&nbsp;<a id="transaction_panel_control" class="control" onclick="hideOrShow('maker_transaction_panel', 'transaction_panel_control')">[show]</a></h2>
 	  <div id="maker_transaction_panel">
-		<div id="transaction_table_controls"><span id="prev_control"><a href="/maker_dashboard/{{maker.slug}}/prev">&lt;-- older</a> </span> <span id="next_control"> <a href="/maker_dashboard/{{maker.slug}}/next">newer --&gt;</a></span></div>
+
+		<div id="transaction_table_controls"><a id="prev_control" class="control" onclick="doGetOlderTransactions()">&lt;-- older</a> <a id="next_control" class="control" onclick="doGetMakerActivityTable('', 'newer')">latest</a></div>
 
 		<table id="transaction_table">
 		</table>
 
-		<div id="transaction_table_controls"><span id="prev_control"><a href="/maker_dashboard/{{maker.slug}}/prev">&lt;-- older</a> </span> <span id="next_control"> <a href="/maker_dashboard/{{maker.slug}}/next">newer --&gt;</a></span></div>
+		<div id="transaction_table_controls"><a id="prev_control" class="control" onclick="doGetOlderTransactions()">&lt;-- older</a> <a id="next_control" class="control" onclick="doGetMakerActivityTable('', 'newer')">latest</a></div>
+
 	  </div>
+
 	  <h2>Products&nbsp;<a id="product_control" class="control" onclick="hideOrShow('maker_product_panel', 'product_control')">[show]</a></h2>
 	  <div id="maker_product_panel">
 	  <p>(<a href="/product/add">Add Product</a>)</p>

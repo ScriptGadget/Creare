@@ -15,3 +15,14 @@ indexes:
   - name: community
   - name: show
   - name: last_shown
+
+- kind: MakerTransaction
+  properties:
+  - name: maker
+  - name: when
+
+- kind: MakerTransaction
+  properties:
+  - name: maker
+  - name: when
+    direction: desc
