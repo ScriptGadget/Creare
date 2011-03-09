@@ -13,7 +13,11 @@
 		   </div>
 		   <table>
 		   {{ form.as_table }}
+		   <tr><th><label for="id_current_impressions">Impressions Remaining:</label></th><td><lavel name="impressions_remaining" />{{impressions}}</label></td></tr>
+
+		   <tr><th><label for="id_impressions">Add Impressions:</label></th><td><input type="text" name="impressions" value="0" id="id_impressions" /></td></tr>
 		   </table>
+		   
 		   <input type="hidden" name="_id" value="{{ id }}">
            <div><input id="submit" class="button"  type="submit" {% if id %} value="Update Advertisement" {% else %} value="Create Advertisement" {% endif %}/></div>
          </form>

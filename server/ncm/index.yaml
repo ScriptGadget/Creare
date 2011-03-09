@@ -16,10 +16,10 @@ indexes:
   - name: show
   - name: last_shown
 
-- kind: MakerTransaction
+- kind: Advertisement
   properties:
-  - name: maker
-  - name: when
+  - name: show
+  - name: last_shown
 
 - kind: MakerTransaction
   properties:

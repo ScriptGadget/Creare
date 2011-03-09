@@ -3,6 +3,7 @@ from unicodedata import normalize
 from google.appengine.ext import db
 from gaesessions import get_current_session
 import logging
+import shardedcounter
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
@@ -279,8 +280,8 @@ class Advertisement(db.Model):
     contact_email = db.EmailProperty()
     hover_text = db.StringProperty()
     url = db.LinkProperty()
-    rotation = db.CategoryProperty(['High', 'Medium', 'Low'], default='High')
     show = db.BooleanProperty(default=False)
+    PSA = db.BooleanProperty(default=False)
     notes = db.StringProperty()
 
     @staticmethod
@@ -298,6 +299,15 @@ class Advertisement(db.Model):
             pass
 
         return None
+
+    def remaining_impressions(self):
+        return shardedcounter.get_count(str(self.key()))
+
+    def decrement_impressions(self):
+        shardedcounter.decrement(str(self.key()))
+
+    def refill_impressions(self, impressions):
+        shardedcounter.increment(str(self.key()), impressions)
 
 class AdvertisementImage(db.Model):
     """ An Image associated with an Advertisement """

@@ -601,9 +601,20 @@ class MakerDashboard(webapp.RequestHandler):
             sales.sort(key=lambda sale: sale.timestamp, reverse=True)
 
             q = db.Query(Advertisement)
-            q.filter('show =', True).filter('community =', maker.community).order('last_shown')
-            ad = q.get()
+            q.filter('show =', True).order('last_shown')
+
+            ad = None
+            for a in q:
+                if a.PSA or ad.remaining_impressions() > 0:
+                    ad = a
+                    break;
+                else:
+                    a.show = False
+                    a.put()
+
             if ad:
+                if not ad.PSA:
+                    ad.decrement_impressions()
                 ad.put() # to update the last_shown
                 ad.img = '/advertisement_image/' + str(ad.advertisement_images[0].key())
                 ad.height = 160
@@ -1201,6 +1212,7 @@ class AdvertisementPage(webapp.RequestHandler):
         else:
             template_values = { 'form' : AdvertisementForm(),
                                 'upload_form': self.buildImageUploadForm(), 
+                                'impressions':0,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -1237,11 +1249,15 @@ class AdvertisementPage(webapp.RequestHandler):
                     entity.delete()
                     self.response.out.write("That doesn't look like a valid ad image. It should be 750 pixels wide by 160 pixels high and be a jpg or png image. Use your back button and try again.");
                     return
+                impressions = int(self.request.get("impressions"))
+                if impressions:
+                    entity.refill_impressions(impressions)
                 self.redirect('/advertisement/'+entity.slug)
             else:
                 # Reprint the form
                 template_values = { 'form' : data, 
                                     'upload_form': self.buildImageUploadForm(),
+                                    'impressions':0,
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -1264,7 +1280,9 @@ class EditAdvertisementPage(webapp.RequestHandler):
 
             template_values = { 'form' : AdvertisementForm(instance=advertisement), 
                                 'upload_form': self.buildImageUploadForm(),
-                                'advertisement':advertisement, 'id' : advertisement.key(),
+                                'advertisement':advertisement,
+                                'impressions':advertisement.remaining_impressions(),
+                                'id' : advertisement.key(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -1295,6 +1313,9 @@ class EditAdvertisementPage(webapp.RequestHandler):
                       upload.put()
                   except images.NotImageError:
                       pass
+              impressions = int(self.request.get("impressions"))
+              if impressions:
+                  entity.refill_impressions(impressions)
               self.redirect('/advertisements')
           else:
               # Reprint the form
