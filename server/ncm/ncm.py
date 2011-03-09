@@ -1392,9 +1392,9 @@ class ListMakers(webapp.RequestHandler):
             self.response.out.write("I don't recognize that community")
             return
 
-        q = Maker.all()
-        q.order('-joined')
-        makers = q.fetch(25)
+        makers = Maker.all()
+        makers.order('-joined')
+
         template_values = { 
             'title':'Makers', 
             'makers':makers,
