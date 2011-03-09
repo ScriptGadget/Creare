@@ -637,8 +637,9 @@ class AddProductToCart(webapp.RequestHandler):
         except:
             self.response.out.write('{"alert1":"Product Not Found"}')
             return
-        if not product.inventory:
+        if product.inventory < 1:
             self.response.out.write('{"alert1":"No More ' + product.name + ' In Stock"}')
+
             return
         session = get_current_session()
         if not session.is_active():
@@ -648,12 +649,8 @@ class AddProductToCart(webapp.RequestHandler):
 
         for item in items:
             if item.product_key == product_id:
-                if product.inventory <= item.count:
-                    self.response.out.write('{"alert1":"No More ' + product.name + ' In Stock"}')
-                    return
-                else:
-                    item.count += 1
-                    break
+                item.count += 1
+                break
         else:
             newItem = ShoppingCartItem(product_key=product_id, price=product.price, count=1)
             items.append(newItem)
@@ -909,9 +906,23 @@ class NotFoundErrorHandler(webapp.RequestHandler):
 
 class OrderProductsInCart(webapp.RequestHandler):
     """ Deduct items from product inventory and create a CartTransaction
-    and MakerTransactions to represent the cart. TBD: inventory changes should be
-    protected by transactions to ensure integrity! """
-
+    and MakerTransactions to represent the cart. """
+    
+    def decrement_product_inventory(self, product_key, sold):
+        """ 
+        Here we can wrap the inventory decrement in a transaction. 
+        If we ever really need to scale this we could do it with 
+        a sharded counter and keep a high water mark for inventory
+        instead of a count, but that's probably uneeded 
+        this size site.
+        """
+        
+        product = Product.get(product_key)
+        product.inventory -= sold
+        if product.inventory < 0:
+            product.inventory = 0
+        product.put()
+        
     def get(self):
         """ Ignore gets. This isn't an idempotent operation. """
         pass
@@ -933,8 +944,15 @@ class OrderProductsInCart(webapp.RequestHandler):
             maker_business_ids = []
             for item in items:
                 product = Product.get(item.product_key)
-                if product.inventory > 0:
-                    product.inventory -= item.count
+                if product.inventory - item.count < 0:
+                    self.response.out.write(
+                        "{ \"alert1\":\""
+                        + "%d %s in stock, but %d in your cart - please remove %d" %(product.inventory, product.name, item.count, item.count - product.inventory)
+                        + "\"}")
+                    return
+                else:
+                    product.sold = item.count
+
                 products.append(product)
 
                 for maker_transaction in maker_transactions:
@@ -978,7 +996,6 @@ class OrderProductsInCart(webapp.RequestHandler):
                                                 return_url=base_url+'/return?payKey=${payKey}',
                                                 action_url='https://svcs.sandbox.paypal.com/AdaptivePayments/Pay',
                                                 ipn_url=base_url+'/ipn',
-                                                trackingId=str(cart_transaction.key()),
                                                 sandbox_email=community.paypal_sandbox_email_address,
                                                 )
             except TooManyRecipientsException:
@@ -995,15 +1012,16 @@ class OrderProductsInCart(webapp.RequestHandler):
                 paypalPaymentResponse.put();
                 confirmation_url = payment.buildRedirectURL(response=response, sandbox=community.use_sandbox)
             except Exception as e:
-                logging.Error('Exception handling Paypal transaction: %s',  str(e));
+                logging.error('Exception handling Paypal transaction: %s',  str(e));
                 response = None
 
             if response and confirmation_url:
-                cart_transaction.transaction_status = 'Created';
+                cart_transaction.transaction_status = 'CREATED';
                 cart_transaction.paypal_pay_key = payment.pay_key
                 cart_transaction.put()
                 db.put(maker_transactions)
-                db.put(products)
+                for product in products:
+                    db.run_in_transaction(self.decrement_product_inventory, product.key(), product.sold)                
                 message = '{ "redirect":"%s" }' % confirmation_url
                 self.response.out.write(message)
                 session.pop('ShoppingCartItems')
