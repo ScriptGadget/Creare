@@ -14,8 +14,6 @@ from payment import *
 
 def update_cart_and_maker_transaction_record(cart_key, status, parameters):
     """ We got paid or had an error make a note of it."""
-    # pay_key = parameters['pay_key']
-    # trackingId = parameters['trackingId']
 
     cart = CartTransaction.get(cart_key)
     cart.transaction_status=status
@@ -107,10 +105,8 @@ class IPNHandler(webapp.RequestHandler):
             q.fetch('paypal_pay_key =', pay_key)
             cart = q.get()
             if not cart:
-                cart = cart.get(trackingId)
-                if not cart:
-                    logging.error('Unrecognized IPN: ' + pay_key + ': ' + (self.request))
-                    return
+                logging.error('Unrecognized IPN: ' + pay_key + ': ' + (self.request))
+                return
             else:
                 db.run_in_transaction(update_cart_and_maker_transaction_record, cart.key(), status, parameters)
 
