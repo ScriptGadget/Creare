@@ -69,3 +69,31 @@ class TestSandboxPayment(unittest.TestCase):
         maker_transactions = q.fetch(5)
         for transaction in maker_transactions:
             self.assertTrue(transaction.status == 'Paid')
+
+    def test_update_cart_and_maker_transaction_record_ERROR(self):
+        parameters = {
+            'pay_key':'test_key',
+            'trackingId':self.cart.key(),
+            }
+
+        for i in range(5):
+            parameters['transaction[%d].status_for_sender_txn' % i] = 'FAILURE'
+            parameters['transaction[%d].receiver' % i] = self.makers[i].email
+
+        status = 'ERROR'
+
+        db.run_in_transaction(
+            update_cart_and_maker_transaction_record,
+            self.cart.key(), 
+            status,
+            parameters
+            )
+
+        cart = CartTransaction.get(self.cart.key())
+        self.assertTrue(cart.transaction_status == status)
+        
+        q = MakerTransaction.all()
+        q.ancestor(cart)
+        maker_transactions = q.fetch(5)
+        for transaction in maker_transactions:
+            self.assertTrue(transaction.status == 'Error')
