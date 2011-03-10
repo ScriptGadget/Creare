@@ -62,7 +62,7 @@ class PaypalChainedPayment:
 
         if action_url.count('sandbox') > 0:
             self.headers['X-PAYPAL-SANDBOX-EMAIL-ADDRESS']=sandbox_email
-            self.redirect_url_template = 'https://sandbox.paypal.com/webscr?cmd=_ap-payment&paykey='
+            self.redirect_url_template = 'https://www.sandbox.paypal.com/webscr?cmd=_ap-payment&paykey='
         else:
             self.redirect_url_template = 'https://www.paypal.com/webscr?cmd=_ap-payment&paykey='
 
