@@ -204,6 +204,9 @@ class CartTransaction(db.Model):
     transaction_status = db.StringProperty(choices=set(['UNSUBMITTED', 'CREATED', 'ERROR', 'REVERSALERROR', 'COMPLETED', 'INCOMPLETE']), default='UNSUBMITTED', required=True)
     error_details = db.StringProperty()
     paypal_pay_key = db.StringProperty()
+    shopper_name = db.StringProperty()
+    shopper_email = db.EmailProperty()
+    shopper_shipping = db.StringListProperty()
     note = db.StringProperty()
     transaction_history = db.TextProperty()
 

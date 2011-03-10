@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block functions %}
+  // a few globals for the form
+  form = new Object()
+  form.name = "";
+  form.email = "";
+  form.shipping = "";
+
   InstallFunction(server, 'OrderProductsInCart', false);
   InstallFunction(server, 'GetShoppingCart', true);
   InstallFunction(server, 'RemoveProductFromCart', false);
@@ -15,7 +21,9 @@
   }
 
   function doOrderProductsInCart(){
-    server.OrderProductsInCart(displayOrderResultOrRedirect);
+    if(validateForm()){
+      server.OrderProductsInCart(form.name, form.email, form.shipping, displayOrderResultOrRedirect);
+    }
   }
 
   function doGetShoppingCart(){
@@ -70,6 +78,21 @@
 	}
   }
   
+  function updateForm(){
+    form.name = $("name_id").value;
+    form.email = $("email_id").value;
+    form.shipping = $("shipping_id").value;
+	return form.name != "" && form.email != "" && form.shipping != "";
+  }
+
+  function validateForm(){
+    valid = updateForm();
+    if(!valid){
+      alert("No! Bad!");
+    }
+    return valid;
+  }
+
   function tangram_init(){
     doGetShoppingCart();
   }
@@ -78,8 +101,13 @@
 {% block cart_widget %} {% endblock %}
 
 {% block content %}
-    <div id="ShoppingCartProductList">
-	</div>
+    <div id="ShoppingCartProductList"></div>
+	<table>
+	<tr><th>Email:</th><td><input type="text" name="email" id="email_id" onchange="updateForm()"/></td></tr>
+	<tr><th>Name:</th><td><input type="text" name="name" id="name_id" onchange="updateForm()"/></td></tr>
+	<tr><th>Shipping:</th><td><textarea name="shipping" id="shipping_id" onchange="updateForm()"></textarea></td></tr>
+	</table>
+	<p class="explanatory_message">(All fields required)</p>
     <div id="PaymentOptions"></div> 
 
 	

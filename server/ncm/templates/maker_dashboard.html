@@ -32,7 +32,16 @@
       if(!cellsOnly)
         row += "<tr id='"+sale.transaction+"'>";
 
-	  row += "<td>"+sale.date+"</td><td>"+sale.items+"</td><td>"+sale.amount+"</td><td>"+sale.fee+"</td><td>"+sale.net+"</td><td>"+sale.transaction_status+"</td>";
+	  row += "<td><span id="+sale.transaction+"_control onclick=hideOrShow('"+sale.transaction+"_detail','"+sale.transaction+"_control') class=control>[show]</span> "+sale.date
+	  row += " <ul id="+sale.transaction+"_detail style=display:none>"
+	  row += "<li>Items:<br/>"
+		for(var i = 0; i < sale.products.length; i++)
+		  row += sale.products[i].product_name +" ("+ sale.products[i].items + " ea) <br\>"
+	  row += " </li> "
+	  row += "<li>Name: "+sale.shopper_name+"</li> "
+	  row += "<li>Email: "+sale.shopper_email+"</li> "
+	  row += "<li>Shipping: <br/>"+sale.shopper_shipping+"</li> "
+      row += "</ul></td><td>"+sale.items+"</td><td>"+sale.amount+"</td><td>"+sale.fee+"</td><td>"+sale.net+"</td><td>"+sale.transaction_status+"</td>";
 	  row += "<td><input type='checkbox' onclick='doSetMakerTransactionShipped(\"" + sale.transaction + "\", \"" + start + "\", \""  + end + "\")'";
 	  if(sale.shipped){
 	    row += " checked/></td>";

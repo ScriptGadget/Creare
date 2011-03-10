@@ -444,14 +444,17 @@ class MakerActivityTableHandler(webapp.RequestHandler):
         sale['transaction_status'] = transaction.status
         sale['when'] = transaction.when
         sale['date'] = str(cart.timestamp.date())
-        sale['shipped'] = transaction.shipped
+        sale['shipped'] = transaction.shipped        
+        sale['shopper_name'] = cart.shopper_name
+        sale['shopper_email'] = cart.shopper_email
+        sale['shopper_shipping'] = cart.shopper_shipping
         products = []
         sale_amount = 0.0
         sale_items = 0
         sale_fee = 0.0
         additional_sales = 0.0
         additional_items = 0
-
+        
         for entry in transaction.detail:
             product = {}
             (product_key, items, amount) = entry.split(':')
@@ -468,8 +471,9 @@ class MakerActivityTableHandler(webapp.RequestHandler):
             product['net'] = "%.2f" % (float(product_amount) - float(fee))
             additional_items += product_items
             additional_sales += product_amount * product_items
-            sale['product'] = product
+            products.append(product)
 
+        sale['products'] = products
         sale['items'] = sale_items
         sale['fee'] = "%.2f" % sale_fee
         sale['amount'] = "%.2f" % sale_amount
@@ -952,6 +956,9 @@ class OrderProductsInCart(webapp.RequestHandler):
         else:
             items = session.get('ShoppingCartItems', [])
             cart_transaction = CartTransaction(transaction_type='Sale')
+            cart_transaction.shopper_name = self.request.get('arg0').strip('"')
+            cart_transaction.shopper_email = self.request.get('arg1').strip('"')
+            cart_transaction.shopper_shipping = self.request.get('arg2').strip('"').split('\u000a')
             cart_transaction.put()
 
             maker_transactions = []
@@ -1041,12 +1048,12 @@ class OrderProductsInCart(webapp.RequestHandler):
                 self.response.out.write(message)
                 session.pop('ShoppingCartItems')
             else:
-                logging.error("A Paypal checkout failed! Here's the cart: " + items)
-                cart_transaction.transaction_status = 'Error'
+                logging.error("A Paypal checkout failed! Here's the cart: " + str(items))
+                cart_transaction.transaction_status = 'ERROR'
                 cart_transaction.error_details = 'Error Talking to Paypal.'
                 cart_transaction.put()
                 self.response.out.write("{ \"message\":\""
-                                    + "An error occured talking to Paypal. Please try again later. You can also call us or email. We have logged the error and will be looking into it right away."
+                                    + "An error occured talking to Paypal. Please try again later. You can also call us or email. We have logged the error and will be looking into it right away. Your account has not been charged."
                                     + "\"}")
                 # TBD Generate email alert?
             return
