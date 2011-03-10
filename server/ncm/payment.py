@@ -113,7 +113,7 @@ class PaypalChainedPayment:
                                     method=urlfetch.POST,
                                     headers=self.headers)
 
-        except Exception as e:
+        except Exception, e:
             logging.error("PaypalChainedPayment.execute(): Unexpected Exception %s\n" % str(e))
 
         if not response:

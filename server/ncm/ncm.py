@@ -760,7 +760,7 @@ class EditCommunityPage(webapp.RequestHandler):
             (user, maker) = authenticator.authenticate()
         except AuthenticationException:
             return
-        except Exception as e:
+        except Exception, e:
             self.error(500)
             self.response.out.write("Error identifying user: " + str(e))
             return
@@ -792,7 +792,7 @@ class EditCommunityPage(webapp.RequestHandler):
             (user, maker) = authenticator.authenticate()
         except AuthenticationException:
             return
-        except Exception as e:
+        except Exception, e:
             self.error(500)
             self.response.out.write("Error identifying user:" + str(e))
             # Return immediately
@@ -833,7 +833,7 @@ class AddCommunityPage(webapp.RequestHandler):
             (user, maker) = authenticator.authenticate()
         except AuthenticationException:
             return
-        except Exception as e:
+        except Exception, e:
             self.error(500)
             self.response.out.write('Error identifying user:' + str(e))
             return
@@ -1033,7 +1033,7 @@ class OrderProductsInCart(webapp.RequestHandler):
                                                                response=response.content)
                 paypalPaymentResponse.put();
                 confirmation_url = payment.buildRedirectURL(response=response, sandbox=community.use_sandbox)
-            except Exception as e:
+            except Exception, e:
                 logging.error('Exception handling Paypal transaction: %s',  str(e));
                 response = None
 
