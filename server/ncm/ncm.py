@@ -605,7 +605,7 @@ class MakerDashboard(webapp.RequestHandler):
 
             ad = None
             for a in q:
-                if a.PSA or ad.remaining_impressions() > 0:
+                if a.PSA or a.remaining_impressions() > 0:
                     ad = a
                     break;
                 else:
@@ -786,9 +786,11 @@ class EditCommunityPage(webapp.RequestHandler):
 
         try:
             (user, maker) = authenticator.authenticate()
-        except:
+        except AuthenticationException:
+            return
+        except Exception as e:
             self.error(500)
-            self.response.out.write("Error identifying user.")
+            self.response.out.write("Error identifying user:" + str(e))
             # Return immediately
             return
 
@@ -825,9 +827,11 @@ class AddCommunityPage(webapp.RequestHandler):
 
         try:
             (user, maker) = authenticator.authenticate()
-        except:
-            self.error(403)
-            self.response.out.write('Error identifying user.')
+        except AuthenticationException:
+            return
+        except Exception as e:
+            self.error(500)
+            self.response.out.write('Error identifying user:' + str(e))
             return
 
         if user and users.is_current_user_admin():
