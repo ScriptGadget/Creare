@@ -14,7 +14,6 @@ from payment import *
 
 def update_cart_and_maker_transaction_record(cart_key, status, parameters):
     """ We got paid or had an error make a note of it."""
-
     cart = CartTransaction.get(cart_key)
     cart.transaction_status=status
     cart.put()
@@ -27,13 +26,14 @@ def update_cart_and_maker_transaction_record(cart_key, status, parameters):
     maker_transaction_dict = {}
     for m in maker_transactions:
         maker_transaction_dict[m.email] = m
-                    
-    for i in range(num_maker_transactions):
+
+    i = 0
+    while "transaction[%d].receiver" % i in parameters:
         maker_email = parameters["transaction[%d].receiver" % i]
         maker_status = parameters["transaction[%d].status_for_sender_txn" % i]
         if maker_email and maker_status and maker_email in maker_transaction_dict:
             m = maker_transaction_dict[maker_email]
-            if maker_status == 'SUCCESS':
+            if maker_status == 'SUCCESS' or maker_status == 'Completed': # The docs say SUCCESS, the log says Completed
                 m.status = 'Paid'
             elif maker_status == 'PENDING' or maker_status == 'CREATED' or maker_status == 'PROCESSING':
                 m.status = 'Pending'
@@ -42,6 +42,7 @@ def update_cart_and_maker_transaction_record(cart_key, status, parameters):
                 m.status = 'Error'
                 m.messages = maker_status
             m.put()
+        i += 1
 
 class IPNHandler(webapp.RequestHandler):
     """ Handle Paypal IPN updates """
@@ -99,16 +100,16 @@ class IPNHandler(webapp.RequestHandler):
                 # much error handling and fraud checking
                 # email address, amounts, currency etc.
                 # sender_email = parameters['sender_email']
-                pass
 
-            q = CartTransaction.all()
-            q.fetch('paypal_pay_key =', pay_key)
-            cart = q.get()
-            if not cart:
-                logging.error('Unrecognized IPN: ' + pay_key + ': ' + (self.request))
-                return
-            else:
-                db.run_in_transaction(update_cart_and_maker_transaction_record, cart.key(), status, parameters)
+                pay_key = parameters['pay_key']
+                q = CartTransaction.all()
+                q.filter('paypal_pay_key =', pay_key)
+                cart = q.get()
+                if not cart:
+                    logging.error('Unrecognized IPN: ' + pay_key + ': ' + (self.request))
+                    return
+                else:
+                    db.run_in_transaction(update_cart_and_maker_transaction_record, cart.key(), status, parameters)
 
     def post(self):
         self.ipn()

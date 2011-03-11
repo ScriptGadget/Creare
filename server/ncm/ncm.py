@@ -990,7 +990,7 @@ class OrderProductsInCart(webapp.RequestHandler):
                     when = "%s|%s" % (datetime.now(), hashlib.md5(str(product.maker.key())+get_current_session().sid).hexdigest())
                     maker_transaction = MakerTransaction(parent=cart_transaction,
                                                          maker=product.maker,
-                                                         email=product.maker.email,
+                                                         email=product.maker.paypal_business_account_email,
                                                          when=when)
 
                     entry = "%s:%s:%s" % (str(product.key()),

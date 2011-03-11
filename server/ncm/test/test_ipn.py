@@ -20,6 +20,7 @@ class TestSandboxPayment(unittest.TestCase):
                 store_description = 'Nothing',
                 full_name = 'Maker %d' % i,
                 email = 'maker%d@example.com' % i,
+                paypal_business_account_email = 'maker%d_5551212_biz@gmail.com' %i,
                 phone_number = '5305551212',
                 location = 'Test Place',
                 mailing_address = '111 Test Ave, Tester CA, 95945',
@@ -31,7 +32,7 @@ class TestSandboxPayment(unittest.TestCase):
             transaction = MakerTransaction(
                 parent=self.cart,
                 maker=maker,
-                email=maker.email,
+                email=maker.paypal_business_account_email,
                 when='now-ish%d' % i,
                 )
             transaction.put()
@@ -48,9 +49,11 @@ class TestSandboxPayment(unittest.TestCase):
             'trackingId':self.cart.key(),
             }
 
+        # The PP_AdaptivePayments.book manual claims this should be "SUCCESS"
+        # But in the sandbox at least this come back as "Completed"
         for i in range(5):
-            parameters['transaction[%d].status_for_sender_txn' % i] = 'SUCCESS'
-            parameters['transaction[%d].receiver' % i] = self.makers[i].email
+            parameters['transaction[%d].status_for_sender_txn' % i] = 'Completed'
+            parameters['transaction[%d].receiver' % i] = self.makers[i].paypal_business_account_email
 
         status = 'COMPLETED'
 
@@ -78,7 +81,7 @@ class TestSandboxPayment(unittest.TestCase):
 
         for i in range(5):
             parameters['transaction[%d].status_for_sender_txn' % i] = 'FAILURE'
-            parameters['transaction[%d].receiver' % i] = self.makers[i].email
+            parameters['transaction[%d].receiver' % i] = self.makers[i].paypal_business_account_email
 
         status = 'ERROR'
 
