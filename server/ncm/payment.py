@@ -10,6 +10,7 @@ PP_URL = "https://www.paypal.com/cgi-bin/webscr"
 
 class PaypalPaymentResponse(db.Model):
     """ parent will be a CartTransaction """
+    source = db.StringProperty(choices=set(['IPN','Pay_API']), default='Pay_API', required=True)
     response=db.TextProperty(required=True)
     timestamp = db.DateTimeProperty(auto_now_add=True)
 

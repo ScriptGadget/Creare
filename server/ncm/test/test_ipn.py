@@ -67,9 +67,9 @@ class TestSandboxPayment(unittest.TestCase):
         cart = CartTransaction.get(self.cart.key())
         self.assertTrue(cart.transaction_status == status)
         
-        q = MakerTransaction.all()
-        q.ancestor(cart)
-        maker_transactions = q.fetch(5)
+        t = MakerTransaction.all()
+        t.ancestor(cart)
+        maker_transactions = t.fetch(5)
         for transaction in maker_transactions:
             self.assertTrue(transaction.status == 'Paid')
 
