@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block functions %}
+InstallFunction(server, 'EditContent', false);
+
+function doEditContent(name, content){
+  server.EditContent(name, content);
+}
+
+function submit(name){
+  child = $(name).childNodes[0];
+  content = child.value;
+  $(name).innerHTML=content;
+  doEditContent(name, content);
+}
+
+function edit(name){
+	if($(name).childNodes[0].type != 'textarea'){
+		content = $(name).innerHTML;
+		textarea = document.createElement("textarea");
+		textarea.setAttribute("class", "editable");
+		textarea.setAttribute("value", content);
+        var blur = "submit('" + name + "')";
+        textarea.setAttribute("onblur", blur);
+		textarea.innerHTML = content;
+		$(name).innerHTML="";
+		$(name).appendChild(textarea);
+	}
+}
+
+
+{{ block.super }}
+{% endblock functions %}
+
+{% block content %}
+{% if admin %}
+	<div id="{{name}}" class="editable" onclick="edit('{{name}}')">{{content}}</div>
+{% else %}
+    <div>{{content}}<div>
+{% endif %}
+{% endblock %}
+

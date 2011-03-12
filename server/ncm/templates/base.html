@@ -42,7 +42,7 @@
 	</div>
 	  {% endblock cart_widget %}
 	  {% block join %}
-	  {% if not user %} <p id="join_link">Local maker? <a href="/login">Join Up</a>!</p> {% endif %}
+	  {% if not user %} <p id="join_link">Local maker? <a href="/join">Join Up</a>!</p> {% endif %}
 	  {% endblock %}
 	  {% endif %}    
 	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
@@ -114,7 +114,7 @@
 
 	<div id="footer">
 	  {% block footer %}
-	  <p>Powered by ScriptGadget - <a href="/privacy">Privacy Policy</a> &nbsp; <a href="/terms">Terms and Conditions</a> &nbsp; <a href="">Copyright and D.M.C.A. Policy</a></p>
+	  <p>Powered by ScriptGadget - <a href="/privacy">Privacy Policy</a> &nbsp; <a href="/terms">Terms and Conditions</a> &nbsp; <a href="/dmca">Copyright and D.M.C.A. Policy</a></p>
 	  {% endblock %}
 	</div>
     </body>

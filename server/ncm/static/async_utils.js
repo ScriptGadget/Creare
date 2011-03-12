@@ -101,3 +101,4 @@ function hideOrShow(panel, control){
 		$(panel).style.display="none";
 	}
 }
+

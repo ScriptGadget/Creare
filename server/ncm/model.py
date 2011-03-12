@@ -78,6 +78,11 @@ class Community(db.Model):
 
         return community
 
+class Page(db.Model):
+    """ A miscellaneous content page like About, Privacy Policy, etc.  """
+    name = db.StringProperty(required=True)
+    content = db.TextProperty(required=True, default='Add Content Here.')
+
 class CommunityManager(db.Model):
     """ A Person Who can Approve Makers and Manage a Community Site """
     community = db.ReferenceProperty(Community, collection_name='community_managers')
@@ -206,7 +211,7 @@ class CartTransaction(db.Model):
     paypal_pay_key = db.StringProperty()
     shopper_name = db.StringProperty()
     shopper_email = db.EmailProperty()
-    shopper_shipping = db.StringListProperty()
+    shopper_shipping = db.PostalAddressProperty()
     note = db.StringProperty()
     transaction_history = db.TextProperty()
 

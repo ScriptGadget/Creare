@@ -420,19 +420,6 @@ class CommunityHomePage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
-class PrivacyPage(webapp.RequestHandler):
-    """ Renders a store page for a particular maker. """
-    def get(self):
-        template_values = { 'title':'Privacy Policy' }
-        path = os.path.join(os.path.dirname(__file__), "templates/privacy.html")
-        self.response.out.write(template.render(path, add_base_values(template_values)))
-
-class TermsPage(webapp.RequestHandler):
-    """ Renders the terms and conditions page. """
-    def get(self):
-        template_values = { 'title':'Terms and Conditions'}
-        path = os.path.join(os.path.dirname(__file__), "templates/terms.html")
-        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class MakerActivityTableHandler(webapp.RequestHandler):
     """ Base class for pages which handle the Maker Activity Table """
@@ -447,7 +434,7 @@ class MakerActivityTableHandler(webapp.RequestHandler):
         sale['shipped'] = transaction.shipped        
         sale['shopper_name'] = cart.shopper_name
         sale['shopper_email'] = cart.shopper_email
-        sale['shopper_shipping'] = cart.shopper_shipping
+        sale['shopper_shipping'] = cart.shopper_shipping.encode('utf-8').replace("\n", "</br>")
         products = []
         sale_amount = 0.0
         sale_items = 0
@@ -646,10 +633,10 @@ class AddProductToCart(webapp.RequestHandler):
     """ Accept a JSON RPC request to add a product to the cart"""
     def post(self):
         logging.info('AddProductToCart: ' + str(self.request))
-        product_id = self.request.get('arg0')
+        product_id = self.request.get('arg0').strip('"')
         try:
             product = Product.get(product_id)
-        except:
+        except Exception, e:
             self.response.out.write('{"alert1":"Product Not Found"}')
             return
         if product.inventory < 1:
@@ -958,7 +945,9 @@ class OrderProductsInCart(webapp.RequestHandler):
             cart_transaction = CartTransaction(transaction_type='Sale')
             cart_transaction.shopper_name = self.request.get('arg0').strip('"')
             cart_transaction.shopper_email = self.request.get('arg1').strip('"')
-            cart_transaction.shopper_shipping = self.request.get('arg2').strip('"').split('\u000a')
+            shipping = self.request.get('arg2').strip('"').decode('unicode_escape')
+            logging.info(shipping)
+            cart_transaction.shopper_shipping = shipping
             cart_transaction.put()
 
             maker_transactions = []
@@ -1449,6 +1438,30 @@ class CompletePurchase(webapp.RequestHandler):
     def post(self):
         self.handle()
 
+class RenderContentPage(webapp.RequestHandler):
+    """ Render a content page. """
+    def get(self, page_name):
+        page = Page.get_or_insert(page_name, name=page_name)
+        template_values = { 'title':page.name, 
+                            'name':page.name,
+                            'content':page.content.encode('utf-8'), 
+                            'uri':self.request.uri }
+        path = os.path.join(os.path.dirname(__file__), "templates/content_page.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
+
+class EditContent(webapp.RequestHandler):
+    """ Change content for a content page. """
+    def post(self):
+        if not users.is_current_user_admin():
+            self.error(403)
+            self.response.out.write('You do not have permission to edit that.')
+        else:
+            name = self.request.get('arg0').strip('"')
+            page = Page.get_or_insert(name, name=name)
+            page.content=self.request.get('arg1').strip('"').decode('unicode_escape')
+            logging.info("Name: %s content: %s" %(page.name, page.content))
+            page.put()
+
 def main():
     app = webapp.WSGIApplication([
         ('/', CommunityHomePage),
@@ -1461,8 +1474,6 @@ def main():
         (r'/product/edit/(.*)', EditProductPage),
         ('/product/edit', EditProductPage),
         (r'/product/(.*)', ViewProductPage),
-        ('/privacy', PrivacyPage),
-        ('/terms', TermsPage),
         ('/login', Login),
         ('/logout', Logout),
         ('/makers', ListMakers),
@@ -1488,9 +1499,14 @@ def main():
         (r'/advertisement/edit/(.*)', EditAdvertisementPage),
         (r'/advertisement_image/(.*)', DisplayImage),
         (r'/advertisement/(.*)', ViewAdvertisementPage),
+        (r'/(join)', RenderContentPage),
+        (r'/(privacy)', RenderContentPage),
+        (r'/(terms)', RenderContentPage),
+        (r'/(dmca)', RenderContentPage),
         ('/advertisements', ListAdvertisements),
         ('/return', CompletePurchase),
         ('/cancel', CompletePurchase),
+        ('/EditContent', EditContent),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

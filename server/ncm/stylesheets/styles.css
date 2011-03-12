@@ -228,3 +228,12 @@ body { background-color: white; }
 	width: 150px;
 	text-align: left;
 }
+
+div.editable:hover {
+	background-color:FFFF66;
+}
+
+textarea.editable {
+	width:100%;
+	height:150px;
+}
