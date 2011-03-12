@@ -1422,7 +1422,6 @@ class SetApprovalStatus(webapp.RequestHandler):
         else:
             logging.error("Attempt to change approval status of a maker which doesn't exist: %s\n", maker_id)
             self.error(404)
-            
 
 class CompletePurchase(webapp.RequestHandler):
     """ Handle a redirect from Paypal for a successful purchase. """
@@ -1442,9 +1441,15 @@ class RenderContentPage(webapp.RequestHandler):
     """ Render a content page. """
     def get(self, page_name):
         page = Page.get_or_insert(page_name, name=page_name)
+        content = page.content.encode('utf-8')
+        logging.info("content: '%s'", content)
+
+        if not content or content.isspace():
+            content = 'Please Add Content Here'
+
         template_values = { 'title':page.name, 
                             'name':page.name,
-                            'content':page.content.encode('utf-8'), 
+                            'content':content,
                             'uri':self.request.uri }
         path = os.path.join(os.path.dirname(__file__), "templates/content_page.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -1458,8 +1463,7 @@ class EditContent(webapp.RequestHandler):
         else:
             name = self.request.get('arg0').strip('"')
             page = Page.get_or_insert(name, name=name)
-            page.content=self.request.get('arg1').strip('"').decode('unicode_escape')
-            logging.info("Name: %s content: %s" %(page.name, page.content))
+            page.content=self.request.get('arg1').strip('"').replace(u'\u201c', '"').replace(u'\u201d', '"').decode('unicode_escape')
             page.put()
 
 def main():
