@@ -1507,6 +1507,7 @@ def main():
         (r'/(privacy)', RenderContentPage),
         (r'/(terms)', RenderContentPage),
         (r'/(dmca)', RenderContentPage),
+        (r'/(about)', RenderContentPage),
         ('/advertisements', ListAdvertisements),
         ('/return', CompletePurchase),
         ('/cancel', CompletePurchase),

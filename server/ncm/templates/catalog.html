@@ -28,18 +28,21 @@
 	   {% endif %}
 	   {% endif %}
        <td>
-		 <div id='product_image_panel'>
+		 <div class="product_image_panel">
 		   {% for product_image in product.product_images %}
 		   <a href="/product/{{product.slug}}"><img class="product_image" src="/product_images/{{product_image.key}}" alt="{{product.name}}" title="{{product.name}}"/></a>
            {% endfor%}
          </div>
-		 <div class="product_info">
-		 <p class="store_name"><a href="/maker_store/{{product.maker.slug}}">{{product.maker.store_name}}</a></p>
-           <p>{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <a href="/product/{{product.slug}}">{{product.name}}</a></p> <p class="product_info"> {{product.short_description}}</p>
-		   <p/>
-		   <p>{{product.inventory}} remaining</p>
+
+		 <div class="product_info_panel">
+		   <p class="product_name">{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <a href="/product/{{product.slug}}">{{product.name}}</a></p>
+		   <p class="store_name">by <a href="/maker_store/{{product.maker.slug}}">{{product.maker.store_name}}</a></p>
+		   <p class="product_short_description">{{product.short_description}}</p>
 		 </div>
-		 <p class="price">${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		 <div class="product_price_panel">
+		   <p>{{product.inventory}} remaining</p>
+		   <p class="price">${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		 </div>
 	   </td>
     {% endfor %}
 	</tr>

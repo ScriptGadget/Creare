@@ -13,7 +13,7 @@ class ProductForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a product  """
     class Meta:
         model = Product
-        exclude = ['maker', 'thumb', 'slug']
+        exclude = ['maker', 'thumb', 'slug', 'disable']
 
 class CommunityForm(djangoforms.ModelForm):
     """ Auto generate a form for adding a Community  """

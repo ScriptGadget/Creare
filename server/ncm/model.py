@@ -20,6 +20,7 @@ class Community(db.Model):
     slug = db.StringProperty()
     support_email=db.EmailProperty()
     support_phone=db.PhoneNumberProperty()
+    forum_link = db.LinkProperty()
 
     fee_percentage = db.FloatProperty(required=True, default=10.0)
     fee_minimum = db.FloatProperty(required=True, default=0.30)
@@ -132,6 +133,8 @@ class Product(db.Model):
     price = db.FloatProperty(required=True)
     tags = db.CategoryProperty(required=True)
     inventory = db.IntegerProperty(required=True)
+    show = db.BooleanProperty(default=True)
+    disable = db.BooleanProperty(default=False)
 
     @staticmethod
     def get_product_for_slug(slug):

@@ -1,4 +1,4 @@
-body { background-color: white; }
+body { background-color:white; }
 
 .text { color: black; }
 
@@ -40,14 +40,40 @@ body { background-color: white; }
 	width:10em;
 	vertical-align:text-top;
 	padding: 10px;
+	padding-bottom: 20px;
+	border-style: dotted;
+	border-color: gray;
+	border-width: 1px;
+	background-color: white;
 }
 
-.product_info p {
-	display: block;
-	font-size: small; 
-	padding: 5px;
-	margin: 1px;
-	overflow: visible;
+.product_image_panel {
+	text-align: center;
+	margin: auto;
+	font-size: small;
+	padding: 3px;
+}
+
+.product_info_panel {
+	text-align: left;
+}
+
+
+.product_price_panel {
+	text-align: center;
+	margin: auto;
+	font-size: small;
+}
+
+.product_name {
+	text-align: center;
+	padding-bottom: 0.5em;
+	overflow: hidden;
+}
+
+.product_short_description {
+	padding-bottom: 0.5em;
+	overflow: hidden;
 }
 
 #ShoppingCartWidget { 
@@ -56,7 +82,7 @@ body { background-color: white; }
 }
 
 #sidebar {
-	width: 190px;
+	width: 250px;
 	padding-left: 10px;
 	margin-top: 10px;
 	position: absolute; 
@@ -98,9 +124,13 @@ body { background-color: white; }
 	margin-top: 2em;
 	margin-left: auto;
 	margin-right: auto;
-    text-align: left; 
-	font-size: small;
+    text-align: center; 
+	font-size: normal;
 	padding: 3px 10px; 
+}
+
+#footer a {
+	padding-right: 30px;
 }
 
 .errorlist { 
@@ -210,7 +240,9 @@ body { background-color: white; }
 	display:none;
 }
 
-#maker_product_panel img{ width:25%; }
+#maker_product_panel img{ 
+	width:25%; 
+}
 
 .control { 
 	font-size: small;
