@@ -910,22 +910,7 @@ class NotFoundErrorHandler(webapp.RequestHandler):
 
 class OrderProductsInCart(webapp.RequestHandler):
     """ Deduct items from product inventory and create a CartTransaction
-    and MakerTransactions to represent the cart. """
-    
-    def decrement_product_inventory(self, product_key, sold):
-        """ 
-        Here we can wrap the inventory decrement in a transaction. 
-        If we ever really need to scale this we could do it with 
-        a sharded counter and keep a high water mark for inventory
-        instead of a count, but that's probably uneeded 
-        this size site.
-        """
-        
-        product = Product.get(product_key)
-        product.inventory -= sold
-        if product.inventory < 0:
-            product.inventory = 0
-        product.put()
+    and MakerTransactions to represent the cart. """    
         
     def get(self):
         """ Ignore gets. This isn't an idempotent operation. """
@@ -1029,8 +1014,6 @@ class OrderProductsInCart(webapp.RequestHandler):
                 cart_transaction.paypal_pay_key = payment.pay_key
                 cart_transaction.put()
                 db.put(maker_transactions)
-                for product in products:
-                    db.run_in_transaction(self.decrement_product_inventory, product.key(), product.sold)                
                 message = '{ "redirect":"%s" }' % confirmation_url
                 self.response.out.write(message)
                 session.pop('ShoppingCartItems')

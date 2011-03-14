@@ -12,40 +12,58 @@ from google.appengine.ext import db
 from model import *
 from payment import *
 
-def update_cart_and_maker_transaction_record(cart_key, status, parameters):
-    """ We got paid or had an error make a note of it."""
-    cart = CartTransaction.get(cart_key)
-    cart.transaction_status=status
-    cart.put()
-
-    q = MakerTransaction.all()
-    q.ancestor(cart)
-    maker_transactions = q.fetch(6) # This can't be more than five according to paypal. Should it be a constant someplace?
-    num_maker_transactions = len(maker_transactions) # we should only get back as many as we sent
-
-    maker_transaction_dict = {}
-    for m in maker_transactions:
-        maker_transaction_dict[m.email] = m
-
-    i = 0
-    while "transaction[%d].receiver" % i in parameters:
-        maker_email = parameters["transaction[%d].receiver" % i]
-        maker_status = parameters["transaction[%d].status_for_sender_txn" % i]
-        if maker_email and maker_status and maker_email in maker_transaction_dict:
-            m = maker_transaction_dict[maker_email]
-            if maker_status == 'SUCCESS' or maker_status == 'Completed': # The docs say SUCCESS, the log says Completed
-                m.status = 'Paid'
-            elif maker_status == 'PENDING' or maker_status == 'CREATED' or maker_status == 'PROCESSING':
-                m.status = 'Pending'
-                m.messages = maker_status
-            else:
-                m.status = 'Error'
-                m.messages = maker_status
-            m.put()
-        i += 1
-
 class IPNHandler(webapp.RequestHandler):
     """ Handle Paypal IPN updates """
+
+    @staticmethod
+    def update_cart_and_maker_transaction_record(cart_key, status, parameters):
+        """ We got paid or had an error make a note of it."""
+        cart = CartTransaction.get(cart_key)
+        cart.transaction_status=status
+        cart.put()
+
+        q = MakerTransaction.all()
+        q.ancestor(cart)
+        maker_transactions = q.fetch(6) # This can't be more than five according to paypal. Should it be a constant someplace?
+        num_maker_transactions = len(maker_transactions) # we should only get back as many as we sent
+
+        maker_transaction_dict = {}
+        for m in maker_transactions:
+            maker_transaction_dict[m.email] = m
+
+        i = 0
+        while "transaction[%d].receiver" % i in parameters:
+            maker_email = parameters["transaction[%d].receiver" % i]
+            maker_status = parameters["transaction[%d].status_for_sender_txn" % i]
+            if maker_email and maker_status and maker_email in maker_transaction_dict:
+                m = maker_transaction_dict[maker_email]
+                if maker_status == 'SUCCESS' or maker_status == 'Completed': # The docs say SUCCESS, the log says Completed
+                    m.status = 'Paid'
+                elif maker_status == 'PENDING' or maker_status == 'CREATED' or maker_status == 'PROCESSING':
+                    m.status = 'Pending'
+                    m.messages = maker_status
+                else:
+                    m.status = 'Error'
+                    m.messages = maker_status
+                m.put()
+            i += 1
+
+    @staticmethod
+    def update_inventory(cart, status, parameters):
+        db.run_in_transaction(IPNHandler.update_cart_and_maker_transaction_record, cart.key(), status, parameters)
+    
+        # We have just touched the MakerTransactions above. Is there
+        # a way to just do this all once?
+        if status == 'COMPLETED':
+            transactions = MakerTransaction.all()
+            transactions.ancestor(cart)
+            for transaction in transactions:
+                for entry in transaction.detail:
+                    (product_key, items, amount) = entry.split(':')
+                    count = int(items)
+                    product = Product.get(product_key)                        
+                    db.run_in_transaction( Product.decrement_product_inventory, product.key(), count )
+
 
 
     def ipn(self):
@@ -111,9 +129,8 @@ class IPNHandler(webapp.RequestHandler):
                 else:
                     paypalPaymentResponse = PaypalPaymentResponse( parent=cart,
                                                                response=str(parameters))
-                    paypalPaymentResponse.put();
-
-                    db.run_in_transaction(update_cart_and_maker_transaction_record, cart.key(), status, parameters)
+                    paypalPaymentResponse.put();                    
+                    IPNHandler.update_inventory(cart, status, parameters)
 
     def post(self):
         self.ipn()

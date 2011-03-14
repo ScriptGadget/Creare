@@ -152,6 +152,23 @@ class Product(db.Model):
     def get_slug_for_name(name):
         return slugify(name)
 
+    @staticmethod
+    def decrement_product_inventory(product_key, sold):
+        """ 
+        Here we can wrap the inventory decrement in a transaction. 
+        If we ever really need to scale this we could do it with 
+        a sharded counter and keep a high water mark for inventory
+        instead of a count, but that's probably uneeded 
+        this size site.
+        """
+        
+        product = Product.get(product_key)
+        product.inventory -= sold
+        if product.inventory < 0:
+            product.inventory = 0
+        product.put()
+
+
 class ProductImage(db.Model):
     """ An Image of a Product """
     product = db.ReferenceProperty(Product, collection_name='product_images')

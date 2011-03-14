@@ -10,8 +10,11 @@ class TestSandboxPayment(unittest.TestCase):
     def setUp(self):
         self.cart = CartTransaction ( paypal_pay_key='test_key' )
         self.cart.put()
+        
+        self.products = []
 
         self.makers = []
+        self.products = []
         self.maker_transactions = []
 
         for i in range(5):
@@ -29,11 +32,28 @@ class TestSandboxPayment(unittest.TestCase):
             maker.put()
             self.makers.append(maker)
 
+            product = Product(
+                maker=maker,
+                name="%s's Product" % maker.full_name,
+                short_description="Product #%d" % i,
+                description="Yes it is Product #%d!" % i,
+                price=9.95,
+                tags="Test, Item",
+                inventory=10 
+                )
+            product.put()
+            self.products.append(product)
+
+            entry = "%s:%s:%s" % (str(product.key()),
+                                  str(i+1),
+                                  "%.2f" %product.price)
+
             transaction = MakerTransaction(
                 parent=self.cart,
                 maker=maker,
                 email=maker.paypal_business_account_email,
                 when='now-ish%d' % i,
+                detail=[entry],
                 )
             transaction.put()
             self.maker_transactions.append(transaction)
@@ -56,13 +76,8 @@ class TestSandboxPayment(unittest.TestCase):
             parameters['transaction[%d].receiver' % i] = self.makers[i].paypal_business_account_email
 
         status = 'COMPLETED'
-
-        db.run_in_transaction(
-            update_cart_and_maker_transaction_record,
-            self.cart.key(), 
-            status,
-            parameters
-            )
+        
+        IPNHandler.update_inventory(self.cart, status, parameters)
 
         cart = CartTransaction.get(self.cart.key())
         self.assertTrue(cart.transaction_status == status)
@@ -72,6 +87,14 @@ class TestSandboxPayment(unittest.TestCase):
         maker_transactions = t.fetch(5)
         for transaction in maker_transactions:
             self.assertTrue(transaction.status == 'Paid')
+
+            for entry in transaction.detail:
+                (product_key, items, amount) = entry.split(':')
+                count = int(items)
+                product = Product.get(product_key)
+                self.assertTrue(product is not None)
+                logging.info("product.inventory: %d count: %d" % (product.inventory, count));
+                self.assertTrue(product.inventory == 10-count)
 
     def test_update_cart_and_maker_transaction_record_ERROR(self):
         parameters = {
@@ -85,12 +108,7 @@ class TestSandboxPayment(unittest.TestCase):
 
         status = 'ERROR'
 
-        db.run_in_transaction(
-            update_cart_and_maker_transaction_record,
-            self.cart.key(), 
-            status,
-            parameters
-            )
+        IPNHandler.update_inventory(self.cart, status, parameters)
 
         cart = CartTransaction.get(self.cart.key())
         self.assertTrue(cart.transaction_status == status)
@@ -100,3 +118,8 @@ class TestSandboxPayment(unittest.TestCase):
         maker_transactions = q.fetch(5)
         for transaction in maker_transactions:
             self.assertTrue(transaction.status == 'Error')
+            for entry in transaction.detail:
+                (product_key, items, amount) = entry.split(':')
+                product = Product.get(product_key)
+                self.assertTrue(product is not None)
+                self.assertTrue(product.inventory == 10)
