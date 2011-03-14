@@ -7,6 +7,8 @@
   form.email = "";
   form.shipping = "";
 
+  orderInProgress = false;
+
   InstallFunction(server, 'OrderProductsInCart', false);
   InstallFunction(server, 'GetShoppingCart', true);
   InstallFunction(server, 'RemoveProductFromCart', false);
@@ -22,7 +24,12 @@
 
   function doOrderProductsInCart(){
     if(validateForm()){
-      server.OrderProductsInCart(form.name, form.email, form.shipping, displayOrderResultOrRedirect);
+      if(orderInProgress){
+        alert("Please do not click the button\nwhile an order is in progress.");
+      }else{
+        orderInProgress = true;
+        server.OrderProductsInCart(form.name, form.email, form.shipping, displayOrderResultOrRedirect);
+      }
     }
   }
 
@@ -69,6 +76,7 @@
   }
 
   function displayOrderResultOrRedirect(response){
+    orderInProgress = false;
 	if("redirect" in response) {
 	   redirect_url = response["redirect"];	   
 	   window.location.href = redirect_url;
@@ -88,7 +96,7 @@
   function validateForm(){
     valid = updateForm();
     if(!valid){
-      alert("No! Bad!");
+      $('form_message').innerHTML="(Please fill out the form so our makers know where to send your items.)";
     }
     return valid;
   }
@@ -107,7 +115,7 @@
 	<tr><th>Name:</th><td><input type="text" name="name" id="name_id" onchange="updateForm()"/></td></tr>
 	<tr><th>Shipping:</th><td><textarea name="shipping" id="shipping_id" onchange="updateForm()"></textarea></td></tr>
 	</table>
-	<p class="explanatory_message">(All fields required)</p>
+	<p id="form_message" class="explanatory_message">(All fields required)</p>
     <div id="PaymentOptions"></div> 
 
 	

@@ -57,7 +57,6 @@ class MakerPage(webapp.RequestHandler):
                                 'form':data,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
-            logging.info("Showing Registration Page")
             self.response.out.write(template.render(path, add_base_values(template_values)))
 
     def post(self):
@@ -670,13 +669,12 @@ class RemoveProductFromCart(webapp.RequestHandler):
         pass
 
     def post(self):
-        product_id = self.request.get('arg0')
+        product_id = self.request.get('arg0').strip('"')
         session = get_current_session()
         if not session.is_active():
-            # session.start(ssl_only=True)
             session.regenerate_id()
         items = session.get('ShoppingCartItems', [])
-
+        
         for item in items:
             if item.product_key == product_id:
                 if item.count > 1:
@@ -1426,8 +1424,11 @@ class SetApprovalStatus(webapp.RequestHandler):
 class CompletePurchase(webapp.RequestHandler):
     """ Handle a redirect from Paypal for a successful purchase. """
     def handle(self):
-        logging.info("Redirect from Paypal: " + str(self.request))
-        template_values = {"message":"Not Yet Implemented."}
+        if self.request.uri.count('cancel') > 0:
+            message = "Checkout cancelled.";
+        else:
+            message = "Thank you for supporting local makers, crafters and artists.";
+        template_values = {"message":message}
         path = os.path.join(os.path.dirname(__file__), "templates/error.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
