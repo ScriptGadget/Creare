@@ -1,5 +1,5 @@
 application: maker-sites
-version: alpha-16
+version: alpha-17
 runtime: python
 api_version: 1
 
@@ -37,3 +37,6 @@ handlers:
 
 error_handlers:
 - file: error.html
+
+builtins:
+- datastore_admin: on
