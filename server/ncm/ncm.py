@@ -943,10 +943,10 @@ class OrderProductsInCart(webapp.RequestHandler):
         else:
             items = session.get('ShoppingCartItems', [])
             cart_transaction = CartTransaction(transaction_type='Sale')
-            cart_transaction.shopper_name = self.request.get('arg0').strip('"')
-            cart_transaction.shopper_email = self.request.get('arg1').strip('"')
-            shipping = self.request.get('arg2').strip('"').decode('unicode_escape')
-            logging.info(shipping)
+            cart_transaction.shopper_name = sanitizeHtml(self.request.get('arg0').strip('"'))
+            cart_transaction.shopper_email = sanitizeHtml(self.request.get('arg1').strip('"'))
+            shipping = sanitizeHtml(self.request.get('arg2').strip('"').decode('unicode_escape'))
+            logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping)
             cart_transaction.shopper_shipping = shipping
             cart_transaction.put()
 
