@@ -22,5 +22,5 @@
 
 from gaesessions import SessionMiddleware
 def webapp_add_wsgi_middleware(app):
-    app = SessionMiddleware(app, cookie_key='KO3+6reNS8sNDk6fyGz2ZHIEsdNsmLs1iVlXAXHMYjTc3mL2oburJ4/+ogx7XdyhbYDLaVjUiLET3fXAh23YlQ==')
+    app = SessionMiddleware(app, cookie_key='KMOPgO79WHQ4vtrUil9TPPPK33idCJaHi+FL/O+v34cri8CQ5N9aPOgO1xjWYwVp7HS8js1Rx0YW2i9C4CbT3Q==')
     return app
