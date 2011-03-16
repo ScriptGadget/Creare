@@ -15,7 +15,12 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Creare.  If not, see <http://www.gnu.org/licenses/>.
 #
+#  This is a setup file needed by gaesessions (gaesessions itself
+#  is not part of Creare). This should probably be removed from
+#  the repository and replaced with instructions on where to get
+#  gaesessions and instruction for how to instal it.
+
 from gaesessions import SessionMiddleware
 def webapp_add_wsgi_middleware(app):
-    app = SessionMiddleware(app, cookie_key='xT9SEPmacUU+ZgfVu+Zpwn8mB+aXwqBFDe/Y52+N3Xj4+dH9STsVH+DhGQgLtCs/7zq0Jbkkq36oJcBYsMM2cw==')
+    app = SessionMiddleware(app, cookie_key='REPLACETHISWITHAREALCOOKIEKEY')
     return app
