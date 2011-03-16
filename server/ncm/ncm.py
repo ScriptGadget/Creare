@@ -436,131 +436,6 @@ class CommunityHomePage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
-
-class MakerActivityTableHandler(webapp.RequestHandler):
-    """ Base class for pages which handle the Maker Activity Table """
-
-    def buildTransactionRow(self, transaction, fee_percentage, fee_minimum):
-        sale = {}
-        cart = transaction.parent()
-        sale['transaction'] = str(transaction.key())
-        sale['transaction_status'] = transaction.status
-        sale['when'] = transaction.when
-        sale['date'] = str(cart.timestamp.date())
-        sale['shipped'] = transaction.shipped        
-        sale['shopper_name'] = cart.shopper_name
-        sale['shopper_email'] = cart.shopper_email
-        sale['shopper_shipping'] = cart.shopper_shipping.encode('utf-8').replace("\n", "</br>")
-        products = []
-        sale_amount = 0.0
-        sale_items = 0
-        sale_fee = 0.0
-        additional_sales = 0.0
-        additional_items = 0
-        
-        for entry in transaction.detail:
-            product = {}
-            (product_key, items, amount) = entry.split(':')
-            product_amount = float(amount)
-            product_items = int(items)
-            fee = sale_amount * fee_percentage + fee_minimum
-            sale_amount += product_amount
-            sale_items += product_items
-            sale_fee += fee
-            product['product_name'] = Product.get(product_key).name
-            product['items'] = product_items
-            product['amount'] = "%.2f" % product_amount
-            product['fee'] = "%.2f" % fee
-            product['net'] = "%.2f" % (float(product_amount) - float(fee))
-            additional_items += product_items
-            additional_sales += product_amount * product_items
-            products.append(product)
-
-        sale['products'] = products
-        sale['items'] = sale_items
-        sale['fee'] = "%.2f" % sale_fee
-        sale['amount'] = "%.2f" % sale_amount
-        sale['net'] = "%.2f" % (sale_amount - sale_fee)
-
-        return (sale, additional_items, additional_sales)
-
-class GetMakerActivityTable(MakerActivityTableHandler):
-    """ Respond to an RPC call requesting the maker activity table.  """
-    def post(self):
-        self.error(404)
-
-    def get(self):
-        maker = Maker.get(self.request.get('arg0'))
-        if not maker and not Authenticator.authorized_for(maker.user):
-            self.error(403)
-            self.response.out.write('{"alert1":"You do not have permission to request that."}')
-            return
-
-        cursor = self.request.get('arg1').strip('"')
-        direction = self.request.get('arg2').strip('"')
-        q = db.Query(MakerTransaction)
-        q.filter('maker =', maker.key())
-        
-        if cursor and cursor != '':
-            if direction and direction == 'older':
-                q.order('-when')
-                q.filter('when <', cursor)
-        else:
-            q.order('-when')
-
-        maker_transactions = q.fetch(15)
-
-        sales = []
-        total_sales = 0.0
-        total_items = 0
-        total_fees = 0.0
-        total_net = 0.0
-        community = Community.get_current_community()
-        fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
-        fee_minimum = community.paypal_fee_minimum + community.fee_minimum
-
-        for transaction in maker_transactions:
-            (sale, additional_items, additional_sales) = self.buildTransactionRow(transaction, fee_percentage, fee_minimum)
-            total_items += additional_items
-            total_sales += additional_sales
-            sales.append(sale)
-
-        sales.sort(key=lambda sale: sale['when'], reverse=True)
-
-        reply = { 'sales':sales,
-                  'total_sales': "%.2f" % total_sales,
-                  'total_items':total_items}
-
-        self.response.out.write(simplejson.dumps(reply))
-
-class SetMakerTransactionShipped(MakerActivityTableHandler):
-    def post(self):
-        maker = Maker.get(self.request.get('arg0'))
-        if not maker and not Authenticator.authorized_for(maker.user):
-            self.error(403)
-            self.response.out.write('{"alert1":"You do not have permission to request that."}')
-            return
-
-        transaction = MakerTransaction.get(self.request.get('arg1'))
-        if not transaction:
-            self.response.out.write('{"alert1":"Transaction not found."}')
-            return
-        transaction.shipped = not transaction.shipped
-        transaction.put()
-
-        community = Community.get_current_community()
-        fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
-        fee_minimum = community.paypal_fee_minimum + community.fee_minimum
-        
-        (sale, additional_items, additional_sales) = self.buildActivityTableRow(transaction, fee_percentage, fee_minimum)
-        reply = {"sale":sale}
-
-        self.response.out.write(simplejson.dumps(reply))
-
-    def get(self):
-        self.error(404)
-        self.response.out.write('{"alert1":"Error, request not idempotent."}')
-
 class MakerDashboard(webapp.RequestHandler):
     """ Renders a page for Makers to view and manage their catalog and sales """
     def get(self, maker_slug):
@@ -644,114 +519,6 @@ class MakerStorePage(webapp.RequestHandler):
         template_values = { 'maker':maker, 'products':maker.products, 'user':users.get_current_user()}
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
-
-class AddProductToCart(webapp.RequestHandler):
-    """ Accept a JSON RPC request to add a product to the cart"""
-    def post(self):
-        logging.info('AddProductToCart: ' + str(self.request))
-        product_id = self.request.get('arg0').strip('"')
-        try:
-            product = Product.get(product_id)
-        except Exception, e:
-            self.response.out.write('{"alert1":"Product Not Found"}')
-            return
-        if product.inventory < 1:
-            self.response.out.write('{"alert1":"No More ' + product.name + ' In Stock"}')
-
-            return
-        session = get_current_session()
-        if not session.is_active():
-            # session.start(ssl_only=True)
-            session.regenerate_id()
-        items = session.get('ShoppingCartItems', [])
-
-        for item in items:
-            if item.product_key == product_id:
-                item.count += 1
-                break
-        else:
-            newItem = ShoppingCartItem(product_key=product_id, price=product.price, count=1)
-            items.append(newItem)
-
-        total = 0
-        for item in items:
-            total += item.count
-        session['ShoppingCartItems'] = items
-        count = str(total) + ' items'
-        self.response.out.write("{ \"count\":\"" + count + "\"}")
-
-class RemoveProductFromCart(webapp.RequestHandler):
-    """ Accept a JSON RPC request to remove a product from the cart"""
-    def get(self):
-        pass
-
-    def post(self):
-        product_id = self.request.get('arg0').strip('"')
-        session = get_current_session()
-        if not session.is_active():
-            session.regenerate_id()
-        items = session.get('ShoppingCartItems', [])
-        
-        for item in items:
-            if item.product_key == product_id:
-                if item.count > 1:
-                    item.count -= 1
-                else:
-                    items.remove(item)
-                break
-
-        session['ShoppingCartItems'] = items
-        self.response.out.write('{"result":"success"}')
-
-class GetShoppingCart(webapp.RequestHandler):
-    """ 
-    Accept a JSON RPC request to provide information for a shopping cart table and 
-    paypal payment button
-    """
-
-    def get(self):
-        session = get_current_session()
-        if not session.is_active():
-            self.response.out.write('{"button_available":"false"}')
-        else:
-            community = Community.get_community_for_slug(session.get('community'))
-            email = "";
-            action_url = "";
-            if community.use_sandbox:
-                email = community.paypal_sandbox_email_address
-                action_url = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
-            else:
-                email = community.paypal_email_address
-                action_url = 'https://www.paypal.com/cgi-bin/webscr'
-            item_name = 'Shopping Cart'
-            item_number = '123'
-            items = session.get('ShoppingCartItems', [])
-            return_url = 'http://nevadacountymakes.com/return'
-            cancel_url = 'http://nevadacountymakes.com/cancel'
-            transaction_id = 'abc'
-
-            message = '{'
-            message += '"products":['
-            amount = 0.0
-            for item in items:
-                product = Product.get(item.product_key)
-                if product:
-                    message += '{"count":"' + str(item.count) + '",'
-                    message += '"name":"' + product.name + '",'
-                    message += '"key":"' + str(product.key()) + '",'
-                    message += '"price":"' + '%3.2f' % item.price + '",'
-                    message += '"total":"' + '%3.2f' % item.subtotal + '"},'
-                    amount += item.subtotal
-            if len(items):
-                message = message[:-1] # some browsers don't like trailing commas
-            message += '],'
-            message += '"amount":"' + "%.2f" % amount + '"'
-            message += '}'
-
-            self.response.out.write(message)
-
-    def post(self):
-        pass
 
 class EditCommunityPage(webapp.RequestHandler):
     """ A page for managing community info  """
@@ -924,126 +691,6 @@ class NotFoundErrorHandler(webapp.RequestHandler):
     def get(self):
         self.error(404)
         self.response.out.write("Opps, that doesn't seem to be a valid page.")
-
-class OrderProductsInCart(webapp.RequestHandler):
-    """ Deduct items from product inventory and create a CartTransaction
-    and MakerTransactions to represent the cart. """    
-        
-    def get(self):
-        """ Ignore gets. This isn't an idempotent operation. """
-        pass
-
-    def post(self):
-        session = get_current_session()
-        if not session.is_active():
-            self.response.out.write("{ \"message\":\""
-                                    + "I don't see anything in your cart"
-                                    + "\"}")
-            return
-        else:
-            items = session.get('ShoppingCartItems', [])
-            cart_transaction = CartTransaction(transaction_type='Sale')
-            cart_transaction.shopper_name = sanitizeHtml(self.request.get('arg0').strip('"'))
-            cart_transaction.shopper_email = sanitizeHtml(self.request.get('arg1').strip('"'))
-            shipping = sanitizeHtml(self.request.get('arg2').strip('"').decode('unicode_escape'))
-            logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping)
-            cart_transaction.shopper_shipping = shipping
-            cart_transaction.put()
-
-            maker_transactions = []
-            products = []
-            maker_business_ids = []
-            for item in items:
-                product = Product.get(item.product_key)
-                if product.inventory - item.count < 0:
-                    self.response.out.write(
-                        "{ \"alert1\":\""
-                        + "%d %s in stock, but %d in your cart - please remove %d" %(product.inventory, product.name, item.count, item.count - product.inventory)
-                        + "\"}")
-                    return
-                else:
-                    product.sold = item.count
-
-                products.append(product)
-
-                for maker_transaction in maker_transactions:
-                    if maker_transaction.maker.key() == product.maker.key():
-                        entry = "%s:%s:%s" % (str(product.key()),
-                                              str(item.count),
-                                              str(item.price))
-                        maker_transaction.detail.append(entry)
-                        break
-                    else:
-                        logging.info(str(maker_transaction.maker.key()) + "!=" + str(product.maker.key()))
-                else:
-                    when = "%s|%s" % (datetime.now(), hashlib.md5(str(product.maker.key())+get_current_session().sid).hexdigest())
-                    maker_transaction = MakerTransaction(parent=cart_transaction,
-                                                         maker=product.maker,
-                                                         email=product.maker.paypal_business_account_email,
-                                                         when=when)
-
-                    entry = "%s:%s:%s" % (str(product.key()),
-                                          str(item.count),
-                                          str(item.price))
-                    maker_transaction.detail.append(entry)
-                    maker_transactions.append(maker_transaction)
-                    maker_business_ids.append((product.maker.paypal_business_account_email, 1.00))
-
-            community = Community.get_current_community()
-            base_url = self.request.url.replace(self.request.path, '')
-
-            receivers = ShoppingCartItem.createReceiverList(community=community,
-                                                            shopping_cart_items=items)
-
-            try:
-                payment = PaypalChainedPayment( primary_recipient=receivers['primary'],
-                                                additional_recipients=receivers['others'],
-                                                api_username=community.paypal_sandbox_api_username,
-                                                api_password=community.paypal_sandbox_api_password,
-                                                api_signature=community.paypal_sandbox_api_signature,
-                                                application_id=community.paypal_sandbox_application_id,
-                                                client_ip=self.request.remote_addr,
-                                                cancel_url=base_url+'/cancel?payKey=${payKey}',
-                                                return_url=base_url+'/return?payKey=${payKey}',
-                                                action_url='https://svcs.sandbox.paypal.com/AdaptivePayments/Pay',
-                                                ipn_url=base_url+'/ipn',
-                                                sandbox_email=community.paypal_sandbox_email_address,
-                                                )
-            except TooManyRecipientsException:
-                cart_transaction.delete()
-                self.response.out.write("{ \"message\":\""
-                                        + "Paypal allows no more than five different Makers' products in a cart. Please divide your purchase."
-                                        + "\"}")
-                return
-
-            try:
-                response = payment.execute()
-                paypalPaymentResponse = PaypalPaymentResponse( parent=cart_transaction,
-                                                               response=response.content)
-                paypalPaymentResponse.put();
-                confirmation_url = payment.buildRedirectURL(response=response, sandbox=community.use_sandbox)
-            except Exception, e:
-                logging.error('Exception handling Paypal transaction: %s',  str(e));
-                response = None
-
-            if response and confirmation_url:
-                cart_transaction.transaction_status = 'CREATED';
-                cart_transaction.paypal_pay_key = payment.pay_key
-                cart_transaction.put()
-                db.put(maker_transactions)
-                message = '{ "redirect":"%s" }' % confirmation_url
-                self.response.out.write(message)
-                session.pop('ShoppingCartItems')
-            else:
-                logging.error("A Paypal checkout failed! Here's the cart: " + str(items))
-                cart_transaction.transaction_status = 'ERROR'
-                cart_transaction.error_details = 'Error Talking to Paypal.'
-                cart_transaction.put()
-                self.response.out.write("{ \"message\":\""
-                                    + "An error occured talking to Paypal. Please try again later. You can also call us or email. We have logged the error and will be looking into it right away. Your account has not been charged."
-                                    + "\"}")
-                # TBD Generate email alert?
-            return
 
 class ListNewsItems(webapp.RequestHandler):
     """ List news items. """
@@ -1401,26 +1048,6 @@ class ListMakers(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/makers.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
-class SetApprovalStatus(webapp.RequestHandler):
-    """ Change the approval status of a  maker. """
-    def get(self):
-        self.error(404)
-        self.response.out.write("Not Found")
-
-    def post(self):
-        logging.info("SetApprovalStatus\n")
-        maker_id = self.request.get('arg0')
-        maker = Maker.get(maker_id)
-        if maker:
-            status = self.request.get('arg1').strip('"')
-            maker.approval_status = status
-            maker.put()
-            logging.info("Setting " + maker.full_name + " to " + status)
-            self.response.out.write('{"key":"' + str(maker.key()) +'", "approval_status":"' + status + '"}')            
-        else:
-            logging.error("Attempt to change approval status of a maker which doesn't exist: %s\n", maker_id)
-            self.error(404)
-
 class CompletePurchase(webapp.RequestHandler):
     """ Handle a redirect from Paypal for a successful purchase. """
     def handle(self):
@@ -1455,20 +1082,403 @@ class RenderContentPage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/content_page.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
-class EditContent(webapp.RequestHandler):
-    """ Change content for a content page. """
-    def post(self):
+class RPCHandler(webapp.RequestHandler):
+    """ Allows the functions defined in the RPCMethods class to be RPCed."""
+    def __init__(self):
+        webapp.RequestHandler.__init__(self)
+        self.getMethods = RPCGetMethods()
+        self.postMethods = RPCPostMethods()
+
+    def get(self, action):
+        func = None
+
+        if action:
+            if action[0] == '_':
+                self.error(403) # access denied
+                return
+            else:
+                func = getattr(self.getMethods, action, None)
+
+        if not func:
+            self.error(404) # file not found
+            return
+
+        args = ()
+        while True:
+            key = 'arg%d' % len(args)
+            val = self.request.get(key)
+            if val:
+                args += (simplejson.loads(val),)
+            else:
+                break
+
+        result = func(self.request, *args)
+        self.response.out.write(simplejson.dumps(result))
+
+    def post(self, action):
+        func = None
+        if action:
+            if action[0] == '_':
+                self.error(403) # access denied
+                return
+            else:
+                func = getattr(self.postMethods, action, None)
+
+        if not func:
+            self.error(404) # file not found
+            return
+
+        args = ()
+        while True:
+            key = 'arg%d' % len(args)
+            val = self.request.get(key)
+            if val:
+                args += (simplejson.loads(val),)
+            else:
+                break
+
+        result = func(self.request, *args)
+        self.response.out.write(simplejson.dumps(result))
+   
+
+def _buildTransactionRow(transaction, fee_percentage, fee_minimum):
+    """ Put together information for a single row in the maker activity table  """
+    sale = {}
+    cart = transaction.parent()
+    sale['transaction'] = str(transaction.key())
+    sale['transaction_status'] = transaction.status
+    sale['when'] = transaction.when
+    sale['date'] = str(cart.timestamp.date())
+    sale['shipped'] = transaction.shipped        
+    sale['shopper_name'] = cart.shopper_name
+    sale['shopper_email'] = cart.shopper_email
+    sale['shopper_shipping'] = cart.shopper_shipping.encode('utf-8').replace("\n", "</br>")
+    products = []
+    sale_amount = 0.0
+    sale_items = 0
+    sale_fee = 0.0
+    additional_sales = 0.0
+    additional_items = 0
+        
+    for entry in transaction.detail:
+        product = {}
+        (product_key, items, amount) = entry.split(':')
+        product_amount = float(amount)
+        product_items = int(items)
+        fee = sale_amount * fee_percentage + fee_minimum
+        sale_amount += product_amount
+        sale_items += product_items
+        sale_fee += fee
+        product['product_name'] = Product.get(product_key).name
+        product['items'] = product_items
+        product['amount'] = "%.2f" % product_amount
+        product['fee'] = "%.2f" % fee
+        product['net'] = "%.2f" % (float(product_amount) - float(fee))
+        additional_items += product_items
+        additional_sales += product_amount * product_items
+        products.append(product)
+
+    sale['products'] = products
+    sale['items'] = sale_items
+    sale['fee'] = "%.2f" % sale_fee
+    sale['amount'] = "%.2f" % sale_amount
+    sale['net'] = "%.2f" % (sale_amount - sale_fee)
+
+    return (sale, additional_items, additional_sales)
+
+
+class RPCGetMethods:
+    """ Defines the methods that can be RPCed.
+    NOTE: Do not allow remote callers access to private/protected "_*" methods.
+    """
+    def GetShoppingCart(self, request, *args):
+        """ Returns the items currently in the shopping cart. """
+        session = get_current_session()
+        results = {}
+        items = session.get('ShoppingCartItems', [])
+            
+        products = []
+        amount = 0.0
+        for item in items:
+            product = Product.get(item.product_key)
+            if product:
+                p = { "count": str(item.count),
+                      "name": product.name,
+                      "key": str(product.key()),
+                      "price":'%3.2f' % item.price,
+                      "total":'%3.2f' % item.subtotal, }
+                products.append(p)
+                amount += item.subtotal
+            
+        results = {'products':products, 'amount':"%.2f" % amount}
+        return results
+
+    def GetMakerActivityTable(self, request, *args):
+        try:
+            maker = Maker.get(args[0])
+        except:
+            return {"alert1":"Maker not found"}
+
+        if not maker and not Authenticator.authorized_for(maker.user):
+            self.error(403)
+            return {"alert1":"You do not have permission to request that."}
+
+        cursor = args[1]
+        direction = args[2]
+        q = db.Query(MakerTransaction)
+        q.filter('maker =', maker.key())
+        
+        if cursor and cursor != '':
+            if direction and direction == 'older':
+                q.order('-when')
+                q.filter('when <', cursor)
+        else:
+            q.order('-when')
+
+        maker_transactions = q.fetch(15)
+
+        sales = []
+        total_sales = 0.0
+        total_items = 0
+        total_fees = 0.0
+        total_net = 0.0
+        community = Community.get_current_community()
+        fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
+        fee_minimum = community.paypal_fee_minimum + community.fee_minimum
+
+        for transaction in maker_transactions:
+            (sale, additional_items, additional_sales) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
+            total_items += additional_items
+            total_sales += additional_sales
+            sales.append(sale)
+
+        sales.sort(key=lambda sale: sale['when'], reverse=True)
+
+        return { 'sales':sales,
+                 'total_sales': "%.2f" % total_sales,
+                 'total_items':total_items}
+
+
+class RPCPostMethods:
+    """ Handle any RPC request that change the state of the sytem. """
+
+    def AddProductToCart(self, request, *args):
+        """ Add a product to the shopping cart by key. """
+        results = {}
+        product_id = args[0]
+        try:
+            product = Product.get(product_id)
+        except:
+            results["alert1"]="Product Not Found"
+            return results
+        if product.inventory < 1:
+            results["alert1"]="No More ' + product.name + ' In Stock"
+            return results
+
+        session = get_current_session()
+        if not session.is_active():
+            session.regenerate_id()
+        items = session.get('ShoppingCartItems', [])
+
+        for item in items:
+            if item.product_key == product_id:
+                item.count += 1
+                break
+        else:
+            newItem = ShoppingCartItem(product_key=product_id, price=product.price, count=1)
+            items.append(newItem)
+
+        total = 0
+        for item in items:
+            total += item.count
+        session['ShoppingCartItems'] = items
+        count = str(total) + ' items'
+        results["count"] = count 
+        return results
+
+    def RemoveProductFromCart(self, request, *args):
+        """ Remove and item from the shopping cart by key """
+        product_id = args[0]
+        session = get_current_session()
+        if not session.is_active():
+            session.regenerate_id()
+        items = session.get('ShoppingCartItems', [])
+        
+        for item in items:
+            if item.product_key == product_id:
+                if item.count > 1:
+                    item.count -= 1
+                else:
+                    items.remove(item)
+                break
+
+        session['ShoppingCartItems'] = items
+        return {"result":"success"}
+
+    def SetMakerTransactionShipped(self, request, *args):
+        try:
+            maker = Maker.get(args[0])
+        except:
+            return {"alert1":"Maker not found"}
+        
+        if not maker and not Authenticator.authorized_for(maker.user):
+            self.error(403)
+            return {"alert1":"You do not have permission to request that."}
+
+        try:
+            transaction = MakerTransaction.get(args[1])
+        except Exception, e:
+            return {"alert1":"Transaction not found"}
+
+        if not transaction:
+            return {"alert1":"Transaction not found"}
+        transaction.shipped = not transaction.shipped
+        transaction.put()
+
+        community = Community.get_current_community()
+        fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
+        fee_minimum = community.paypal_fee_minimum + community.fee_minimum
+        
+        (sale, additional_items, additional_sales) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
+        return {"sale":sale}
+
+    def OrderProductsInCart(self, request, *args):
+        """ Deduct items from product inventory and create a CartTransaction
+        and MakerTransactions to represent the cart. """    
+        session = get_current_session()
+        if not session.is_active():
+            return{"message":"I don't see anything in your cart"}
+        else:
+            items = session.get('ShoppingCartItems', [])
+            cart_transaction = CartTransaction(transaction_type='Sale')
+            cart_transaction.shopper_name = sanitizeHtml(args[0])
+            cart_transaction.shopper_email = sanitizeHtml(args[1])
+            shipping = sanitizeHtml(args[2].decode('unicode_escape'))
+
+            logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping)
+
+            cart_transaction.shopper_shipping = shipping
+            cart_transaction.put()
+
+            maker_transactions = []
+            products = []
+            maker_business_ids = []
+            for item in items:
+                product = Product.get(item.product_key)
+                if product.inventory - item.count < 0:
+                    return{"alert1":"%d %s in stock, but %d in your cart - please remove %d" 
+                           % (product.inventory, product.name, item.count, item.count - product.inventory) }
+                else:
+                    product.sold = item.count
+
+                products.append(product)
+
+                for maker_transaction in maker_transactions:
+                    if maker_transaction.maker.key() == product.maker.key():
+                        entry = "%s:%s:%s" % (str(product.key()),
+                                              str(item.count),
+                                              str(item.price))
+                        maker_transaction.detail.append(entry)
+                        break
+                    else:
+                        logging.info(str(maker_transaction.maker.key()) + "!=" + str(product.maker.key()))
+                else:
+                    when = "%s|%s" % (datetime.now(), hashlib.md5(str(product.maker.key())+get_current_session().sid).hexdigest())
+                    maker_transaction = MakerTransaction(parent=cart_transaction,
+                                                         maker=product.maker,
+                                                         email=product.maker.paypal_business_account_email,
+                                                         when=when)
+
+                    entry = "%s:%s:%s" % (str(product.key()),
+                                          str(item.count),
+                                          str(item.price))
+                    maker_transaction.detail.append(entry)
+                    maker_transactions.append(maker_transaction)
+                    maker_business_ids.append((product.maker.paypal_business_account_email, 1.00))
+
+            community = Community.get_current_community()
+            base_url = request.url.replace(request.path, '')
+
+            receivers = ShoppingCartItem.createReceiverList(community=community,
+                                                            shopping_cart_items=items)
+
+            try:
+                payment = PaypalChainedPayment( primary_recipient=receivers['primary'],
+                                                additional_recipients=receivers['others'],
+                                                api_username=community.paypal_sandbox_api_username,
+                                                api_password=community.paypal_sandbox_api_password,
+                                                api_signature=community.paypal_sandbox_api_signature,
+                                                application_id=community.paypal_sandbox_application_id,
+                                                client_ip=request.remote_addr,
+                                                cancel_url=base_url+'/cancel?payKey=${payKey}',
+                                                return_url=base_url+'/return?payKey=${payKey}',
+                                                action_url='https://svcs.sandbox.paypal.com/AdaptivePayments/Pay',
+                                                ipn_url=base_url+'/ipn',
+                                                sandbox_email=community.paypal_sandbox_email_address,
+                                                )
+            except TooManyRecipientsException:
+                cart_transaction.delete()
+                return {"message":"Paypal allows no more than five different Makers' products in a cart. Please divide your purchase."}
+            try:
+                response = payment.execute()
+                paypalPaymentResponse = PaypalPaymentResponse( parent=cart_transaction, response=response.content)
+                paypalPaymentResponse.put();
+                confirmation_url = payment.buildRedirectURL(response=response, sandbox=community.use_sandbox)
+            except Exception, e:
+                logging.error('Exception handling Paypal transaction: %s',  str(e));
+                response = None
+
+            if response and confirmation_url:
+                cart_transaction.transaction_status = 'CREATED';
+                cart_transaction.paypal_pay_key = payment.pay_key
+                cart_transaction.put()
+                db.put(maker_transactions)
+                session.pop('ShoppingCartItems')
+                return {"redirect":"%s" % confirmation_url} 
+            else:
+                logging.error("A Paypal checkout failed! Here's the cart: " + str(items))
+                cart_transaction.transaction_status = 'ERROR'
+                cart_transaction.error_details = 'Error Talking to Paypal.'
+                cart_transaction.put()
+                # TBD Generate email alert?
+                return{"message":"An error occured talking to Paypal. Please try again later. You can also call us or email. We have logged the error and will be looking into it right away. Your account has not been charged."}
+
+    def SetApprovalStatus(self, request, *args):
+        """ Change the approval status of a  maker. """
+        try:
+            maker = Maker.get(args[0])
+        except:
+            return {"alert1":"Maker not found."}
+        if maker:
+            status = args[1]
+            maker.approval_status = status
+            maker.put()
+            return{"key":str(maker.key()), "approval_status":status}
+        else:
+            logging.error("Attempt to change approval status of a maker which doesn't exist: %s\n", maker_id)
+            self.error(404)
+
+    def EditContent(self, request, *args):
+        """ Change content for a content page. """
         if not users.is_current_user_admin():
             self.error(403)
-            self.response.out.write('You do not have permission to edit that.')
+            return{"alert1":"You do not have permission to edit that."}
         else:
-            name = self.request.get('arg0').strip('"')
+            name = args[0]
             page = Page.get_or_insert(name, name=name)
-            page.content=self.request.get('arg1').strip('"').replace(u'\u201c', '"').replace(u'\u201d', '"').decode('unicode_escape')
+            page.content=args[1].replace(u'\u201c', '"').replace(u'\u201d', '"').decode('unicode_escape')
             page.put()
 
 def main():
     app = webapp.WSGIApplication([
+        (r'/rpc/(GetShoppingCart)', RPCHandler),
+        (r'/rpc/(GetMakerActivityTable)', RPCHandler),
+        (r'/rpc/(SetApprovalStatus)', RPCHandler),
+        (r'/rpc/(AddProductToCart)', RPCHandler),
+        (r'/rpc/(RemoveProductFromCart)', RPCHandler),
+        (r'/rpc/(SetMakerTransactionShipped)', RPCHandler),
+        (r'/rpc/(OrderProductsInCart)', RPCHandler),
+        (r'/rpc/(EditContent)', RPCHandler),
         ('/', CommunityHomePage),
         ('/communities', SiteHomePage),
         ('/maker', MakerPage),
@@ -1484,18 +1494,11 @@ def main():
         ('/makers', ListMakers),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
-        ('/SetApprovalStatus', SetApprovalStatus),
         (r'/product_images/(.*)', DisplayImage),
         ('/upload_product_image', UploadProductImage), 
-        ('/AddProductToCart', AddProductToCart),
-        ('/RemoveProductFromCart', RemoveProductFromCart),
-        ('/GetShoppingCart', GetShoppingCart),
-        ('/GetMakerActivityTable', GetMakerActivityTable),
-        ('/SetMakerTransactionShipped', SetMakerTransactionShipped),
         ('/community/add', AddCommunityPage),
         ('/community/edit', EditCommunityPage),
         ('/checkout', CheckoutPage),
-        ('/OrderProductsInCart', OrderProductsInCart),
         ('/news_items', ListNewsItems),
         ('/news_item/add', AddNewsItem),
         (r'/news_item/edit/(.*)', EditNewsItem),
@@ -1512,7 +1515,6 @@ def main():
         ('/advertisements', ListAdvertisements),
         ('/return', CompletePurchase),
         ('/cancel', CompletePurchase),
-        ('/EditContent', EditContent),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

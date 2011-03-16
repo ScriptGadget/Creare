@@ -59,9 +59,9 @@ function Request(idempotent, function_name, opt_argv) {
       
 	var req = new XMLHttpRequest();
 	if(idempotent){
-        req.open('GET', '/'+encodeURIComponent(function_name)+'?' + query, async);
+        req.open('GET', '/rpc/'+encodeURIComponent(function_name)+'?' + query, async);
 	}else{
-        req.open('POST', '/'+encodeURIComponent(function_name), async);
+        req.open('POST', '/rpc/'+encodeURIComponent(function_name), async);
         req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         req.setRequestHeader("Content-length", query.length);
         req.setRequestHeader("Connection", "close");        
