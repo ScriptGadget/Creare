@@ -1089,7 +1089,7 @@ class RPCHandler(webapp.RequestHandler):
         self.getMethods = RPCGetMethods()
         self.postMethods = RPCPostMethods()
 
-    def get(self, action):
+    def handle(self, action, handlers):
         func = None
 
         if action:
@@ -1097,7 +1097,7 @@ class RPCHandler(webapp.RequestHandler):
                 self.error(403) # access denied
                 return
             else:
-                func = getattr(self.getMethods, action, None)
+                func = getattr(handlers, action, None)
 
         if not func:
             self.error(404) # file not found
@@ -1114,31 +1114,12 @@ class RPCHandler(webapp.RequestHandler):
 
         result = func(self.request, *args)
         self.response.out.write(simplejson.dumps(result))
+
+    def get(self, action):
+        self.handle(action, self.getMethods)
 
     def post(self, action):
-        func = None
-        if action:
-            if action[0] == '_':
-                self.error(403) # access denied
-                return
-            else:
-                func = getattr(self.postMethods, action, None)
-
-        if not func:
-            self.error(404) # file not found
-            return
-
-        args = ()
-        while True:
-            key = 'arg%d' % len(args)
-            val = self.request.get(key)
-            if val:
-                args += (simplejson.loads(val),)
-            else:
-                break
-
-        result = func(self.request, *args)
-        self.response.out.write(simplejson.dumps(result))
+        self.handle(action, self.postMethods)
    
 
 def _buildTransactionRow(transaction, fee_percentage, fee_minimum):
