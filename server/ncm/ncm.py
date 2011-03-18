@@ -224,6 +224,7 @@ class ProductPage(webapp.RequestHandler):
                 entity = data.save(commit=False)
                 entity.maker = maker
                 entity.slug = Product.get_slug_for_name(entity.name)
+                entity.when = "%s|%s" % (datetime.now(), hashlib.md5(str(maker.key())+get_current_session().sid).hexdigest())
                 entity.put()
                 upload = ProductImage()
                 try:
@@ -422,10 +423,15 @@ class CommunityHomePage(webapp.RequestHandler):
         user = users.get_current_user()
 
         stuff = Product.all()
+        stuff.order('-when')
         products = []
+        count = 0;
         for product in stuff:
             if product.maker.approval_status == 'Approved':
                 products.append(product)
+                count += 1
+                if count >= 16:
+                    break;
 
         template_values = { 'title': community.name,
                             'maker': Authenticator.getMakerForUser(user),

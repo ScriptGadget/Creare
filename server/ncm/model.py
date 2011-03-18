@@ -153,6 +153,7 @@ class Product(db.Model):
     inventory = db.IntegerProperty(required=True)
     show = db.BooleanProperty(default=True)
     disable = db.BooleanProperty(default=False)
+    when = db.StringProperty()
 
     @staticmethod
     def get_product_for_slug(slug):
