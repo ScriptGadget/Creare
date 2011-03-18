@@ -24,14 +24,14 @@
 		  {{ form.as_table }}
 		</table>
 
+		{% if not maker.accepted_terms %}
 		<h2>Terms and Conditions</h2>
-
-		<p class="terms"><input id="term1" class="checkbox" name="term1" type="checkbox" value="term1">I will be good.</p>
-		<p class="terms"><input id="term2" class="checkbox" name="term2" type="checkbox" value="term2">I will not be bad.</p>
-		<p class="terms"><input id="term3" class="checkbox" name="term3" type="checkbox" value="term3">I will be reasonable.</p>
+		
+		<p class="terms"><input id="term1" class="checkbox" name="term1" type="checkbox" value="term1">I accept the <a href="/terms" target="_new">Terms and Conditions.</a> (opens in a new window)</p>
+		{% endif %}
 		
 		<input type="hidden" name="_id" value="{{ id }}" />
-        <div><input id="submit" class="button"  type="submit" {% if id %} value="Update Store" {% else %} value="Create Store" {% endif %} /></div>
+        <div id="account_button"><input id="submit" class="button"  type="submit" {% if id %} value="Update Store" {% else %} value="Create Store" {% endif %} /></div>
       </form>
 	</div>
 {% endblock %}

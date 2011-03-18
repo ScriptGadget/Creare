@@ -57,7 +57,14 @@ class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
     class Meta:
         model = Maker
-        exclude = ['user', 'community', 'slug', 'timestamp', 'approval_status']
+        exclude = [
+            'user',
+            'community',
+            'slug',
+            'timestamp',
+            'approval_status',
+            'accepted_terms',
+            ]
 
 class ProductForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a product  """

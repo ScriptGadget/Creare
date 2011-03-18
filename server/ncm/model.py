@@ -123,6 +123,7 @@ class Maker(db.Model):
     location = db.StringProperty(required=True)
     mailing_address = db.PostalAddressProperty(required=True)
     tags = db.CategoryProperty(required=True)
+    accepted_terms = db.BooleanProperty(required=False)
 
     @staticmethod
     def get_maker_for_slug(slug):

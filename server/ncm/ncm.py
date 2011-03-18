@@ -70,7 +70,6 @@ class MakerPage(webapp.RequestHandler):
         else:
             data = MakerForm()
             template_values = { 'title':'Open Your Store',
-                                'new':True,
                                 'form':data,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -86,19 +85,20 @@ class MakerPage(webapp.RequestHandler):
             return
 
         data = MakerForm(data=self.request.POST)
-        terms_accepted = self.request.get('term1') and self.request.get('term2') and self.request.get('term2')
+        accepted_terms = self.request.get('term1')
 
-        if data.is_valid() and terms_accepted:
+        if data.is_valid() and accepted_terms:
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
             entity.user = users.get_current_user()
             entity.community = community
             entity.slug = Maker.get_slug_for_store_name(entity.store_name)
+            entity.accepted_terms = bool(accepted_terms)
             entity.put()
             logging.info('User: ' + str(entity.user) + ' has joined ' + entity.community.name)
             self.redirect('/')
         else:
-            if not terms_accepted:
+            if not accepted_terms:
                 errors = ['You must accept the terms and conditions to use this site.']
 
             # Reprint the form
@@ -156,16 +156,22 @@ class EditMakerPage(webapp.RequestHandler):
             self.redirect('/maker/add')
         else:
             data = MakerForm(data=self.request.POST, instance=maker)
-            if data.is_valid():
+            accepted_terms = self.request.get('term1')
+            if data.is_valid() and accepted_terms:
                 # Save the data, and redirect to the view page
                 entity = data.save(commit=False)
                 entity.user = users.get_current_user()
                 entity.slug = Maker.get_slug_for_store_name(entity.store_name)
+                entity.accepted_terms = bool(accepted_terms)
+                
                 entity.put()
                 self.redirect('/')
             else:
+                if not accepted_terms:
+                    errors = ['You must accept the terms and conditions to use this site.']
                 # Reprint the form
-                template_values = { 'form' : ProductForm(instance=maker),
+                template_values = { 'form' : data,
+                                    'extraErrors':errors,
                                     'id' : id,
                                     'uri':self.request.uri
                                     }
