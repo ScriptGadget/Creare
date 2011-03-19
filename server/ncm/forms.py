@@ -29,6 +29,20 @@ from google.appengine.ext.db import djangoforms
 from model import *
 
 
+def autostrip(cls):
+    """
+    From http://djangosnippets.org/snippets/956/
+    since http://code.djangoproject.com/ticket/6362 seems to be stuck in committee
+    """
+    fields = [(key, value) for key, value in cls.base_fields.iteritems() if isinstance(value, forms.CharField)]
+    for field_name, field_object in fields:
+        def get_clean_func(original_clean):
+            return lambda value: original_clean(value and value.strip())
+        clean_func = get_clean_func(getattr(field_object, 'clean'))
+        setattr(field_object, 'clean', clean_func)
+    return cls
+
+
 def sanitizeHtml(value, base_url=None):
     """ From an example on StackOverflow 
         http://stackoverflow.com/questions/16861/sanitising-user-input-using-python
@@ -61,9 +75,10 @@ def sanitizeHtml(value, base_url=None):
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
     def clean_store_name(self):
-        if not self.instance:
-            data=self.clean_data['store_name']
-            if Maker.all().filter('store_name = ', data).get():
+        data=self.clean_data['store_name']
+        maker = Maker.all().filter('store_name = ', data).get()
+        if maker:
+            if not self.instance or self.instance.key() != maker.key():
                 raise forms.ValidationError(u'that store name is already taken')
         return data
 
@@ -78,11 +93,15 @@ class MakerForm(djangoforms.ModelForm):
             'accepted_terms',
             ]
 
+PersonForm = autostrip(MakerForm)
+
 class ProductForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a product  """
     class Meta:
         model = Product
         exclude = ['maker', 'thumb', 'slug', 'disable', 'when']
+
+ProductForm = autostrip(ProductForm)
 
 class CommunityForm(djangoforms.ModelForm):
     """ Auto generate a form for adding a Community  """
@@ -90,14 +109,20 @@ class CommunityForm(djangoforms.ModelForm):
         model = Community
         exclude = ['slug']
 
+CommunityForm = autostrip(CommunityForm)
+
 class NewsItemForm(djangoforms.ModelForm):
     """ Auto generate a form for adding a NewsItem  """
     class Meta:
         model = NewsItem
         exclude = ['published', 'community', 'slug']
 
+NewsItemForm = autostrip(NewsItemForm)
+
 class AdvertisementForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing an advertisment  """
     class Meta:
         model = Advertisement
         exclude = ['slug', 'community', 'rotation', 'created']
+
+AdvertismentForm = autostrip(AdvertisementForm)
