@@ -98,6 +98,7 @@ class MakerPage(webapp.RequestHandler):
             logging.info('User: ' + str(entity.user) + ' has joined ' + entity.community.name)
             self.redirect('/')
         else:
+            errors = []
             if not accepted_terms:
                 errors = ['You must accept the terms and conditions to use this site.']
 
