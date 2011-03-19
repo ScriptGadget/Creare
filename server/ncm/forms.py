@@ -19,6 +19,11 @@ import re
 from urlparse import urljoin
 from BeautifulSoup import BeautifulSoup, Comment
 from google.appengine.ext import db
+try:
+  from django import newforms as forms
+except ImportError:
+  from django import forms
+
 from google.appengine.ext.db import djangoforms
 
 from model import *
@@ -55,6 +60,13 @@ def sanitizeHtml(value, base_url=None):
 
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
+    def clean_store_name(self):
+        if not self.instance:
+            data=self.clean_data['store_name']
+            if Maker.all().filter('store_name = ', data).get():
+                raise forms.ValidationError(u'that store name is already taken')
+        return data
+
     class Meta:
         model = Maker
         exclude = [
