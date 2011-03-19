@@ -271,7 +271,7 @@ class EditProductPage(webapp.RequestHandler):
             <div><label>Product Image:</label></div>
             <div><input type="file" name="img"/></div> """
 
-    def get(self, product_slug):
+    def get(self, maker_slug, product_slug):
         authenticator = Authenticator(self)
 
         try:
@@ -352,7 +352,7 @@ class EditProductPage(webapp.RequestHandler):
 
 class ViewProductPage(webapp.RequestHandler):
     """ View a Product """
-    def get(self, product_slug):
+    def get(self, maker_slug, product_slug):
         session = get_current_session()
         community = Community.get_community_for_slug(session.get('community'))
 
@@ -1476,9 +1476,8 @@ def main():
         (r'/maker/edit/(.*)', EditMakerPage),
         ('/maker/edit', EditMakerPage),
         ('/product/add', ProductPage),
-        (r'/product/edit/(.*)', EditProductPage),
-        ('/product/edit', EditProductPage),
-        (r'/product/(.*)', ViewProductPage),
+        (r'/product/edit/(.*)/(.*)', EditProductPage),
+        (r'/product/(.*)/(.*)', ViewProductPage),
         ('/login', Login),
         ('/logout', Logout),
         ('/makers', ListMakers),

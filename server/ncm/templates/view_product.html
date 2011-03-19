@@ -11,7 +11,7 @@
 	 <p class="price">${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
    </div>
    <div>
-     <p>{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <a href="/product/{{product.slug}}">{{product.name}}</a></p>
+     <p>{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.maker.slug}}/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <a href="/product/{{product.maker.slug}}/{{product.slug}}">{{product.name}}</a></p>
 	 <p class="product_info"> {{product.short_description}}</p>
 	 <p class="product_info"> {{product.description}}</p>
    </div>
