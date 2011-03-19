@@ -157,24 +157,20 @@ class EditMakerPage(webapp.RequestHandler):
             self.redirect('/maker/add')
         else:
             data = MakerForm(data=self.request.POST, instance=maker)
-            accepted_terms = self.request.get('term1')
-            if data.is_valid() and accepted_terms:
+            if data.is_valid():
                 # Save the data, and redirect to the view page
                 entity = data.save(commit=False)
                 entity.user = users.get_current_user()
                 entity.slug = Maker.get_slug_for_store_name(entity.store_name)
-                entity.accepted_terms = bool(accepted_terms)
-                
                 entity.put()
                 self.redirect('/')
             else:
-                if not accepted_terms:
-                    errors = ['You must accept the terms and conditions to use this site.']
                 # Reprint the form
                 template_values = { 'form' : data,
-                                    'extraErrors':errors,
                                     'id' : id,
-                                    'uri':self.request.uri
+                                    'uri':self.request.uri,
+                                    'maker':maker,
+                                    'title':'Update Store Information',
                                     }
                 path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
