@@ -2,10 +2,17 @@
 
 {% block content %}
 <h1>News</h1>
+{% if admin %}
 <a href="/news_item/add">Add an item</a>
+{% endif %}
     <div id="newsListPanel">
 	  {% for item in news_items  %}
-	  <p class="news_item"><a href="/news_item/{{item.slug}}">{{item.title}}</a> - {{item.summary}}</p>
+	  <p class="news_item">
+		{% if admin %}
+		(<a href="/news_item/edit/{{item.slug}}">edit</a>)
+		{% endif %}
+		<a href="/news_item/{{item.slug}}">{{item.title}}</a> - {{item.summary}}
+	  </p>
 	  {% endfor %}
 	</div>
 {% endblock %}
