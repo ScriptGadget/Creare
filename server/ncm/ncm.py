@@ -430,7 +430,7 @@ class CommunityHomePage(webapp.RequestHandler):
         products = []
         count = 0;
         for product in stuff:
-            if product.maker.approval_status == 'Approved' and product.show:
+            if product.maker.approval_status == 'Approved' and product.show and not product.disable:
                 products.append(product)
                 count += 1
                 if count >= 16:
@@ -533,7 +533,7 @@ class MakerStorePage(webapp.RequestHandler):
         maker = Maker.get_maker_for_slug(maker_slug)
         products = []
         for product in maker.products:
-            if product.show:
+            if product.show and not product.disable:
                 products.append(product)
         template_values = { 'maker':maker,
                             'products':products,
