@@ -116,7 +116,7 @@ class EditMakerPage(webapp.RequestHandler):
     def get(self, maker_slug):
         if not maker_slug:
             logging.info('No id found for EditMakerPage')
-            maker = Authenticator.getMakerForUser(users.get_current_user())
+            maker = Maker.getMakerForUser(users.get_current_user())
             if maker:
                 maker_slug = maker.slug
             else:
@@ -379,7 +379,7 @@ class ViewProductPage(webapp.RequestHandler):
         user = users.get_current_user()
         maker = None
         if user is not None:
-            maker = Authenticator.getMakerForUser(user)
+            maker = Maker.getMakerForUser(user)
 
         product = Product.get_product_for_slug(product_slug)
 
@@ -449,7 +449,7 @@ class CommunityHomePage(webapp.RequestHandler):
                     break;
 
         template_values = { 'title': community.name,
-                            'maker': Authenticator.getMakerForUser(user),
+                            'maker': Maker.getMakerForUser(user),
                             'products':products}
 
         items = session.get('ShoppingCartItems', [])
@@ -1018,7 +1018,7 @@ class ViewAdvertisementPage(webapp.RequestHandler):
         user = users.get_current_user()
         maker = None
         if user is not None:
-            maker = Authenticator.getMakerForUser(user)
+            maker = Maker.getMakerForUser(user)
 
         advertisement = Advertisement.get_advertisement_for_slug(advertisement_slug)
         if not advertisement:

@@ -141,6 +141,22 @@ class Maker(db.Model):
     def get_slug_for_store_name(store_name):
         return slugify(store_name)
 
+    @staticmethod
+    def getMakerForUser(user):
+        """ get the Maker if any associated with this user """
+        maker = None
+
+        if user:
+            try:
+                makers = Maker.gql("WHERE user = :1", user)
+                maker = makers.get()
+            except db.KindError:
+                maker = None
+                logging.debugging.error("Unexpected db.KindError: " + db.KindError)
+
+        return maker;
+
+
 class Product(db.Model):
     """ Something a Maker can sell to a Shopper """
     maker = db.ReferenceProperty(Maker, collection_name='products')
