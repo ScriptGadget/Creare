@@ -3,6 +3,10 @@
 {% block content %}
     <div id="product_panel">
          <form id="product_form" enctype="multipart/form-data" action="{{ uri }}" method="POST">
+		   <table>
+		   {{ form.as_table }}
+		   </table>
+		   <input type="hidden" name="_id" value="{{ id }}">
 		   <div id="image_upload_panel">
 			 {% if product %}
 			   {% for product_image in product.product_images %}
@@ -11,10 +15,13 @@
 			 {% endif %}
 			 {{ upload_form }}
 		   </div>
-		   <table>
-		   {{ form.as_table }}
-		   </table>
-		   <input type="hidden" name="_id" value="{{ id }}">
+		   {% if messages %}
+		   <ul class="errorList">
+		   {% for message in messages %}
+		   <li>{{message}}</li>
+		   {% endfor %}
+		   </ul>
+		   {% endif %}
            <div><input id="submit" class="button"  type="submit" {% if id %} value="Update Product" {% else %} value="Create Product" {% endif %}/></div>
          </form>
 	</div>

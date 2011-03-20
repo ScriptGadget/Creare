@@ -177,10 +177,13 @@ class EditMakerPage(webapp.RequestHandler):
 
 class ProductPage(webapp.RequestHandler):
     """ Add a Product """
-    def buildImageUploadForm(self):
+
+    @staticmethod
+    def buildImageUploadForm():
         return """
-            <div><label>Product Image:</label></div>
-            <div><input type="file" name="img"/></div> """
+            <div><label>Product Image: (PNG or JPG, 240x240, less then 1MB)</label></div> 
+            <div><input type="file" name="img"/></div>
+            """
 
     def get(self):
         authenticator = Authenticator(self)
@@ -198,7 +201,7 @@ class ProductPage(webapp.RequestHandler):
         else:
             template_values = { 'form' : ProductForm(maker=maker), 
                                 'maker':maker,
-                                'upload_form': self.buildImageUploadForm(),
+                                'upload_form': ProductPage.buildImageUploadForm(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -218,42 +221,39 @@ class ProductPage(webapp.RequestHandler):
             return
         else:
             data = ProductForm(data=self.request.POST, maker=maker)
-            if data.is_valid():
+            uploaded_file = self.request.get("img")
+            image_is_valid = uploaded_file is not None and uploaded_file != ''
+            image_is_valid = image_is_valid and len(uploaded_file) < 1024*1024
+            if image_is_valid:
+                try:
+                    image = images.resize(uploaded_file, 240, 240)
+                except:
+                    image_is_valid = False
+
+            if data.is_valid() and image_is_valid:
                 entity = data.save(commit=False)
                 entity.maker = maker
                 entity.slug = Product.get_slug_for_name(entity.name)
                 entity.when = "%s|%s" % (datetime.now(), hashlib.md5(str(maker.key())+get_current_session().sid).hexdigest())
                 entity.put()
                 upload = ProductImage()
-                try:
-                    upload.product = entity
-                    upload.image = images.resize(self.request.get("img"), 240, 240)
-                    upload.put()
-                except images.NotImageError:
-                    self.response.out.write("That doesn't seem to be a valid image.");
-                    return
-
+                upload.product = entity
+                upload.image = image
+                upload.put()
                 self.redirect('/maker_dashboard/' + maker.slug)
             else:
+                messages = []
+                if not image_is_valid:
+                    messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+
                 # Reprint the form
                 template_values = { 'form' : data,
                                     'maker':maker,
-                                    'upload_form': self.buildImageUploadForm(),
+                                    'messages':messages,
+                                    'upload_form': ProductPage.buildImageUploadForm(),
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/product.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
-
-class UploadProductImage(webapp.RequestHandler):
-    def post(self):
-        upload = ProductImage()
-        bits = self.request.get("img")
-        try:
-            upload.image = images.resize(self.request.get("img"), 240, 240)
-            upload.put()
-            self.redirect('/product_images/'+str(upload.key()))
-        except images.NotImageError:
-            # Have to come up with a much better way of handling this
-            self.redirect('/')
 
 class DisplayImage(webapp.RequestHandler):
     def get(self, image_id):
@@ -266,11 +266,6 @@ class DisplayImage(webapp.RequestHandler):
 
 class EditProductPage(webapp.RequestHandler):
     """ Edit an existing Product """
-
-    def buildImageUploadForm(self, ):
-        return """
-            <div><label>Product Image:</label></div>
-            <div><input type="file" name="img"/></div> """
 
     def get(self, maker_slug, product_slug):
         authenticator = Authenticator(self)
@@ -302,7 +297,7 @@ class EditProductPage(webapp.RequestHandler):
 
             template_values = { 'form' : ProductForm(instance=product),
                                 'maker' : maker,
-                                'upload_form': self.buildImageUploadForm(),
+                                'upload_form': ProductPage.buildImageUploadForm(),
                                 'product':product,
                                 'id' : product.key(),
                                 'uri':self.request.uri}
@@ -326,27 +321,43 @@ class EditProductPage(webapp.RequestHandler):
           return
       else:
           data = ProductForm(data=self.request.POST, instance=product)
-          if data.is_valid():
+          uploaded_file = self.request.get("img")
+
+          if not uploaded_file:
+              image_is_valid = True
+              image = None
+              logging.info('No New Image')
+          else:
+              image_is_valid = len(uploaded_file) < 1024*1024
+              if image_is_valid:
+                  try:
+                      image = images.resize(uploaded_file, 240, 240)
+                  except:
+                      image = None
+                      image_is_valid = False
+
+          if data.is_valid() and image_is_valid:
               entity = data.save(commit=False)
               entity.slug = Product.get_slug_for_name(entity.name)
               entity.put()
-              image = self.request.get("img")
               if image:
                   upload = ProductImage(parent=entity)
                   for product_image in entity.product_images:
                       product_image.delete()
-                  try:
-                      upload.product = entity
-                      upload.image = images.resize(image, 240, 240)
-                      upload.put()
-                  except images.NotImageError:
-                      pass
+
+                  upload.product = entity
+                  upload.image = image;
+                  upload.put()
               self.redirect('/maker_dashboard/' + maker.slug)
           else:
+              messages = []
+              if not image_is_valid:
+                  messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
               # Reprint the form
               template_values = { 'form' : data,
                                   'maker' : maker,
-                                  'upload_form': self.buildImageUploadForm(),
+                                  'messages': messages,
+                                  'upload_form': ProductPage.buildImageUploadForm(),
                                   'product':product,
                                   'id' : _id,
                                   'uri':self.request.uri}
@@ -1497,7 +1508,6 @@ def main():
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
         (r'/product_images/(.*)', DisplayImage),
-        ('/upload_product_image', UploadProductImage), 
         ('/community/add', AddCommunityPage),
         ('/community/edit', EditCommunityPage),
         ('/checkout', CheckoutPage),
