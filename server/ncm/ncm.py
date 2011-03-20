@@ -58,6 +58,13 @@ def add_base_values(template_values):
 
     return template_values;
 
+def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1MB)"):
+    """ Build a form to upload images with a configurable prompt message. """
+    return """
+<div><label>%s</label></div> 
+<div><input type="file" name="img"/></div>
+""" % prompt
+
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
     def get(self):
@@ -185,10 +192,7 @@ class ProductPage(webapp.RequestHandler):
 
     @staticmethod
     def buildImageUploadForm():
-        return """
-            <div><label>Product Image: (PNG or JPG, 240x240, less then 1MB)</label></div> 
-            <div><input type="file" name="img"/></div>
-            """
+        return buildImageUploadForm("Product Image: (PNG or JPG, 240x240, less then 1MB)")
 
     def get(self):
         authenticator = Authenticator(self)
@@ -880,10 +884,10 @@ class AddNewsItem(webapp.RequestHandler):
 
 class AdvertisementPage(webapp.RequestHandler):
     """ Add a Advertisement """
-    def buildImageUploadForm(self):
-        return """
-            <div><label>Advertisement Image:</label></div>
-            <div> <input type="file" name="img"/> </div>"""
+
+    @staticmethod
+    def buildImageUploadForm():
+        return buildImageUploadForm("Advertisement Image: (PNG or JPG, 750wx160h, less then 1MB)")
 
     def get(self):
         authenticator = Authenticator(self)
@@ -895,7 +899,7 @@ class AdvertisementPage(webapp.RequestHandler):
             return
         else:
             template_values = { 'form' : AdvertisementForm(),
-                                'upload_form': self.buildImageUploadForm(), 
+                                'upload_form': AdvertisementPage.buildImageUploadForm(), 
                                 'impressions':0,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
@@ -940,7 +944,7 @@ class AdvertisementPage(webapp.RequestHandler):
             else:
                 # Reprint the form
                 template_values = { 'form' : data, 
-                                    'upload_form': self.buildImageUploadForm(),
+                                    'upload_form': AdvertisementPage.buildImageUploadForm(),
                                     'impressions':0,
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/advertisement.html")
@@ -948,11 +952,6 @@ class AdvertisementPage(webapp.RequestHandler):
 
 class EditAdvertisementPage(webapp.RequestHandler):
     """ Edit an existing Advertisement """
-
-    def buildImageUploadForm(self, ):
-        return """
-            <div><label>Advertisement Image:</label></div>
-            <div><input type="file" name="img"/></div> """
 
     def get(self, advertisement_slug):
         if not users.is_current_user_admin():
@@ -963,7 +962,7 @@ class EditAdvertisementPage(webapp.RequestHandler):
             advertisement = Advertisement.get_advertisement_for_slug(advertisement_slug)
 
             template_values = { 'form' : AdvertisementForm(instance=advertisement), 
-                                'upload_form': self.buildImageUploadForm(),
+                                'upload_form': AdvertisementPage.buildImageUploadForm(),
                                 'advertisement':advertisement,
                                 'impressions':advertisement.remaining_impressions(),
                                 'id' : advertisement.key(),
