@@ -120,7 +120,7 @@ class Maker(db.Model):
     email = db.EmailProperty(required=True, verbose_name="Your email")
     paypal_business_account_email = db.EmailProperty(verbose_name="Paypal ID (looks like an email)")
     phone_number = db.PhoneNumberProperty(required=True)
-    location = db.StringProperty(required=True, verbose_name="Where are you located")
+    location = db.StringProperty(required=True, verbose_name="Where you are located")
     mailing_address = db.PostalAddressProperty(required=True)
     tags = db.CategoryProperty(required=True, verbose_name="Comma separated keywords")
     accepted_terms = db.BooleanProperty(required=False)
