@@ -430,7 +430,7 @@ class CommunityHomePage(webapp.RequestHandler):
         products = []
         count = 0;
         for product in stuff:
-            if product.maker.approval_status == 'Approved':
+            if product.maker.approval_status == 'Approved' and product.show:
                 products.append(product)
                 count += 1
                 if count >= 16:
@@ -531,7 +531,14 @@ class MakerStorePage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
     def get(self, maker_slug):
         maker = Maker.get_maker_for_slug(maker_slug)
-        template_values = { 'maker':maker, 'products':maker.products, 'user':users.get_current_user()}
+        products = []
+        for product in maker.products:
+            if product.show:
+                products.append(product)
+        template_values = { 'maker':maker,
+                            'products':products,
+                            'user':users.get_current_user()
+                            }
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
