@@ -393,7 +393,10 @@ class Login(webapp.RequestHandler):
         if maker:
             self.redirect('/maker_dashboard/%s' % maker.slug)
         else:
-            self.redirect('/maker/add')
+            if users.is_current_user_admin():
+                self.redirect('/')
+            else:
+                self.redirect('/maker/add')
 
 class Logout(webapp.RequestHandler):
     """ Just kills the session and clears authentication tokens  """
