@@ -376,3 +376,11 @@ class AdvertisementImage(db.Model):
     """ An Image associated with an Advertisement """
     advertisement = db.ReferenceProperty(Advertisement, collection_name='advertisement_images')
     image = db.BlobProperty()
+
+class Image(db.Model):
+    """ 
+    An icon, photo or graphic. 
+    Use ancestry to associate with Makers, Products and Communities.
+    """
+    category = db.StringProperty(choices=set(['Product','Advertisement','Portrait','Logo','Banner']), required=True)
+    content = db.BlobProperty(required=True)

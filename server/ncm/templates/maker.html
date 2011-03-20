@@ -19,10 +19,24 @@
 		  {% endfor %}
 		</ul>
 	  {% endif %}
-      <form id="register" action="{{uri}}" method="POST">
+      <form id="register" enctype="multipart/form-data" action="{{uri}}" method="POST">
 		<table>
 		  {{ form.as_table }}
 		</table>
+		
+		<div id="image_upload_panel">
+		  {% if maker.photo %}
+		  <img class="maker_photo" src="/images/{{maker.photo}}"/></br>
+		  {% endif %}
+		  {{ upload_form }}
+		</div>
+		{% if messages %}
+		<ul class="errorList">
+		  {% for message in messages %}
+		  <li>{{message}}</li>
+		  {% endfor %}
+		</ul>
+		{% endif %}
 
 		{% if not maker.accepted_terms %}
 		<h2>Terms and Conditions</h2>

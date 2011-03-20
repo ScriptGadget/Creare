@@ -83,6 +83,7 @@ class MakerPage(webapp.RequestHandler):
             data = MakerForm()
             template_values = { 'title':'Open Your Store',
                                 'form':data,
+                                'upload_form': buildImageUploadForm("Your Photo: (PNG or JPG, 240x240, less than 1MB)"),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -98,8 +99,16 @@ class MakerPage(webapp.RequestHandler):
 
         data = MakerForm(data=self.request.POST)
         accepted_terms = self.request.get('term1')
+        uploaded_file = self.request.get("img")
+        image_is_valid = uploaded_file is not None and uploaded_file != ''
+        image_is_valid = image_is_valid and len(uploaded_file) < 1024*1024
+        if image_is_valid:
+            try:
+                image = images.resize(uploaded_file, 240, 240)
+            except:
+                image_is_valid = False
 
-        if data.is_valid() and accepted_terms:
+        if data.is_valid() and accepted_terms and image_is_valid:
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
             entity.user = users.get_current_user()
@@ -107,16 +116,24 @@ class MakerPage(webapp.RequestHandler):
             entity.slug = Maker.get_slug_for_store_name(entity.store_name)
             entity.accepted_terms = bool(accepted_terms)
             entity.put()
-            logging.info('User: ' + str(entity.user) + ' has joined ' + entity.community.name)
+            if image:
+                Image( 
+                    parent=entity, 
+                    category='Portrait',
+                    content=image,
+                    ).put()
             self.redirect('/')
         else:
             errors = []
+            if not image_is_valid:
+                errors.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
             if not accepted_terms:
-                errors = ['You must accept the terms and conditions to use this site.']
+                errors.append('You must accept the terms and conditions to use this site.')
 
             # Reprint the form
             template_values = { 'title':'Open Your Store', 
                                 'extraErrors':errors,
+                                'upload_form': buildImageUploadForm("Your Photo: (PNG or JPG, 240x240, less than 1MB)"),
                                 'form' : data, 
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -144,8 +161,10 @@ class EditMakerPage(webapp.RequestHandler):
                 return
 
         if maker and Authenticator.authorized_for(maker.user):
+            maker.photo = Image.all(keys_only=True).ancestor(maker).get()
             template_values = { 'form' : MakerForm(instance=maker),
                                 'id' : maker.key(),
+                                'upload_form': buildImageUploadForm("Your Photo: (PNG or JPG, 240x240, less than 1MB)"),
                                 'uri':self.request.uri,
                                 'maker':maker,
                                 'title':'Update Store Information'}
@@ -168,18 +187,47 @@ class EditMakerPage(webapp.RequestHandler):
         if not Authenticator.authorized_for(maker.user):
             self.redirect('/maker/add')
         else:
+            maker.photo = Image.all(keys_only=True).ancestor(maker).get()
             data = MakerForm(data=self.request.POST, instance=maker)
-            if data.is_valid():
+            uploaded_file = self.request.get("img")
+
+            if not uploaded_file:
+                image_is_valid = True
+                image = None
+            else:
+                image_is_valid = len(uploaded_file) < 1024*1024
+                if image_is_valid:
+                    try:
+                        image = images.resize(uploaded_file, 240, 240)
+                    except:
+                        image = None
+                        image_is_valid = False
+
+            if data.is_valid() and image_is_valid:
                 # Save the data, and redirect to the view page
                 entity = data.save(commit=False)
                 entity.user = users.get_current_user()
                 entity.slug = Maker.get_slug_for_store_name(entity.store_name)
                 entity.put()
+                if image:
+                    if maker.photo:
+                        db.delete(maker.photo)
+                    Image( 
+                        parent=entity, 
+                        category='Portrait',
+                        content=image,
+                        ).put()
                 self.redirect('/')
             else:
+                messages = []
+                if not image_is_valid:
+                    messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+
                 # Reprint the form
                 template_values = { 'form' : data,
                                     'id' : id,
+                                    'messages':messages,
+                                    'upload_form': buildImageUploadForm("Your Photo: (PNG or JPG, 240x240, less than 1MB)"),
                                     'uri':self.request.uri,
                                     'maker':maker,
                                     'title':'Update Store Information',
@@ -264,7 +312,8 @@ class ProductPage(webapp.RequestHandler):
                 path = os.path.join(os.path.dirname(__file__), "templates/product.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
 
-class DisplayImage(webapp.RequestHandler):
+class DisplayProductImage(webapp.RequestHandler):
+    """ Deprecated """
     def get(self, image_id):
         productImage = db.get(image_id)
         if productImage.image:
@@ -336,7 +385,6 @@ class EditProductPage(webapp.RequestHandler):
           if not uploaded_file:
               image_is_valid = True
               image = None
-              logging.info('No New Image')
           else:
               image_is_valid = len(uploaded_file) < 1024*1024
               if image_is_valid:
@@ -552,6 +600,7 @@ class MakerStorePage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
     def get(self, maker_slug):
         maker = Maker.get_maker_for_slug(maker_slug)
+        maker.photo = Image.all(keys_only=True).ancestor(maker).get()
         products = []
         for product in maker.products:
             if product.show and not product.disable:
@@ -1482,6 +1531,16 @@ class RPCPostMethods:
             page.content=args[1].replace(u'\u201c', '"').replace(u'\u201d', '"').decode('unicode_escape')
             page.put()
 
+class DisplayImage(webapp.RequestHandler):
+    def get(self, image_id):
+        image = db.get(image_id)
+        if image.content:
+            self.response.headers['Content-Type'] = "image/png"
+            self.response.headers['max-age'] = "10800"
+            self.response.out.write(image.content)
+        else:
+            self.error(404)
+
 def main():
     app = webapp.WSGIApplication([
         (r'/rpc/(GetShoppingCart)', RPCHandler),
@@ -1506,7 +1565,6 @@ def main():
         ('/makers', ListMakers),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
-        (r'/product_images/(.*)', DisplayImage),
         ('/community/add', AddCommunityPage),
         ('/community/edit', EditCommunityPage),
         ('/checkout', CheckoutPage),
@@ -1516,7 +1574,6 @@ def main():
         (r'/news_item/(.*)', ViewNewsItem),
         ('/advertisement/add', AdvertisementPage),
         (r'/advertisement/edit/(.*)', EditAdvertisementPage),
-        (r'/advertisement_image/(.*)', DisplayImage),
         (r'/advertisement/(.*)', ViewAdvertisementPage),
         (r'/(join)', RenderContentPage),
         (r'/(privacy)', RenderContentPage),
@@ -1526,6 +1583,9 @@ def main():
         ('/advertisements', ListAdvertisements),
         ('/return', CompletePurchase),
         ('/cancel', CompletePurchase),
+        (r'/images/(.*)', DisplayImage),
+        (r'/product_images/(.*)', DisplayProductImage),
+        (r'/advertisement_image/(.*)', DisplayProductImage),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)
