@@ -48,7 +48,12 @@ def add_base_values(template_values):
         news_items = q.fetch(limit=50)
         template_values["news_items"] = news_items
 
-    template_values["user"] = users.get_current_user()
+    user = users.get_current_user()
+    template_values["user"] = user
+
+    if 'maker' not in template_values:
+        template_values['maker'] = Maker.getMakerForUser(user)
+
     template_values["admin"] = users.is_current_user_admin()
 
     return template_values;
@@ -547,7 +552,7 @@ class MakerStorePage(webapp.RequestHandler):
         for product in maker.products:
             if product.show and not product.disable:
                 products.append(product)
-        template_values = { 'maker':maker,
+        template_values = { 'store':maker,
                             'products':products,
                             'user':users.get_current_user()
                             }
@@ -1015,19 +1020,13 @@ class ViewAdvertisementPage(webapp.RequestHandler):
             self.response.out.write("I don't recognize that community.")
             return
 
-        user = users.get_current_user()
-        maker = None
-        if user is not None:
-            maker = Maker.getMakerForUser(user)
-
         advertisement = Advertisement.get_advertisement_for_slug(advertisement_slug)
         if not advertisement:
             self.error(404)
             self.response.out.write("I don't recognize that advertisement.")
             return
             
-        template_values = { 'maker' : maker, 
-                            'advertisement':advertisement}
+        template_values = {'advertisement':advertisement}
         path = os.path.join(os.path.dirname(__file__), "templates/view_advertisement.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 

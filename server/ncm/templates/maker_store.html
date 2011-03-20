@@ -1,10 +1,10 @@
 {% extends "catalog.html" %}
 
 {% block content %}
-	<h1>{{maker.store_name}}</h1>
-    <p class="byline">by {{maker.full_name}}</p>
-	<p>{{maker.store_description}}</p>
-	<p>{{maker.location}}</p>
+	<h1>{{store.store_name}}</h1>
+    <p class="byline">by {{store.full_name}}</p>
+	<p>{{store.store_description}}</p>
+	<p>{{store.location}}</p>
 	<p>Products:</p>
 	{{block.super}}
 {% endblock %}
