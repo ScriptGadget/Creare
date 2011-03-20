@@ -260,6 +260,7 @@ class DisplayImage(webapp.RequestHandler):
         productImage = db.get(image_id)
         if productImage.image:
             self.response.headers['Content-Type'] = "image/png"
+            self.response.headers['max-age'] = "10800"
             self.response.out.write(productImage.image)
         else:
             self.error(404)
