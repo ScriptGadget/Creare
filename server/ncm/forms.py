@@ -74,12 +74,23 @@ def sanitizeHtml(value, base_url=None):
 
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
+    def __init__(self, *args, **kwargs):
+        super(MakerForm, self).__init__(*args, **kwargs)
+        instance = getattr(self, 'instance', None)
+        if instance:
+            self.fields['store_name'].widget.attrs['readonly'] = True
+
     def clean_store_name(self):
         data=self.clean_data['store_name']
+
+        if self.instance:
+          if self.instance.store_name != data:
+            raise forms.ValidationError(u'Store names cannot be changed.')
+
         maker = Maker.all().filter('store_name = ', data).get()
         if maker:
             if not self.instance or self.instance.key() != maker.key():
-                raise forms.ValidationError(u'that store name is already taken')
+                raise forms.ValidationError(u'That store name is already taken.')
         return data
 
     class Meta:
@@ -97,6 +108,29 @@ PersonForm = autostrip(MakerForm)
 
 class ProductForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a product  """
+    def __init__(self, data=None, instance=None, maker=None):
+      djangoforms.ModelForm.__init__(self, data=data, instance=instance)
+      self.maker = maker
+      if instance:
+        self.fields['name'].widget.attrs['readonly'] = True
+
+    def clean_name(self):
+        data=self.clean_data['name']
+
+        if self.instance:
+          if self.instance.name != data:
+            raise forms.ValidationError(u'Product names cannot be changed')
+        else:
+          if self.maker:
+            p = Product.all()
+            p.filter('name = ', data)
+            p.filter('maker == ', self.maker.key())
+            product = p.get()
+            if product:
+              raise forms.ValidationError(u'You already have a product by that name.')
+
+        return data
+
     class Meta:
         model = Product
         exclude = ['maker', 'thumb', 'slug', 'disable', 'when']

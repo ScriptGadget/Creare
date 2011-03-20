@@ -196,7 +196,8 @@ class ProductPage(webapp.RequestHandler):
             self.response.out.write("You do not have permission to add products.")
             return
         else:
-            template_values = { 'form' : ProductForm(), 'maker':maker,
+            template_values = { 'form' : ProductForm(maker=maker), 
+                                'maker':maker,
                                 'upload_form': self.buildImageUploadForm(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
@@ -216,7 +217,7 @@ class ProductPage(webapp.RequestHandler):
             self.response.out.write("You do not have permission to add products.")
             return
         else:
-            data = ProductForm(data=self.request.POST)
+            data = ProductForm(data=self.request.POST, maker=maker)
             if data.is_valid():
                 entity = data.save(commit=False)
                 entity.maker = maker
@@ -308,7 +309,7 @@ class EditProductPage(webapp.RequestHandler):
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
 
-    def post(self, product_slug):
+    def post(self, maker_slug, product_slug):
       _id = self.request.get('_id')
       product = Product.get(_id)
       authenticator = Authenticator(self)
@@ -343,9 +344,11 @@ class EditProductPage(webapp.RequestHandler):
               self.redirect('/maker_dashboard/' + maker.slug)
           else:
               # Reprint the form
-              template_values = { 'form' : ProductForm(instance=product),
+              template_values = { 'form' : data,
                                   'maker' : maker,
-                                  'id' : id,
+                                  'upload_form': self.buildImageUploadForm(),
+                                  'product':product,
+                                  'id' : _id,
                                   'uri':self.request.uri}
               path = os.path.join(os.path.dirname(__file__), "templates/product.html")
               self.response.out.write(template.render(path, add_base_values(template_values)))
