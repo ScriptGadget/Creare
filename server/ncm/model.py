@@ -122,7 +122,7 @@ class Maker(db.Model):
     phone_number = db.PhoneNumberProperty(required=True)
     location = db.StringProperty(required=True, verbose_name="Where you are located")
     mailing_address = db.PostalAddressProperty(required=True)
-    tags = db.CategoryProperty(required=True, verbose_name="Comma separated keywords")
+    tags = db.StringListProperty(required=True, verbose_name="Comma Separated Keywords")
     accepted_terms = db.BooleanProperty(required=False)
 
     @staticmethod
@@ -165,7 +165,7 @@ class Product(db.Model):
     short_description = db.StringProperty(required=True)
     description = db.TextProperty(required=True)
     price = db.FloatProperty(required=True)
-    tags = db.CategoryProperty(required=True, verbose_name="Comma separated keywords")
+    tags = db.StringListProperty(required=True, verbose_name="Comma separated keywords")
     inventory = db.IntegerProperty(required=True, verbose_name="Items in inventory")
     show = db.BooleanProperty(default=True, verbose_name="Show in store")
     disable = db.BooleanProperty(default=False)

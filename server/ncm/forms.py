@@ -19,6 +19,7 @@ import re
 from urlparse import urljoin
 from BeautifulSoup import BeautifulSoup, Comment
 from google.appengine.ext import db
+
 try:
   from django import newforms as forms
 except ImportError:
@@ -27,7 +28,6 @@ except ImportError:
 from google.appengine.ext.db import djangoforms
 
 from model import *
-
 
 def autostrip(cls):
     """
@@ -71,9 +71,38 @@ def sanitizeHtml(value, base_url=None):
 
     return soup.renderContents().decode('utf8')
 
+"""
+From http://stackoverflow.com/questions/4960445/django-display-a-comma-separated-list-of-manytomany-items-in-a-charfield-on-a-m
+It would have been nice to be able to do something like this, but 
+djangoforms.py breaks overriding to_python() and provides decidedly odd
+default view for a StringListProperty (newline separated in a text area)
+which won't help us at all for comma separated tags.
 
+class CommaTags(forms.Widget):
+    def render(self, name, value, attrs=None):      
+      final_attrs = self.build_attrs(attrs, type='text', name=name)
+      values = []
+      if value:
+        for each in value.split('\n'):
+          values.append(str(each).encode('ascii'))
+          value = ','.join(values)
+      else:
+        value = ''
+        return u'<input type="text" value="%s"/>' % value
+
+class CommaField(forms.CharField):
+    def to_python(self, value):
+      logging.info('to_python:' + str(value))
+      tags = []
+      for tag in value.split(","):
+        tags.append(unicode(tag.strip()).encode('ascii'))
+      return tags
+"""
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
+    # won't work (see above)
+    # tags = CommaField(label="Comma separated keywords", widget=CommaTags())
+   
     def __init__(self, *args, **kwargs):
         super(MakerForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
