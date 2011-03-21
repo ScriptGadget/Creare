@@ -58,15 +58,16 @@ def add_base_values(template_values):
 
     return template_values;
 
-def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1MB)"):
+def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1MB)", name="img"):
     """ Build a form to upload images with a configurable prompt message. """
     return """
 <div><label>%s</label></div> 
-<div><input type="file" name="img"/></div>
-""" % prompt
+<div><input type="file" name="%s"/></div>
+""" % (prompt, name)
 
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
+
     def get(self):
         authenticator = Authenticator(self)
 
@@ -83,7 +84,8 @@ class MakerPage(webapp.RequestHandler):
             data = MakerForm()
             template_values = { 'title':'Open Your Store',
                                 'form':data,
-                                'upload_form': buildImageUploadForm("Your Photo: (PNG or JPG, 240x240, less than 1MB)"),
+                                'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 240x240, less than 1MB)", name="photo"),
+                                'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 750wx160h, less than 1MB)", name="logo"),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -99,16 +101,26 @@ class MakerPage(webapp.RequestHandler):
 
         data = MakerForm(data=self.request.POST)
         accepted_terms = self.request.get('term1')
-        uploaded_file = self.request.get("img")
-        image_is_valid = uploaded_file is not None and uploaded_file != ''
-        image_is_valid = image_is_valid and len(uploaded_file) < 1024*1024
-        if image_is_valid:
-            try:
-                image = images.resize(uploaded_file, 240, 240)
-            except:
-                image_is_valid = False
 
-        if data.is_valid() and accepted_terms and image_is_valid:
+        photo_file = self.request.get("photo")
+        photo_is_valid = photo_file is not None and photo_file != ''
+        photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
+        if photo_is_valid:
+            try:
+                photo = images.resize(photo_file, 240, 240)
+            except:
+                photo_is_valid = False
+
+        logo_file = self.request.get("logo")
+        logo_is_valid = logo_file is not None and logo_file != ''
+        logo_is_valid = logo_is_valid and len(logo_file) < 1024*1024
+        if logo_is_valid:
+            try:
+                logo = images.resize(logo_file, 240, 240)
+            except:
+                logo_is_valid = False
+
+        if data.is_valid() and accepted_terms and photo_is_valid and logo_is_valid:
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
             entity.user = users.get_current_user()
@@ -116,24 +128,34 @@ class MakerPage(webapp.RequestHandler):
             entity.slug = Maker.get_slug_for_store_name(entity.store_name)
             entity.accepted_terms = bool(accepted_terms)
             entity.put()
-            if image:
+            if photo:
                 Image( 
                     parent=entity, 
                     category='Portrait',
-                    content=image,
+                    content=photo,
+                    ).put()
+            if logo:
+                Image( 
+                    parent=entity, 
+                    category='Logo',
+                    content=logo,
                     ).put()
             self.redirect('/')
         else:
             errors = []
-            if not image_is_valid:
-                errors.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+            if not photo_is_valid:
+                messages.append("That doesn't seem to be a valid photo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+            if not logo_is_valid:
+                messages.append("That doesn't seem to be a valid logo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle 160 pixels high by 750 pixels wide. (It can be smaller)")
+
             if not accepted_terms:
                 errors.append('You must accept the terms and conditions to use this site.')
 
             # Reprint the form
             template_values = { 'title':'Open Your Store', 
                                 'extraErrors':errors,
-                                'upload_form': buildImageUploadForm("Your Photo: (PNG or JPG, 240x240, less than 1MB)"),
+                                'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 240x240, less than 1MB)", name="photo"),
+                                'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 750wx160h, less than 1MB)", name="logo"),
                                 'form' : data, 
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -142,6 +164,7 @@ class MakerPage(webapp.RequestHandler):
 
 class EditMakerPage(webapp.RequestHandler):
     """ Edit a Maker store """
+
     def get(self, maker_slug):
         if not maker_slug:
             logging.info('No id found for EditMakerPage')
@@ -161,10 +184,12 @@ class EditMakerPage(webapp.RequestHandler):
                 return
 
         if maker and Authenticator.authorized_for(maker.user):
-            maker.photo = Image.all(keys_only=True).ancestor(maker).get()
+            maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
+            maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
             template_values = { 'form' : MakerForm(instance=maker),
                                 'id' : maker.key(),
-                                'upload_form': buildImageUploadForm("Your Photo: (PNG or JPG, 240x240, less than 1MB)"),
+                                'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 240x240, less than 1MB)", name="photo"),
+                                'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 750wx160h, less than 1MB)", name="logo"),
                                 'uri':self.request.uri,
                                 'maker':maker,
                                 'title':'Update Store Information'}
@@ -187,47 +212,73 @@ class EditMakerPage(webapp.RequestHandler):
         if not Authenticator.authorized_for(maker.user):
             self.redirect('/maker/add')
         else:
-            maker.photo = Image.all(keys_only=True).ancestor(maker).get()
+            maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
+            maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
             data = MakerForm(data=self.request.POST, instance=maker)
-            uploaded_file = self.request.get("img")
+            photo_file = self.request.get("photo")
 
-            if not uploaded_file:
-                image_is_valid = True
-                image = None
+            if not photo_file:
+                photo_is_valid = True
+                photo = None
             else:
-                image_is_valid = len(uploaded_file) < 1024*1024
-                if image_is_valid:
+                photo_is_valid = len(photo_file) < 1024*1024
+                if photo_is_valid:
                     try:
-                        image = images.resize(uploaded_file, 240, 240)
+                        photo = images.resize(photo_file, 240, 240)
                     except:
-                        image = None
-                        image_is_valid = False
+                        photo = None
+                        photo_is_valid = False
 
-            if data.is_valid() and image_is_valid:
+            logo_file = self.request.get("logo")
+
+            if not logo_file:
+                logo_is_valid = True
+                logo = None
+            else:
+                logo_is_valid = len(logo_file) < 1024*1024
+                if logo_is_valid:
+                    try:
+                        logo = images.resize(logo_file, 240, 240)
+                    except:
+                        logo = None
+                        logo_is_valid = False
+
+            if data.is_valid() and photo_is_valid and logo_is_valid:
                 # Save the data, and redirect to the view page
                 entity = data.save(commit=False)
                 entity.user = users.get_current_user()
                 entity.slug = Maker.get_slug_for_store_name(entity.store_name)
                 entity.put()
-                if image:
+                if photo:
                     if maker.photo:
                         db.delete(maker.photo)
-                    Image( 
-                        parent=entity, 
+                    Image(
+                        parent=entity,
                         category='Portrait',
-                        content=image,
+                        content=photo,
+                        ).put()
+                if logo:
+                    if maker.logo:
+                        db.delete(maker.logo)
+                    Image(
+                        parent=entity,
+                        category='Logo',
+                        content=logo,
                         ).put()
                 self.redirect('/')
             else:
                 messages = []
-                if not image_is_valid:
-                    messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+                if not photo_is_valid:
+                    messages.append("That doesn't seem to be a valid photo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+                if not logo_is_valid:
+                    messages.append("That doesn't seem to be a valid logo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle 160 pixels high by 750 pixels wide. (It can be smaller)")
 
                 # Reprint the form
                 template_values = { 'form' : data,
                                     'id' : id,
                                     'messages':messages,
-                                    'upload_form': buildImageUploadForm("Your Photo: (PNG or JPG, 240x240, less than 1MB)"),
+                                    'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 240x240, less than 1MB)", name="photo"),
+                                    'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 750wx160h, less than 1MB)", name="logo"),
                                     'uri':self.request.uri,
                                     'maker':maker,
                                     'title':'Update Store Information',
@@ -600,7 +651,8 @@ class MakerStorePage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
     def get(self, maker_slug):
         maker = Maker.get_maker_for_slug(maker_slug)
-        maker.photo = Image.all(keys_only=True).ancestor(maker).get()
+        maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
+        maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
         products = []
         for product in maker.products:
             if product.show and not product.disable:

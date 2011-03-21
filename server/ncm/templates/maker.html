@@ -28,7 +28,11 @@
 		  {% if maker.photo %}
 		  <img class="maker_photo" src="/images/{{maker.photo}}"/></br>
 		  {% endif %}
-		  {{ upload_form }}
+		  {{ photo_upload_form }}
+		  {% if maker.logo %}
+		  <img class="maker_photo" src="/images/{{maker.logo}}"/></br>
+		  {% endif %}
+		  {{ logo_upload_form }}
 		</div>
 		{% if messages %}
 		<ul class="errorList">
