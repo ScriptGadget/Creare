@@ -2,6 +2,15 @@ body { background-color:white; }
 
 .text { color: black; }
 
+#bio_bar {
+	width: 250px;
+	padding-left: 10px;
+	margin-top: 10px;
+	position: absolute; 
+	left: 1050px; 
+	top:108px;	
+}
+
 #banner { 
 	background-image: url('/static/images/Banner-fade-750-108.jpg');
 	background-repeat:no-repeat;
@@ -229,7 +238,8 @@ body { background-color:white; }
 }
 
 .maker_photo {
-	width:240px;
+	height:110px;
+	width:80px;
 	border-width: 1px;
 	border-color: gray;
 	-moz-box-shadow: 3px 3px 4px #000;
@@ -239,6 +249,12 @@ body { background-color:white; }
 	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
 	/* For IE 5.5 - 7 */
 	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
+}
+
+.maker_logo {
+	width:300px;
+	height:64px;
+	border-width:0px;
 }
 
 #join_link{

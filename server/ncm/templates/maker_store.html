@@ -1,12 +1,15 @@
 {% extends "catalog.html" %}
 
+
 {% block content %}
-    <p><img class="maker_logo" src="/images/{{store.logo}}"/></p>
 	<h1>{{store.store_name}}</h1>
-	<p><img class="maker_photo" src="/images/{{store.photo}}"/></p>
+	{{block.super}}
+{% endblock %}
+
+{% block bio_bar %}
+    <p><a href="/maker_store/{{store.slug}}"><img class="maker_logo" src="/images/{{store.logo}}"/></a></p>
+	<p><a href="/maker_store/{{store.slug}}"><img class="maker_photo" src="/images/{{store.photo}}"/></a></p>
     <p class="byline">by {{store.full_name}}</p>
 	<p>{{store.store_description}}</p>
 	<p>{{store.location}}</p>
-	<p>Products:</p>
-	{{block.super}}
-{% endblock %}
+{% endblock  %}
