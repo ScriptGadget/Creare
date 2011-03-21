@@ -43,7 +43,11 @@
 	  {% block join %}
 	  {% if not user %} <p id="join_link">Local maker? <a href="/join">Join Up</a>!</p> {% endif %}
 	  {% endblock %}
-	  {% endif %}    
+	  {% endif %}
+	<div id="bio_bar">
+	  {% block bio_bar %}
+	  {% endblock %}
+    </div>
 	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
 	  {% if news_items %}
 	    {% for item in news_items %}
@@ -108,12 +112,6 @@
       {% endblock %}
     </div>
 	
-	<div id="bio_bar">
-	  {% block bio_bar %}
-	  {% endblock %}
-    </div>
-
-
 	<div id="footer">
 	  {% block footer %}
 	  <p><a href="/privacy">Privacy&nbsp;Policy</a> <a href="/terms">Terms&nbsp;and&nbsp;Conditions</a> <a href="/about">About&nbsp;/&nbsp;Contact&nbsp;Us</a> <a href="{{community.forum_link}}">Forum</a></p>

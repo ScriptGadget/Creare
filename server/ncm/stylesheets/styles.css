@@ -6,9 +6,7 @@ body { background-color:white; }
 	width: 250px;
 	padding-left: 10px;
 	margin-top: 10px;
-	position: absolute; 
-	left: 1050px; 
-	top:108px;	
+	margin-left: 10px;
 }
 
 #banner { 
@@ -26,7 +24,7 @@ body { background-color:white; }
 	margin-left: auto;
 	margin-right: auto;
 	padding: 3px 10px;
-	width: 750;
+	width: 750px;
 }
 
 .catalog h3 {
@@ -252,8 +250,8 @@ body { background-color:white; }
 }
 
 .maker_logo {
-	width:300px;
-	height:64px;
+	width:250px;
+	height:60px;
 	border-width:0px;
 }
 
