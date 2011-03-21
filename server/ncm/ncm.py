@@ -116,7 +116,7 @@ class MakerPage(webapp.RequestHandler):
         logo_is_valid = logo_is_valid and len(logo_file) < 1024*1024
         if logo_is_valid:
             try:
-                logo = images.resize(logo_file, 240, 240)
+                logo = images.resize(logo_file, 750, 160)
             except:
                 logo_is_valid = False
 
@@ -238,7 +238,7 @@ class EditMakerPage(webapp.RequestHandler):
                 logo_is_valid = len(logo_file) < 1024*1024
                 if logo_is_valid:
                     try:
-                        logo = images.resize(logo_file, 240, 240)
+                        logo = images.resize(logo_file, 750, 160)
                     except:
                         logo = None
                         logo_is_valid = False
