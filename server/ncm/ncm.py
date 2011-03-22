@@ -68,6 +68,9 @@ def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
 
+    @staticmethod
+    def buildTagField(value):
+        return """<tr><th><label for="id_tags">Comma Separated Keywords:</label></th><td><input type="text" name="tags" value="%s" id="id_tags" /></td></tr>""" % value
     def get(self):
         authenticator = Authenticator(self)
 
@@ -84,6 +87,7 @@ class MakerPage(webapp.RequestHandler):
             data = MakerForm()
             template_values = { 'title':'Open Your Store',
                                 'form':data,
+                                'tag_field':MakerPage.buildTagField(''),
                                 'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                 'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                 'uri':self.request.uri}
@@ -127,6 +131,9 @@ class MakerPage(webapp.RequestHandler):
             entity.community = community
             entity.slug = Maker.get_slug_for_store_name(entity.store_name)
             entity.accepted_terms = bool(accepted_terms)
+            tags = self.request.get("tags").split(',')
+            for tag in tags:
+                entity.tags.append(tag.strip())
             entity.put()
             if photo:
                 Image( 
@@ -142,18 +149,18 @@ class MakerPage(webapp.RequestHandler):
                     ).put()
             self.redirect('/')
         else:
-            errors = []
+            messages = []
             if not photo_is_valid:
                 messages.append("That doesn't seem to be a valid photo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 110 pixels high by 80 pixels wide.")
             if not logo_is_valid:
                 messages.append("That doesn't seem to be a valid logo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle 64 pixels high by 300 pixels wide. (It can be smaller)")
 
             if not accepted_terms:
-                errors.append('You must accept the terms and conditions to use this site.')
-
+                messages.append('You must accept the terms and conditions to use this site.')
             # Reprint the form
             template_values = { 'title':'Open Your Store', 
-                                'extraErrors':errors,
+                                'extraErrors':messages,
+                                'tag_field':MakerPage.buildTagField(self.request.get('tags')),
                                 'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                 'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                 'form' : data, 
@@ -186,8 +193,13 @@ class EditMakerPage(webapp.RequestHandler):
         if maker and Authenticator.authorized_for(maker.user):
             maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
             maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
+            if len(maker.tags):
+                tags = ', '.join(maker.tags)
+            else:
+                tags = ''
             template_values = { 'form' : MakerForm(instance=maker),
                                 'id' : maker.key(),
+                                'tag_field':MakerPage.buildTagField(tags),
                                 'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                 'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                 'uri':self.request.uri,
@@ -248,6 +260,9 @@ class EditMakerPage(webapp.RequestHandler):
                 entity = data.save(commit=False)
                 entity.user = users.get_current_user()
                 entity.slug = Maker.get_slug_for_store_name(entity.store_name)
+                tags = self.request.get("tags").split(',')
+                for tag in tags:
+                    entity.tags.append(tag.strip())    
                 entity.put()
                 if photo:
                     if maker.photo:
@@ -272,11 +287,16 @@ class EditMakerPage(webapp.RequestHandler):
                     messages.append("That doesn't seem to be a valid photo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 110 pixels high by 80 pixels wide.")
                 if not logo_is_valid:
                     messages.append("That doesn't seem to be a valid logo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle 64 pixels high by 300 pixels wide. (It can be smaller)")
+                if len(maker.tags):
+                    tags = ', '.join(maker.tags)
+                else:
+                    tags = ''
 
                 # Reprint the form
                 template_values = { 'form' : data,
                                     'id' : id,
                                     'messages':messages,
+                                    'tag_field':MakerPage.buildTagField(tags),
                                     'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                     'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                     'uri':self.request.uri,
