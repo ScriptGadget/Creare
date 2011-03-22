@@ -56,6 +56,13 @@ def add_base_values(template_values):
 
     template_values["admin"] = users.is_current_user_admin()
 
+    items = get_current_session().get('ShoppingCartItems', [])
+    count = 0
+    if items != ():
+        for item in items:
+            count += item.count
+
+    template_values['cartItems'] = count
     return template_values;
 
 def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1MB)", name="img"):
@@ -203,7 +210,6 @@ class EditMakerPage(webapp.RequestHandler):
                                 'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                 'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                 'uri':self.request.uri,
-                                'maker':maker,
                                 'title':'Update Store Information'}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -295,7 +301,6 @@ class EditMakerPage(webapp.RequestHandler):
                                     'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                     'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                     'uri':self.request.uri,
-                                    'maker':maker,
                                     'title':'Update Store Information',
                                     }
                 path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -323,7 +328,6 @@ class ProductPage(webapp.RequestHandler):
             return
         else:
             template_values = { 'form' : ProductForm(maker=maker), 
-                                'maker':maker,
                                 'tag_field':buildTagField(tags),
                                 'upload_form': ProductPage.buildImageUploadForm(),
                                 'uri':self.request.uri}
@@ -376,7 +380,6 @@ class ProductPage(webapp.RequestHandler):
 
                 # Reprint the form
                 template_values = { 'form' : data,
-                                    'maker':maker,
                                     'tag_field':buildTagField(self.request.get('tags')),
                                     'messages':messages,
                                     'upload_form': ProductPage.buildImageUploadForm(),
@@ -431,7 +434,6 @@ class EditProductPage(webapp.RequestHandler):
             else:
                 tags = ''
             template_values = { 'form' : ProductForm(instance=product),
-                                'maker' : maker,
                                 'tag_field':buildTagField(tags),
                                 'upload_form': ProductPage.buildImageUploadForm(),
                                 'product':product,
@@ -494,7 +496,6 @@ class EditProductPage(webapp.RequestHandler):
                   messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
               # Reprint the form
               template_values = { 'form' : data,
-                                  'maker' : maker,
                                   'tag_field':buildTagField(self.request.get('tags')),
                                   'messages': messages,
                                   'upload_form': ProductPage.buildImageUploadForm(),
@@ -572,8 +573,6 @@ class CommunityHomePage(webapp.RequestHandler):
 
         session['community'] = community.slug
 
-        user = users.get_current_user()
-
         stuff = Product.all()
         stuff.order('-when')
         products = []
@@ -586,16 +585,7 @@ class CommunityHomePage(webapp.RequestHandler):
                     break;
 
         template_values = { 'title': community.name,
-                            'maker': Maker.getMakerForUser(user),
                             'products':products}
-
-        items = session.get('ShoppingCartItems', [])
-        count = 0
-        if items != ():
-            for item in items:
-                count += item.count
-
-        template_values['cartItems'] = count
 
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -668,7 +658,6 @@ class MakerDashboard(webapp.RequestHandler):
 
             template_values = { 'title':'Maker Dashboard',
                                 'sales':sales,
-                                'maker':maker,
                                 'ad':ad,
                                 'products':maker.products,
                                 'total_sales':total_sales,
@@ -1637,13 +1626,6 @@ class ProductSearch(webapp.RequestHandler):
             'products':products,
             }
 
-        items = get_current_session().get('ShoppingCartItems', [])
-        count = 0
-        if items != ():
-            for item in items:
-                count += item.count
-
-        template_values['cartItems'] = count
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
