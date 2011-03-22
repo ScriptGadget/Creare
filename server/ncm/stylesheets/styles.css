@@ -305,3 +305,10 @@ textarea.editable {
 	margin-top: 2em;
 	text-align: center;
 }
+
+#seach_form{
+	display:block;
+	margin-left:auto;
+	text-align:right;
+	width:50em;
+}

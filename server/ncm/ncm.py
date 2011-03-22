@@ -133,7 +133,7 @@ class MakerPage(webapp.RequestHandler):
             entity.accepted_terms = bool(accepted_terms)
             tags = self.request.get("tags").split(',')
             for tag in tags:
-                entity.tags.append(tag.strip())
+                entity.tags.append(tag.strip().lower())
             entity.put()
             if photo:
                 Image( 
@@ -262,7 +262,7 @@ class EditMakerPage(webapp.RequestHandler):
                 entity.slug = Maker.get_slug_for_store_name(entity.store_name)
                 tags = self.request.get("tags").split(',')
                 for tag in tags:
-                    entity.tags.append(tag.strip())    
+                    entity.tags.append(tag.strip().lower())
                 entity.put()
                 if photo:
                     if maker.photo:
@@ -1611,6 +1611,33 @@ class DisplayImage(webapp.RequestHandler):
         else:
             self.error(404)
 
+class ProductSearch(webapp.RequestHandler):
+    def get(self):
+        search = self.request.get('search')
+        tags = []
+        products = Product.all()
+        for tag in search.split(" "):
+            tag = tag.strip().lower()
+            tags.append(tag)
+            products.filter('tags =', tag)
+
+        template_values = {
+            'title':'Search Results',
+            'products':products,
+            }
+
+        items = get_current_session().get('ShoppingCartItems', [])
+        count = 0
+        if items != ():
+            for item in items:
+                count += item.count
+
+        template_values['cartItems'] = count
+        path = os.path.join(os.path.dirname(__file__), "templates/home.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
+
+
+
 def main():
     app = webapp.WSGIApplication([
         (r'/rpc/(GetShoppingCart)', RPCHandler),
@@ -1656,6 +1683,7 @@ def main():
         (r'/images/(.*)', DisplayImage),
         (r'/product_images/(.*)', DisplayProductImage),
         (r'/advertisement_image/(.*)', DisplayProductImage),
+        ('/search', ProductSearch),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

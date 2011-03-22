@@ -5,6 +5,11 @@
       <script type="text/javascript" src="/static/json2.js"></script>	
       <script type="text/javascript" src="/static/async_utils.js"></script>
       <script type="text/javascript">
+		{% block search_functions %}
+		function doSearch(form){
+		  $(form).submit()
+		}
+		{% endblock %}
 		{% block functions  %}
 		  function tangram_init(){ 
 		  }
@@ -98,9 +103,11 @@
 		  {% else %}
 		  <li><a href="/login">Login</a></li>
 		  {% endif %}
+		  <li><form id="search_form" name="search" action="/search" method="GET"><label for="id_search">Search:</label><input type="text" name="search" id="id_seach" value="" onblur="doSearch('search_form')"/></form></li>
 		</ul>
 		{% endblock %}
 	  </div>
+	  
 	</div>
 
 	
