@@ -5,6 +5,7 @@
          <form id="product_form" enctype="multipart/form-data" action="{{ uri }}" method="POST">
 		   <table>
 		   {{ form.as_table }}
+		   {{ tag_field }}
 		   </table>
 		   <input type="hidden" name="_id" value="{{ id }}">
 		   <div id="image_upload_panel">

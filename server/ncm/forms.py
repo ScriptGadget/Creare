@@ -163,7 +163,14 @@ class ProductForm(djangoforms.ModelForm):
 
     class Meta:
         model = Product
-        exclude = ['maker', 'thumb', 'slug', 'disable', 'when']
+        exclude = [
+          'maker',
+          'thumb',
+          'slug',
+          'disable',
+          'when',
+          'tags',
+          ]
 
 ProductForm = autostrip(ProductForm)
 

@@ -65,12 +65,11 @@ def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1
 <div><input type="file" name="%s"/></div>
 """ % (prompt, name)
 
+def buildTagField(value):
+    return """<tr><th><label for="id_tags">Comma Separated Keywords:</label></th><td><input type="text" name="tags" value="%s" id="id_tags" /></td></tr>""" % value
+
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
-
-    @staticmethod
-    def buildTagField(value):
-        return """<tr><th><label for="id_tags">Comma Separated Keywords:</label></th><td><input type="text" name="tags" value="%s" id="id_tags" /></td></tr>""" % value
     def get(self):
         authenticator = Authenticator(self)
 
@@ -87,7 +86,7 @@ class MakerPage(webapp.RequestHandler):
             data = MakerForm()
             template_values = { 'title':'Open Your Store',
                                 'form':data,
-                                'tag_field':MakerPage.buildTagField(''),
+                                'tag_field':buildTagField(''),
                                 'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                 'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                 'uri':self.request.uri}
@@ -132,6 +131,7 @@ class MakerPage(webapp.RequestHandler):
             entity.slug = Maker.get_slug_for_store_name(entity.store_name)
             entity.accepted_terms = bool(accepted_terms)
             tags = self.request.get("tags").split(',')
+            entity.tags = []
             for tag in tags:
                 entity.tags.append(tag.strip().lower())
             entity.put()
@@ -160,7 +160,7 @@ class MakerPage(webapp.RequestHandler):
             # Reprint the form
             template_values = { 'title':'Open Your Store', 
                                 'extraErrors':messages,
-                                'tag_field':MakerPage.buildTagField(self.request.get('tags')),
+                                'tag_field':buildTagField(self.request.get('tags')),
                                 'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                 'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                 'form' : data, 
@@ -199,7 +199,7 @@ class EditMakerPage(webapp.RequestHandler):
                 tags = ''
             template_values = { 'form' : MakerForm(instance=maker),
                                 'id' : maker.key(),
-                                'tag_field':MakerPage.buildTagField(tags),
+                                'tag_field':buildTagField(tags),
                                 'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                 'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                 'uri':self.request.uri,
@@ -256,11 +256,11 @@ class EditMakerPage(webapp.RequestHandler):
                         logo_is_valid = False
 
             if data.is_valid() and photo_is_valid and logo_is_valid:
-                # Save the data, and redirect to the view page
                 entity = data.save(commit=False)
                 entity.user = users.get_current_user()
                 entity.slug = Maker.get_slug_for_store_name(entity.store_name)
                 tags = self.request.get("tags").split(',')
+                entity.tags=[]
                 for tag in tags:
                     entity.tags.append(tag.strip().lower())
                 entity.put()
@@ -287,16 +287,11 @@ class EditMakerPage(webapp.RequestHandler):
                     messages.append("That doesn't seem to be a valid photo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 110 pixels high by 80 pixels wide.")
                 if not logo_is_valid:
                     messages.append("That doesn't seem to be a valid logo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle 64 pixels high by 300 pixels wide. (It can be smaller)")
-                if len(maker.tags):
-                    tags = ', '.join(maker.tags)
-                else:
-                    tags = ''
-
                 # Reprint the form
                 template_values = { 'form' : data,
                                     'id' : id,
                                     'messages':messages,
-                                    'tag_field':MakerPage.buildTagField(tags),
+                                    'tag_field':buildTagField(self.request.get('tags')),
                                     'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
                                     'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
                                     'uri':self.request.uri,
@@ -329,6 +324,7 @@ class ProductPage(webapp.RequestHandler):
         else:
             template_values = { 'form' : ProductForm(maker=maker), 
                                 'maker':maker,
+                                'tag_field':buildTagField(tags),
                                 'upload_form': ProductPage.buildImageUploadForm(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
@@ -363,6 +359,10 @@ class ProductPage(webapp.RequestHandler):
                 entity.maker = maker
                 entity.slug = Product.get_slug_for_name(entity.name)
                 entity.when = "%s|%s" % (datetime.now(), hashlib.md5(str(maker.key())+get_current_session().sid).hexdigest())
+                tags = self.request.get("tags").split(',')
+                entity.tags = []
+                for tag in tags:
+                    entity.tags.append(tag.strip().lower())
                 entity.put()
                 upload = ProductImage()
                 upload.product = entity
@@ -377,6 +377,7 @@ class ProductPage(webapp.RequestHandler):
                 # Reprint the form
                 template_values = { 'form' : data,
                                     'maker':maker,
+                                    'tag_field':buildTagField(self.request.get('tags')),
                                     'messages':messages,
                                     'upload_form': ProductPage.buildImageUploadForm(),
                                     'uri':self.request.uri}
@@ -425,8 +426,13 @@ class EditProductPage(webapp.RequestHandler):
                 self.response.out.write("You do not have permission to edit that product.")
                 return
 
+            if len(maker.tags):
+                tags = ', '.join(product.tags)
+            else:
+                tags = ''
             template_values = { 'form' : ProductForm(instance=product),
                                 'maker' : maker,
+                                'tag_field':buildTagField(tags),
                                 'upload_form': ProductPage.buildImageUploadForm(),
                                 'product':product,
                                 'id' : product.key(),
@@ -468,6 +474,10 @@ class EditProductPage(webapp.RequestHandler):
           if data.is_valid() and image_is_valid:
               entity = data.save(commit=False)
               entity.slug = Product.get_slug_for_name(entity.name)
+              tags = self.request.get("tags").split(',')
+              entity.tags = []
+              for tag in tags:
+                  entity.tags.append(tag.strip().lower())
               entity.put()
               if image:
                   upload = ProductImage(parent=entity)
@@ -485,6 +495,7 @@ class EditProductPage(webapp.RequestHandler):
               # Reprint the form
               template_values = { 'form' : data,
                                   'maker' : maker,
+                                  'tag_field':buildTagField(self.request.get('tags')),
                                   'messages': messages,
                                   'upload_form': ProductPage.buildImageUploadForm(),
                                   'product':product,
