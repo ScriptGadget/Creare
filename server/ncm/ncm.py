@@ -1577,6 +1577,10 @@ class RPCPostMethods:
 
     def SetApprovalStatus(self, request, *args):
         """ Change the approval status of a  maker. """
+        if not users.is_current_user_admin():
+            self.error(403)
+            return {"alert1":"You do not have permission to do that."}
+
         try:
             maker = Maker.get(args[0])
         except:
