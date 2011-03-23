@@ -145,6 +145,8 @@ class ProductForm(djangoforms.ModelForm):
       self.maker = maker
       if instance:
         self.fields['name'].widget.attrs['readonly'] = True
+      else:
+        self.fields['name'].widget.attrs.pop('readonly',None)
 
     def clean_name(self):
         data=self.clean_data['name']
