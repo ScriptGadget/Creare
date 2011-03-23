@@ -77,6 +77,18 @@ def buildTagField(value):
 
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
+    prompt_base = "%s: (PNG or JPG, %dwx%dh, less than 1MB)"
+    message_base = "That doesn't seem to be a valid %s. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle %d pixels high by %d pixels wide. (It can be smaller)"
+    photo_height = 110 
+    photo_width = 80
+    photo_prompt =  prompt_base % ("Your Photo", photo_width, photo_height)
+    photo_message = message_base % ('photo', photo_height, photo_width)
+
+    logo_height= 64
+    logo_width= 300
+    logo_prompt = prompt_base % ("Your Logo Banner", logo_width, logo_height)
+    logo_message = message_base  % ('logo', logo_height, logo_width)
+    
     def get(self):
         authenticator = Authenticator(self)
 
@@ -94,8 +106,8 @@ class MakerPage(webapp.RequestHandler):
             template_values = { 'title':'Open Your Store',
                                 'form':data,
                                 'tag_field':buildTagField(''),
-                                'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
+                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
+                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -117,7 +129,7 @@ class MakerPage(webapp.RequestHandler):
         photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
         if photo_is_valid:
             try:
-                photo = images.resize(photo_file, 80, 110)
+                photo = images.resize(photo_file, MakerPage.photo_width, MakerPage.photo_height)
             except:
                 photo_is_valid = False
 
@@ -126,7 +138,7 @@ class MakerPage(webapp.RequestHandler):
         logo_is_valid = logo_is_valid and len(logo_file) < 1024*1024
         if logo_is_valid:
             try:
-                logo = images.resize(logo_file, 300, 64)
+                logo = images.resize(logo_file, MakerPage.logo_width, MakerPage.logo_height)
             except:
                 logo_is_valid = False
 
@@ -158,9 +170,9 @@ class MakerPage(webapp.RequestHandler):
         else:
             messages = []
             if not photo_is_valid:
-                messages.append("That doesn't seem to be a valid photo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 110 pixels high by 80 pixels wide.")
+                messages.append(MakerPage.photo_message)
             if not logo_is_valid:
-                messages.append("That doesn't seem to be a valid logo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle 64 pixels high by 300 pixels wide. (It can be smaller)")
+                messages.append(MakerPage.logo_message)
 
             if not accepted_terms:
                 messages.append('You must accept the terms and conditions to use this site.')
@@ -168,8 +180,8 @@ class MakerPage(webapp.RequestHandler):
             template_values = { 'title':'Open Your Store', 
                                 'extraErrors':messages,
                                 'tag_field':buildTagField(self.request.get('tags')),
-                                'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
+                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
+                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
                                 'form' : data, 
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -207,8 +219,8 @@ class EditMakerPage(webapp.RequestHandler):
             template_values = { 'form' : MakerForm(instance=maker),
                                 'id' : maker.key(),
                                 'tag_field':buildTagField(tags),
-                                'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
+                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
+                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
                                 'uri':self.request.uri,
                                 'title':'Update Store Information'}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -242,7 +254,7 @@ class EditMakerPage(webapp.RequestHandler):
                 photo_is_valid = len(photo_file) < 1024*1024
                 if photo_is_valid:
                     try:
-                        photo = images.resize(photo_file, 80, 110)
+                        photo = images.resize(photo_file, MakerPage.photo_width, MakerPage.photo_height)
                     except:
                         photo = None
                         photo_is_valid = False
@@ -256,7 +268,7 @@ class EditMakerPage(webapp.RequestHandler):
                 logo_is_valid = len(logo_file) < 1024*1024
                 if logo_is_valid:
                     try:
-                        logo = images.resize(logo_file, 300, 64)
+                        logo = images.resize(logo_file, MakerPage.logo_width, MakerPage.logo_height)
                     except:
                         logo = None
                         logo_is_valid = False
@@ -290,16 +302,16 @@ class EditMakerPage(webapp.RequestHandler):
             else:
                 messages = []
                 if not photo_is_valid:
-                    messages.append("That doesn't seem to be a valid photo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 110 pixels high by 80 pixels wide.")
+                    messages.append(MakerPage.photo_message)
                 if not logo_is_valid:
-                    messages.append("That doesn't seem to be a valid logo. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle 64 pixels high by 300 pixels wide. (It can be smaller)")
+                    messages.append(MakerPage.logo_message)
                 # Reprint the form
                 template_values = { 'form' : data,
                                     'id' : id,
                                     'messages':messages,
                                     'tag_field':buildTagField(self.request.get('tags')),
-                                    'photo_upload_form':buildImageUploadForm(prompt="Your Photo: (PNG or JPG, 80wx110h, less than 1MB)", name="photo"),
-                                    'logo_upload_form':buildImageUploadForm(prompt="Your Logo Banner: (PNG or JPG, 300wx64h, less than 1MB)", name="logo"),
+                                    'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
+                                    'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
                                     'uri':self.request.uri,
                                     'title':'Update Store Information',
                                     }
