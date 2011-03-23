@@ -342,7 +342,7 @@ class ProductPage(webapp.RequestHandler):
             return
         else:
             template_values = { 'form' : ProductForm(maker=maker), 
-                                'tag_field':buildTagField(tags),
+                                'tag_field':buildTagField(''),
                                 'upload_form': ProductPage.buildImageUploadForm(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
