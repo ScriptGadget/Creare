@@ -39,7 +39,6 @@ class Community(db.Model):
     support_phone=db.PhoneNumberProperty()
     forum_link = db.LinkProperty()
     coordinator_names = db.StringProperty()
-    community_description = db.TextProperty()
     description = db.TextProperty()
     address = db.PostalAddressProperty()
 
