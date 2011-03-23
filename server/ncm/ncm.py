@@ -1743,7 +1743,7 @@ class DisplayImage(webapp.RequestHandler):
         image = db.get(image_id)
         if image.content:
             self.response.headers['Content-Type'] = "image/png"
-            self.response.headers['max-age'] = "10800"
+            self.response.headers['Cache-Control'] = "max-age=2592000, must-revalidate"
             self.response.out.write(image.content)
         else:
             self.error(404)
