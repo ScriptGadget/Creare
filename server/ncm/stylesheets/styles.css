@@ -298,7 +298,7 @@ body {
 }
 
 #maker_product_panel{
-	display:none;
+	display:block;
 }
 
 #maker_product_panel img{ 
