@@ -84,8 +84,8 @@ class MakerPage(webapp.RequestHandler):
     photo_prompt =  prompt_base % ("Your Photo", photo_width, photo_height)
     photo_message = message_base % ('photo', photo_height, photo_width)
 
-    logo_height= 64
-    logo_width= 300
+    logo_height= 60
+    logo_width= 250
     logo_prompt = prompt_base % ("Your Logo Banner", logo_width, logo_height)
     logo_message = message_base  % ('logo', logo_height, logo_width)
     
