@@ -407,7 +407,7 @@ class DisplayProductImage(webapp.RequestHandler):
         productImage = db.get(image_id)
         if productImage.image:
             self.response.headers['Content-Type'] = "image/png"
-            self.response.headers['max-age'] = "10800"
+            self.response.headers['Cache-Control'] = "max-age=2592000, must-revalidate"
             self.response.out.write(productImage.image)
         else:
             self.error(404)
