@@ -108,6 +108,8 @@ class MakerForm(djangoforms.ModelForm):
         instance = getattr(self, 'instance', None)
         if instance:
             self.fields['store_name'].widget.attrs['readonly'] = True
+        else:
+          self.fields['store_name'].widget.attrs.pop('readonly',None)
 
     def clean_store_name(self):
         data=self.clean_data['store_name']
