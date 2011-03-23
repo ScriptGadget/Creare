@@ -11,10 +11,30 @@
     </div>
 
     <div id="communityPanel">
-      <form id="community" action="{{uri}}" method="POST">
+      <form id="community" enctype="multipart/form-data" action="{{uri}}" method="POST">
 		<table>
 		  {{ form.as_table }}
 		</table>
+
+		<div id="image_upload_panel">
+		  {% if community.photo %}
+		  <img class="coordinator_photo" src="/images/{{community.photo}}"/></br>
+		  {% endif %}
+		  {{ photo_upload_form }}
+		  {% if community.logo %}
+		  <img class="community_logo" src="/images/{{community.logo}}"/></br>
+		  {% endif %}
+		  {{ logo_upload_form }}
+		</div>
+
+		{% if messages %}
+		<ul class="errorList">
+		  {% for message in messages %}
+		  <li>{{message}}</li>
+		  {% endfor %}
+		</ul>
+		{% endif %}
+
 		<input type="hidden" name="_id" value="{{ id }}">
         <div><input id="submit" class="button"  type="submit" {% if id %} value="Update Community" {% else %} value="Create Community" {% endif %} /></div>
       </form>

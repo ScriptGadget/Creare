@@ -10,9 +10,10 @@ body { background-color:white; }
 }
 
 #banner { 
-	background-image: url('/static/images/Banner-fade-750-108.jpg');
+	/*background-image: url('/static/images/Banner-fade-750-108.jpg');*/
+	background-color: white;
 	background-repeat:no-repeat;
-    padding: 0 0 0 5px;
+    padding: 0 0 0 0px;
 	margin-left: 5px;
     height: 108px;
     width: 100%;
@@ -236,8 +237,6 @@ body { background-color:white; }
 }
 
 .maker_photo {
-	height:110px;
-	width:80px;
 	border-width: 1px;
 	border-color: gray;
 	-moz-box-shadow: 3px 3px 4px #000;
@@ -253,6 +252,23 @@ body { background-color:white; }
 	width:250px;
 	height:60px;
 	border-width:0px;
+}
+
+.community_logo {
+	height:108px;
+	border-width:0px;
+}
+
+.coordinator_photo {
+	border-width: 1px;
+	border-color: gray;
+	-moz-box-shadow: 3px 3px 4px #000;
+	-webkit-box-shadow: 3px 3px 4px #000;
+	box-shadow: 3px 3px 4px #000;
+	/* For IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+	/* For IE 5.5 - 7 */
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
 }
 
 #join_link{

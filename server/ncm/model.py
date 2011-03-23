@@ -38,6 +38,10 @@ class Community(db.Model):
     support_email=db.EmailProperty()
     support_phone=db.PhoneNumberProperty()
     forum_link = db.LinkProperty()
+    coordinator_names = db.StringProperty()
+    community_description = db.TextProperty()
+    description = db.TextProperty()
+    address = db.PostalAddressProperty()
 
     fee_percentage = db.FloatProperty(required=True, default=10.0)
     fee_minimum = db.FloatProperty(required=True, default=0.30)

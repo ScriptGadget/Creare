@@ -42,7 +42,9 @@ def add_base_values(template_values):
     community = Community.get_current_community()
 
     if community:
-        template_values["community"] = community
+        if not 'community' in template_values:
+            community.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(community).get()
+            template_values['community'] = community
         q = db.Query(NewsItem)
         q.filter('show =', True).filter('community =', community)
         news_items = q.fetch(limit=50)
@@ -80,7 +82,7 @@ class MakerPage(webapp.RequestHandler):
     prompt_base = "%s: (PNG or JPG, %dwx%dh, less than 1MB)"
     message_base = "That doesn't seem to be a valid %s. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle %d pixels high by %d pixels wide. (It can be smaller)"
     photo_height = 110 
-    photo_width = 80
+    photo_width = 110
     photo_prompt =  prompt_base % ("Your Photo", photo_width, photo_height)
     photo_message = message_base % ('photo', photo_height, photo_width)
 
@@ -114,7 +116,7 @@ class MakerPage(webapp.RequestHandler):
 
     def post(self):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
 
         if not community:
             self.error(404)
@@ -178,7 +180,7 @@ class MakerPage(webapp.RequestHandler):
                 messages.append('You must accept the terms and conditions to use this site.')
             # Reprint the form
             template_values = { 'title':'Open Your Store', 
-                                'extraErrors':messages,
+                                'messages':messages,
                                 'tag_field':buildTagField(self.request.get('tags')),
                                 'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
                                 'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
@@ -709,18 +711,25 @@ class EditCommunityPage(webapp.RequestHandler):
             return
 
         if user and users.is_current_user_admin():
-            community = Community.get_community_for_slug(get_current_session().get('community'))
+            community = Community.get_current_community()
 
             if not community:
                 self.error(404)
                 self.response.out.write("I don't recognize that community")
                 return
 
+            community.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(community).get()
+            community.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(community).get()
             data = CommunityForm(instance=community)
-            template_values = { 'title':'Create a Community',
-                                'form':data,
-                                'id':community.key(),
-                                 'uri':self.request.uri}
+            template_values = { 
+                'title':'Create a Community',
+                'community':community,
+                'form':data,
+                'id':community.key(),
+                'uri':self.request.uri,
+                'photo_upload_form':buildImageUploadForm(prompt=CommunityPage.photo_prompt, name="photo"),
+                'logo_upload_form':buildImageUploadForm(prompt=CommunityPage.logo_prompt, name="logo"),
+                }
             path = os.path.join(os.path.dirname(__file__), "templates/community.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
 
@@ -744,18 +753,73 @@ class EditCommunityPage(webapp.RequestHandler):
         if user and users.is_current_user_admin():
             id = self.request.get('_id')
             community = Community.get(id)
+            community.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(community).get()
+            community.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(community).get()
+            photo_file = self.request.get("photo")
+
+            if not photo_file:
+                photo_is_valid = True
+                photo = None
+            else:
+                photo_is_valid = len(photo_file) < 1024*1024
+                if photo_is_valid:
+                    try:
+                        photo = images.resize(photo_file, CommunityPage.photo_width, CommunityPage.photo_height)
+                    except Exception, e:
+                        photo = None
+                        photo_is_valid = False
+
+            logo_file = self.request.get("logo")
+
+            if not logo_file:
+                logo_is_valid = True
+                logo = None
+            else:
+                logo_is_valid = len(logo_file) < 1024*1024
+                if logo_is_valid:
+                    try:
+                        logo = images.resize(logo_file, CommunityPage.logo_width, CommunityPage.logo_height)
+                    except:
+                        logo = None
+                        logo_is_valid = False
+
             data = CommunityForm(data=self.request.POST, instance=community)
-            if data.is_valid():
+            if data.is_valid() and photo_is_valid and logo_is_valid:
                 # Save the data, and redirect to the view page
                 entity = data.save(commit=False)
                 entity.slug = Community.get_slug_for_name(entity.name)
                 entity.put()
+                if photo:
+                    if community.photo:
+                        db.delete(community.photo)
+                    Image(
+                        parent=entity,
+                        category='Portrait',
+                        content=photo,
+                        ).put()
+                if logo:
+                    if community.logo:
+                        db.delete(community.logo)
+                    Image(
+                        parent=entity,
+                        category='Logo',
+                        content=logo,
+                        ).put()
+
                 self.redirect('/')
             else:
-                # Reprint the form
+                messages = []
+                if not photo_is_valid:
+                    messages.append(CommunityPage.photo_message)
+                if not logo_is_valid:
+                    messages.append(CommunityPage.logo_message)
+
                 template_values = { 'title':'Create a Community',
                                     'id' : id,
+                                    'messages':messages,
                                     'form' : data,
+                                    'photo_upload_form':buildImageUploadForm(prompt=CommunityPage.photo_prompt, name="photo"),
+                                    'logo_upload_form':buildImageUploadForm(prompt=CommunityPage.logo_prompt, name="logo"),
                                     'uri': self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/community.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -763,8 +827,20 @@ class EditCommunityPage(webapp.RequestHandler):
             self.error(403)
             self.response.out.write('You do not have permission to edit this community.')
 
-class AddCommunityPage(webapp.RequestHandler):
+class CommunityPage(webapp.RequestHandler):
     """ A page for adding a Community  """
+    prompt_base = "%s: (PNG or JPG, %dwx%dh, less than 1MB)"
+    message_base = "That doesn't seem to be a valid %s. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle %d pixels high by %d pixels wide. (It can be smaller)"
+    photo_height = 110 
+    photo_width = 110
+    photo_prompt =  prompt_base % ("Your Photo", photo_width, photo_height)
+    photo_message = message_base % ('photo', photo_height, photo_width)
+
+    logo_height= 108
+    logo_width= 750
+    logo_prompt = prompt_base % ("Your Logo Banner", logo_width, logo_height)
+    logo_message = message_base  % ('logo', logo_height, logo_width)
+
     def get(self):
         if Community.get_current_community():
             self.redirect('/community/edit')
@@ -783,9 +859,13 @@ class AddCommunityPage(webapp.RequestHandler):
 
         if user and users.is_current_user_admin():
             data = CommunityForm()
-            template_values = { 'title':'Create a Community',
-                                'form':data,
-                                'uri':self.request.uri}
+            template_values = { 
+                'title':'Create a Community',
+                'form':data,
+                'photo_upload_form':buildImageUploadForm(prompt=CommunityPage.photo_prompt, name="photo"),
+                'logo_upload_form':buildImageUploadForm(prompt=CommunityPage.logo_prompt, name="logo"),
+                'uri':self.request.uri,
+                }
             path = os.path.join(os.path.dirname(__file__), "templates/community.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
 
@@ -802,18 +882,59 @@ class AddCommunityPage(webapp.RequestHandler):
             self.error(403)
             self.response.out.write('You do not have permission to create a new community.')
             return
+
+        photo_file = self.request.get("photo")
+        photo_is_valid = photo_file is not None and photo_file != ''
+        photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
+        if photo_is_valid:
+            try:
+                photo = images.resize(photo_file, CommunityPage.photo_width, CommunityPage.photo_height)
+            except:
+                photo_is_valid = False
+
+        logo_file = self.request.get("logo")
+        logo_is_valid = logo_file is not None and logo_file != ''
+        logo_is_valid = logo_is_valid and len(logo_file) < 1024*1024
+        if logo_is_valid:
+            try:
+                logo = images.resize(logo_file, CommunityPage.logo_width, CommunityPage.logo_height)
+            except:
+                logo_is_valid = False
+
         data = CommunityForm(data=self.request.POST)
-        if data.is_valid():
+        if data.is_valid() and photo_is_valid and logo_is_valid:
             # Save the data, and redirect to the view page
             entity = data.save(commit=False)
             entity.slug = Community.get_slug_for_name(entity.name)
             entity.put()
+            if photo:
+                Image( 
+                    parent=entity, 
+                    category='Portrait',
+                    content=photo,
+                    ).put()
+            if logo:
+                Image( 
+                    parent=entity, 
+                    category='Logo',
+                    content=logo,
+                    ).put()
             self.redirect('/')
         else:
-            # Reprint the form
-            template_values = { 'title':'Create a Community',
-                                'form' : data,
-                                'uri': self.request.uri}
+            messages = []
+            if not photo_is_valid:
+                messages.append(MakerPage.photo_message)
+            if not logo_is_valid:
+                messages.append(MakerPage.logo_message)
+
+            template_values = { 
+                'title':'Create a Community',
+                'messages':messages,
+                'photo_upload_form':buildImageUploadForm(prompt=CommunityPage.photo_prompt, name="photo"),
+                'logo_upload_form':buildImageUploadForm(prompt=CommunityPage.logo_prompt, name="logo"),
+                'form' : data,
+                'uri': self.request.uri
+                }
             path = os.path.join(os.path.dirname(__file__), "templates/community.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
 
@@ -1645,7 +1766,20 @@ class ProductSearch(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
+class AboutPage(webapp.RequestHandler):
+    def get(self):
+        community = Community.get_current_community()
+        community.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(community).get()
+        community.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(community).get()
+        makers = Maker.all().filter('approval_status =', 'Approved')
+        template_values = {
+            'community':community,
+            'makers':makers,
+            'title':'About Us',
+            }
 
+        path = os.path.join(os.path.dirname(__file__), "templates/about.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
 
 def main():
     app = webapp.WSGIApplication([
@@ -1671,7 +1805,7 @@ def main():
         ('/makers', ListMakers),
         (r'/maker_store/(.*)', MakerStorePage),
         (r'/maker_dashboard/(.*)', MakerDashboard),
-        ('/community/add', AddCommunityPage),
+        ('/community/add', CommunityPage),
         ('/community/edit', EditCommunityPage),
         ('/checkout', CheckoutPage),
         ('/news_items', ListNewsItems),
@@ -1685,7 +1819,7 @@ def main():
         (r'/(privacy)', RenderContentPage),
         (r'/(terms)', RenderContentPage),
         (r'/(dmca)', RenderContentPage),
-        (r'/(about)', RenderContentPage),
+        ('/about', AboutPage),
         ('/advertisements', ListAdvertisements),
         ('/return', CompletePurchase),
         ('/cancel', CompletePurchase),
