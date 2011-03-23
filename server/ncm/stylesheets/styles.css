@@ -1,4 +1,6 @@
-body { background-color:white; }
+body { 
+	background-color:white; 
+}
 
 .text { color: black; }
 
@@ -10,7 +12,6 @@ body { background-color:white; }
 }
 
 #banner { 
-	/*background-image: url('/static/images/Banner-fade-750-108.jpg');*/
 	background-color: white;
 	background-repeat:no-repeat;
     padding: 0 0 0 0px;
@@ -20,14 +21,22 @@ body { background-color:white; }
 	color: black;
 }
 
+
 #content { 
-	display: block; 
+	position: absolute;
+	left: 260px;
+	top: 230px;
+	display:block;
 	margin-left: auto;
 	margin-right: auto;
 	padding: 3px 10px;
 	width: 750px;
 }
 
+.catalog {
+	width:750px;
+	table-layout:fixed; 
+}
 .catalog h3 {
 	font-size: small;
 	font-weight: normal;
@@ -45,8 +54,8 @@ body { background-color:white; }
 }
 
 .catalog td {
-	width:10em;
-	vertical-align:text-top;
+	width: 160px;
+	text-align:center;
 	padding: 10px;
 	padding-bottom: 20px;
 	border-style: dotted;
@@ -56,6 +65,7 @@ body { background-color:white; }
 }
 
 .product_image_panel {
+	height: 120px;
 	text-align: center;
 	margin: auto;
 	font-size: small;
@@ -63,23 +73,28 @@ body { background-color:white; }
 }
 
 .product_info_panel {
+	height: 120px;
 	text-align: left;
 }
 
 
 .product_price_panel {
+	height: 60px;
 	text-align: center;
 	margin: auto;
 	font-size: small;
 }
 
 .product_name {
+	height:15px;
 	text-align: center;
 	padding-bottom: 0.5em;
 	overflow: hidden;
 }
 
 .product_short_description {
+	height: 60px;
+	width: 100%;
 	padding-bottom: 0.5em;
 	overflow: hidden;
 }
@@ -90,6 +105,7 @@ body { background-color:white; }
 }
 
 #sidebar {
+	display:block;
 	width: 250px;
 	padding-left: 10px;
 	margin-top: 10px;
@@ -112,13 +128,14 @@ body { background-color:white; }
 	text-decoration: none;
 }
 
-#menubar { display: block; height: 2em; padding: 1px; }
+#menubar { display: block; height: 2em; padding: 1px;}
 #menu { position:relative; float:right; right:50%; font-size: large; margin-top: -1em;}
 #menu li {text-align: left; position: relative; float: left; left: 50%; list-style: none; padding: 3px 5px 3px 5px; margin: 3px 0.5em; border: 0px none #FFF;}
 #menu .current li { background-color: gray; color: black; }
 #menu a { text-decoration: none; color: black;}
 #menu a:hover { text-decoration: none; background-color: black; color: white;}
 #menu .current a { text-decoration: none; background-color: gray; color: black;}
+
 
 #alert1 {
 	color: red;
@@ -128,13 +145,14 @@ body { background-color:white; }
 }
 
 #footer {
-	width: 750px;
-	margin-top: 2em;
-	margin-left: auto;
-	margin-right: auto;
-    text-align: center; 
-	font-size: normal;
-	padding: 3px 10px; 
+   height: 330px;
+   width: 750px;
+   margin-top: 2em;
+   margin-left: auto;
+   margin-right: auto;
+   text-align: center; 
+   font-size: normal;
+   padding: 3px 10px; 
 }
 
 #footer a {
@@ -284,7 +302,7 @@ body { background-color:white; }
 }
 
 #maker_product_panel img{ 
-	width:25%; 
+	width:75%; 
 }
 
 .control { 

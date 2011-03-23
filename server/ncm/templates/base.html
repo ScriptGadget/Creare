@@ -22,7 +22,7 @@
 	  <a href="/">
 		<div id="banner">
 		  {% if community.logo %}
-		  <img id="community_logo" src="/images/{{ community.logo }}" />
+		  <img class="community_logo" src="/images/{{ community.logo }}" />
 		  {% endif %}
 		</div>
 	  </a>
@@ -109,24 +109,25 @@
 		  <li><form id="search_form" name="search" action="/search" method="GET"><label for="id_search">Search:</label> <input type="text" name="search" id="id_seach" value="" onblur="doSearch('search_form')"/></form></li>
 		</ul>
 		{% endblock %}
-	  </div>
-	  
+	  </div>	  
 	</div>
 
-	
+	<div id="container">
     <div id="content">
 	  {% if community.use_sandbox %}
 	  <p class="errorList">THIS WEBSITE IS IN TEST ONLY MODE! No actual products are for sale, and all payments are processed though test accounts in the PayPal sandbox.</p>
 	  {% endif %}
 	  {% block content %}
       {% endblock %}
-    </div>
-	
+
 	<div id="footer">
 	  {% block footer %}
 	  <p><a href="/privacy">Privacy&nbsp;Policy</a> <a href="/terms">Terms&nbsp;and&nbsp;Conditions</a> <a href="/about">About&nbsp;/&nbsp;Contact&nbsp;Us</a> <a href="{{community.forum_link}}">Forum</a></p>
 	  <p>Powered&nbsp;by&nbsp;ScriptGadget</p>
 	  {% endblock %}
 	</div>
+    </div>
+	</div>
     </body>
+
 </html>
