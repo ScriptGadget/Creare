@@ -27,7 +27,7 @@
 		{% endfor %}
 	  </div>
 	  <p>"{{maker.store_description}}"</p>
-	  <p>Tags: {{maker.tags}}</p>
+	  <p>Tags: {% for tag in maker.tags %} {{tag}} {% endfor %}</p>
       <p>email: <a target="_email" href="https://mail.google.com/?view=cm&fs=1&tf=1&source=mailto&to={{maker.email}}&su=Your%20Application%20To%20%20Nevada%20County%20Makes">{{maker.email}}</a></p>
 	  <p>phone: {{maker.phone_number}}</p>
 	  <p>location: {{maker.location}}</p>
