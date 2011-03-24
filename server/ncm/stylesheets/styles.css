@@ -2,7 +2,7 @@ body {
 	background-color:white; 
 }
 
-.text { color: black; }
+.text { color:black; }
 
 #bio_bar {
 	width: 250px;
@@ -30,6 +30,16 @@ body {
 	margin-right: auto;
 	padding: 3px 10px;
 	width: 750px;
+}
+
+
+#content textarea {
+	width: 300px;
+	height: 8em;
+}
+
+#content input {
+	width: 300px;
 }
 
 .catalog {
