@@ -26,6 +26,8 @@
 		  <input onclick="doSetApprovalStatus('{{maker.key}}', '{{status}}')" type="radio" name="{{maker.key}}" class="choice" value="{{status}}" {% ifequal maker.approval_status status %}checked={% endifequal %} /> {{status}}<br/>
 		{% endfor %}
 	  </div>
+      <p><a href="/maker_store/{{maker.slug}}"><img class="maker_logo" src="/images/{{maker.logo}}"/></a></p>
+	  <p><a href="/maker_store/{{maker.slug}}"><img class="maker_photo" src="/images/{{maker.photo}}"/></a></p>
 	  <p>"{{maker.store_description}}"</p>
 	  <p>Tags: {% for tag in maker.tags %} {{tag}} {% endfor %}</p>
       <p>email: <a target="_email" href="https://mail.google.com/?view=cm&fs=1&tf=1&source=mailto&to={{maker.email}}&su=Your%20Application%20To%20%20Nevada%20County%20Makes">{{maker.email}}</a></p>
