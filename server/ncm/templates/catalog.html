@@ -19,6 +19,7 @@
 {% endblock functions%}
 
 {% block content %}
+{% block catalog %}
 	<table class="catalog">
     <tr>
 	{% for product in products %}
@@ -47,4 +48,5 @@
     {% endfor %}
 	</tr>
     </table>
+{% endblock catalog %}
 {% endblock content  %}
