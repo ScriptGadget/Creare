@@ -84,10 +84,10 @@ body {
 }
 
 .product_info_panel {
-	height: 120px;
+	height: 100px;
+	width: 100%;
 	text-align: left;
 }
-
 
 .product_price_panel {
 	height: 60px;
