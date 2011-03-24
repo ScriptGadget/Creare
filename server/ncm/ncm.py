@@ -168,7 +168,7 @@ class MakerPage(webapp.RequestHandler):
                     category='Logo',
                     content=logo,
                     ).put()
-            self.redirect('/')
+            self.redirect('/maker_dashboard/' + entity.slug)
         else:
             messages = []
             if not photo_is_valid:
@@ -669,10 +669,12 @@ class MakerDashboard(webapp.RequestHandler):
                 ad.img = '/advertisement_image/' + str(ad.advertisement_images[0].key())
                 ad.height = 160
                 ad.width = 750
-
+            maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
+            maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
             template_values = { 'title':'Maker Dashboard',
                                 'sales':sales,
                                 'ad':ad,
+                                'store':maker,
                                 'products':maker.products,
                                 'total_sales':total_sales,
                                 'total_items':total_items}

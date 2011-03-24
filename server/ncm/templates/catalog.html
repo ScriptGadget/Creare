@@ -42,7 +42,7 @@
 		 </div>
 		 <div class="product_price_panel">
 		   <p>{{product.inventory}} remaining</p>
-		   <p class="price">${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
 		 </div>
 	   </td>
     {% endfor %}

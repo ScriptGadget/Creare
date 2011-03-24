@@ -1,4 +1,4 @@
-{% extends "catalog.html" %}
+{% extends "maker_space.html" %}
 
 {% block functions %}
   // current first transaction shown
@@ -9,11 +9,11 @@
   InstallFunction(server, 'SetMakerTransactionShipped', false);
 
   function doGetMakerActivityTable(cursor, direction){
-    server.GetMakerActivityTable("{{maker.key}}", cursor, direction, updateMakerActivityTable);
+    server.GetMakerActivityTable("{{store.key}}", cursor, direction, updateMakerActivityTable);
   }
 
   function doSetMakerTransactionShipped(transaction){
-    server.SetMakerTransactionShipped("{{maker.key}}", transaction, updateChangedRow);
+    server.SetMakerTransactionShipped("{{store.key}}", transaction, updateChangedRow);
   }
 
   function doGetOlderTransactions(){
@@ -93,7 +93,8 @@
 {% block style %}
   <!-- Temporary IE hack. TBD remove after restyle -->
   #menu { margin-top: 0em; }
-  #content { top: 230px; }
+  #content { top: 235px; }
+  .add_button { display:none; }
 {% endblock %}
 
 {% block menu %}
@@ -112,9 +113,9 @@
 
 {% block content %}
 
-    <h1>{{maker.store_name}}: dashboard</h1>
+    <h1>{{store.store_name}}: dashboard</h1>
 
-	{% ifequal maker.approval_status "Approved" %}
+	{% ifequal store.approval_status "Approved" %}
     <div id="makerDashboardPanel">
 
 		<h2>Activity&nbsp;<a id="transaction_panel_control" class="control" onclick="hideOrShow('maker_transaction_panel', 'transaction_panel_control')">[show]</a></h2>

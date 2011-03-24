@@ -110,6 +110,7 @@ body {
 	position: absolute; 
 	left: 5px; 
 	top:108px;
+	overflow:hidden;
 }
 
 #sidebar h2 {
