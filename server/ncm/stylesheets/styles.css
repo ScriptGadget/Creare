@@ -42,6 +42,10 @@ body {
 	width: 300px;
 }
 
+#content .choice {
+	width: 10%;
+}
+
 #content .add_button {
 	width:100%;
 }

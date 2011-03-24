@@ -23,7 +23,7 @@
 	<dd id="{{maker.key}}" class="maker_detail">
 	  <div id="approval_buttons">
 		{% for status in statusList %}
-		  <input onclick="doSetApprovalStatus('{{maker.key}}', '{{status}}')" type="radio" name="{{maker.key}}" value="{{status}}" {% ifequal maker.approval_status status %}checked={% endifequal %} /> {{status}}<br/>
+		  <input onclick="doSetApprovalStatus('{{maker.key}}', '{{status}}')" type="radio" name="{{maker.key}}" class="choice" value="{{status}}" {% ifequal maker.approval_status status %}checked={% endifequal %} /> {{status}}<br/>
 		{% endfor %}
 	  </div>
 	  <p>"{{maker.store_description}}"</p>
