@@ -1,4 +1,5 @@
 {% extends "catalog.html" %}
+
 {% block functions %}
   // current first transaction shown
   var scursor = "";
@@ -89,6 +90,15 @@
 
 {% endblock functions %}
 
+{% block style %}
+  <!-- Temporary IE hack. TBD remove after restyle -->
+  #menu { margin-top: 0em; }
+  #content { top: 230px; }
+{% endblock %}
+
+{% block menu %}
+  {{ block.super }}
+{% endblock %}
 
 {% block cart_widget %} {% endblock %}
 {% block banner %} 
@@ -133,5 +143,4 @@
 		<p><strong>phone</strong>: ({{community.support_phone|slice:":3"}}) {{community.support_phone|slice:"3:6"}}-{{community.support_phone|slice:"6:"}}</p>
 	  </div>
 	  {% endifequal %}
-    </div>
 {% endblock %}

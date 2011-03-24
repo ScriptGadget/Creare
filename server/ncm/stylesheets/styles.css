@@ -25,7 +25,7 @@ body {
 #content { 
 	position: absolute;
 	left: 260px;
-	top: 230px;
+	top: 160px;
 	display:block;
 	margin-left: auto;
 	margin-right: auto;
@@ -34,7 +34,6 @@ body {
 }
 
 .catalog {
-	width:750px;
 	table-layout:fixed; 
 }
 .catalog h3 {
@@ -129,7 +128,7 @@ body {
 }
 
 #menubar { display: block; height: 2em; padding: 1px;}
-#menu { position:relative; float:right; right:50%; font-size: large; margin-top: -1em;}
+#menu { position:relative; float:right; right:50%; font-size: large; }
 #menu li {text-align: left; position: relative; float: left; left: 50%; list-style: none; padding: 3px 5px 3px 5px; margin: 3px 0.5em; border: 0px none #FFF;}
 #menu .current li { background-color: gray; color: black; }
 #menu a { text-decoration: none; color: black;}
@@ -251,7 +250,7 @@ body {
 }
 
 .catalog img{
-	width:75%;
+	width:120px;
 }
 
 .maker_photo {
@@ -302,7 +301,7 @@ body {
 }
 
 #maker_product_panel img{ 
-	width:75%; 
+	width:120px; 
 }
 
 .control { 
