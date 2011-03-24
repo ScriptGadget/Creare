@@ -1539,7 +1539,7 @@ class RPCPostMethods:
             results["alert1"]="Product Not Found"
             return results
         if product.inventory < 1:
-            results["alert1"]="No More ' + product.name + ' In Stock"
+            results["alert1"]='No More ' + product.name + ' in stock'
             return results
 
         session = get_current_session()
@@ -1549,7 +1549,11 @@ class RPCPostMethods:
 
         for item in items:
             if item.product_key == product_id:
-                item.count += 1
+                if item.count + 1 > product.inventory:
+                    results["alert1"]='No More ' + product.name + ' in stock'
+                    return results
+                else:
+                    item.count += 1
                 break
         else:
             newItem = ShoppingCartItem(product_key=product_id, price=product.price, count=1)
