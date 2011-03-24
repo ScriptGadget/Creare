@@ -43,7 +43,6 @@ def add_base_values(template_values):
 
     if community:
         if not 'community' in template_values:
-            community.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(community).get()
             template_values['community'] = community
         q = db.Query(NewsItem)
         q.filter('show =', True).filter('community =', community)
@@ -212,8 +211,6 @@ class EditMakerPage(webapp.RequestHandler):
                 return
 
         if maker and Authenticator.authorized_for(maker.user):
-            maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
-            maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
             if len(maker.tags):
                 tags = ', '.join(maker.tags)
             else:
@@ -244,8 +241,6 @@ class EditMakerPage(webapp.RequestHandler):
         if not Authenticator.authorized_for(maker.user):
             self.redirect('/maker/add')
         else:
-            maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
-            maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
             data = MakerForm(data=self.request.POST, instance=maker)
             photo_file = self.request.get("photo")
 
@@ -531,9 +526,6 @@ class ViewProductPage(webapp.RequestHandler):
             return
 
         product = Product.get_product_for_slug(product_slug)
-        product.maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(product.maker).get()
-        product.maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(product.maker).get()
-
 
         template_values = { 'store' : product.maker,
                             'product':product}
@@ -669,8 +661,6 @@ class MakerDashboard(webapp.RequestHandler):
                 ad.img = '/advertisement_image/' + str(ad.advertisement_images[0].key())
                 ad.height = 160
                 ad.width = 750
-            maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
-            maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
             template_values = { 'title':'Maker Dashboard',
                                 'sales':sales,
                                 'ad':ad,
@@ -685,8 +675,6 @@ class MakerStorePage(webapp.RequestHandler):
     """ Renders a store page for a particular maker. """
     def get(self, maker_slug):
         maker = Maker.get_maker_for_slug(maker_slug)
-        maker.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(maker).get()
-        maker.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(maker).get()
         products = []
         for product in maker.products:
             if product.show and not product.disable:
@@ -720,8 +708,6 @@ class EditCommunityPage(webapp.RequestHandler):
                 self.response.out.write("I don't recognize that community")
                 return
 
-            community.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(community).get()
-            community.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(community).get()
             data = CommunityForm(instance=community)
             template_values = { 
                 'title':'Create a Community',
@@ -755,8 +741,6 @@ class EditCommunityPage(webapp.RequestHandler):
         if user and users.is_current_user_admin():
             id = self.request.get('_id')
             community = Community.get(id)
-            community.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(community).get()
-            community.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(community).get()
             photo_file = self.request.get("photo")
 
             if not photo_file:
@@ -1775,8 +1759,6 @@ class ProductSearch(webapp.RequestHandler):
 class AboutPage(webapp.RequestHandler):
     def get(self):
         community = Community.get_current_community()
-        community.photo = Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(community).get()
-        community.logo = Image.all(keys_only=True).filter('category =', 'Logo').ancestor(community).get()
         makers = Maker.all().filter('approval_status =', 'Approved')
         template_values = {
             'community':community,

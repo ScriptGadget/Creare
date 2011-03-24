@@ -64,6 +64,14 @@ class Community(db.Model):
     paypal_api_signature = db.StringProperty()
     paypal_application_id = db.StringProperty()
 
+    @property
+    def photo(self):
+        return Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(self).get()
+
+    @property
+    def logo(self):
+        return Image.all(keys_only=True).filter('category =', 'Logo').ancestor(self).get()
+
     @staticmethod
     def get_community_for_slug(slug):
         try:
@@ -128,6 +136,14 @@ class Maker(db.Model):
     location = db.TextProperty(required=True, verbose_name="Store Location, Market Booth, Maker Space")
     tags = db.StringListProperty(required=True, verbose_name="Comma Separated Keywords")
     accepted_terms = db.BooleanProperty(required=False)
+
+    @property
+    def photo(self):
+        return Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(self).get()
+
+    @property
+    def logo(self):
+        return Image.all(keys_only=True).filter('category =', 'Logo').ancestor(self).get()
 
     @staticmethod
     def get_maker_for_slug(slug):
