@@ -42,6 +42,10 @@ body {
 	width: 300px;
 }
 
+#content .add_button {
+	width:100%;
+}
+
 .catalog {
 	table-layout:fixed; 
 }
@@ -75,7 +79,6 @@ body {
 .product_image_panel {
 	height: 120px;
 	text-align: center;
-	margin: auto;
 	font-size: small;
 	padding: 3px;
 }
