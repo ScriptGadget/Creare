@@ -109,11 +109,12 @@
 {% block cart_widget %} {% endblock %}
 
 {% block content %}
+	<h1>{{ title }}</h1>
     <div id="ShoppingCartProductList"></div>
 	<table>
 	<tr><th>Email:</th><td><input type="text" name="email" id="email_id" onchange="updateForm()"/></td></tr>
 	<tr><th>Name:</th><td><input type="text" name="name" id="name_id" onchange="updateForm()"/></td></tr>
-	<tr><th>Shipping:</th><td><textarea name="shipping" id="shipping_id" onchange="updateForm()"></textarea></td></tr>
+	<tr><th>Shipping Address or<br/>Pick-up time and Notes to Maker:</th><td><textarea name="shipping" id="shipping_id" onchange="updateForm()"></textarea></td></tr>
 	</table>
 	<p id="form_message" class="explanatory_message">(All fields required)</p>
     <div id="PaymentOptions"></div> 
