@@ -1,9 +1,5 @@
 Creare (cray-are-ay) -v (Latin) 1. To create 
 
-Update: Quite a bit of progress this week. It's still an awful mess, but it actually performs Paypal Apdaptive API Chained Payments and handles IPN requests (in tests at least). Much error handling and clean-up to do. There's still quite a bit of redunancy and inconsitency in the code from earlier experiments. I'm sure there are better ways to do almost all of it, but the idea was to just do the simplest thing that works and improve it once the makers can get hold of it and tell us what they need.
-
----
-
 Creare is the engine for our local maker, crafter and creator site, Nevada County Makes. It is PRE BETA and is currently full of exploratory false starts, duplication and brain twiddling. No sane person should attempt to use this code for any reason whatsoever until I get a chance to clean it up later this week. Which is not to imply it would be a great idea even then until I've run it for awhile.
 
 -bill
