@@ -384,10 +384,11 @@ class ProductPage(webapp.RequestHandler):
                 for tag in tags:
                     entity.tags.append(tag.strip().lower())
                 entity.put()
-                upload = ProductImage()
-                upload.product = entity
-                upload.image = image
-                upload.put()
+                Image(
+                    parent=entity,
+                    category='Product',
+                    content=image,
+                    ).put()
                 self.redirect('/maker_dashboard/' + maker.slug)
             else:
                 messages = []
@@ -402,17 +403,6 @@ class ProductPage(webapp.RequestHandler):
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/product.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
-
-class DisplayProductImage(webapp.RequestHandler):
-    """ Deprecated """
-    def get(self, image_id):
-        productImage = db.get(image_id)
-        if productImage.image:
-            self.response.headers['Content-Type'] = "image/png"
-            self.response.headers['Cache-Control'] = "max-age=2592000, must-revalidate"
-            self.response.out.write(productImage.image)
-        else:
-            self.error(404)
 
 class EditProductPage(webapp.RequestHandler):
     """ Edit an existing Product """
@@ -498,13 +488,13 @@ class EditProductPage(webapp.RequestHandler):
                   entity.tags.append(tag.strip().lower())
               entity.put()
               if image:
-                  upload = ProductImage(parent=entity)
-                  for product_image in entity.product_images:
-                      product_image.delete()
-
-                  upload.product = entity
-                  upload.image = image;
-                  upload.put()
+                  if product.image:
+                      db.delete(product.image)
+                  Image(
+                      parent=entity,
+                      category='Product',
+                      content=image,
+                      ).put()
               self.redirect('/maker_dashboard/' + maker.slug)
           else:
               messages = []
@@ -668,9 +658,9 @@ class MakerDashboard(webapp.RequestHandler):
                 if not ad.PSA:
                     ad.decrement_impressions()
                 ad.put() # to update the last_shown
-                ad.img = '/advertisement_image/' + str(ad.advertisement_images[0].key())
-                ad.height = 160
-                ad.width = 750
+                ad.img = '/images/' + str(ad.image)
+                ad.width = AdvertisementPage.photo_width
+                ad.height = AdvertisementPage.photo_height
             template_values = { 'title':'Maker Dashboard',
                                 'sales':sales,
                                 'ad':ad,
@@ -1137,10 +1127,16 @@ class AddNewsItem(webapp.RequestHandler):
 
 class AdvertisementPage(webapp.RequestHandler):
     """ Add a Advertisement """
+    prompt_base = "%s: (PNG or JPG, %dwx%dh, less than 1MB)"
+    message_base = "That doesn't seem to be a valid %s. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a rectangle %d pixels high by %d pixels wide. (It can be smaller)"
+    photo_height = 160
+    photo_width = 750
+    photo_prompt =  prompt_base % ("Advertisement image", photo_width, photo_height)
+    photo_message = message_base % ('image', photo_height, photo_width)
 
     @staticmethod
     def buildImageUploadForm():
-        return buildImageUploadForm("Advertisement Image: (PNG or JPG, 750wx160h, less then 1MB)")
+        return buildImageUploadForm(AdvertisementPage.photo_prompt)
 
     def get(self):
         authenticator = Authenticator(self)
@@ -1181,14 +1177,15 @@ class AdvertisementPage(webapp.RequestHandler):
                 entity.community = community
                 entity.slug = Advertisement.get_slug_for_name(entity.name)
                 entity.put()
-                upload = AdvertisementImage()
                 try:
-                    upload.advertisement = entity
-                    upload.image = images.resize(self.request.get("img"), 750, 160)
-                    upload.put()
+                  Image(
+                      parent=entity,
+                      category='Advertisement',
+                      content=images.resize(self.request.get("img"), AdvertisementPage.photo_width, AdvertisementPage.photo_height),
+                      ).put()
                 except:
                     entity.delete()
-                    self.response.out.write("That doesn't look like a valid ad image. It should be 750 pixels wide by 160 pixels high and be a jpg or png image. Use your back button and try again.");
+                    self.response.out.write(AdvertisementPage.photo_message);
                     return
                 impressions = int(self.request.get("impressions"))
                 if impressions:
@@ -1240,15 +1237,17 @@ class EditAdvertisementPage(webapp.RequestHandler):
               entity.put()
               image = self.request.get("img")
               if image:
-                  upload = AdvertisementImage(parent=entity)
-                  for advertisement_image in entity.advertisement_images:
-                      advertisement_image.delete()
+                  if advertisement.image:
+                      db.delete(advertisement.image)
                   try:
-                      upload.advertisement = entity
-                      upload.image = images.resize(image, 750, 160)
-                      upload.put()
-                  except images.NotImageError:
-                      pass
+                      Image(
+                          parent=entity,
+                          category='Advertisement',
+                          content=images.resize(self.request.get("img"), AdvertisementPage.photo_width, AdvertisementPage.photo_height),
+                          ).put()
+                  except:
+                    self.response.out.write(AdvertisementPage.photo_message);
+                    return
               impressions = int(self.request.get("impressions"))
               if impressions:
                   entity.refill_impressions(impressions)
@@ -1826,8 +1825,6 @@ def main():
         ('/return', CompletePurchase),
         ('/cancel', CompletePurchase),
         (r'/images/(.*)', DisplayImage),
-        (r'/product_images/(.*)', DisplayProductImage),
-        (r'/advertisement_image/(.*)', DisplayProductImage),
         ('/search', ProductSearch),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)

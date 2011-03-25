@@ -5,9 +5,7 @@
          <form id="advertisement_form" enctype="multipart/form-data" action="{{ uri }}" method="POST">
 		   <div id="image_upload_panel">
 			 {% if advertisement %}
-			   {% for advertisement_image in advertisement.advertisement_images %}
-			   <img src="/advertisement_image/{{advertisement_image.key}}" border="0" /></br>
-			   {% endfor%}
+			   <img src="/images/{{advertisement.image}}"/></br>
 			 {% endif %}
 			 {{ upload_form }}
 		   </div>

@@ -31,9 +31,7 @@
 	   {% endif %}
        <td>
 		 <div class="product_image_panel">
-		   {% for product_image in product.product_images %}
-		   <a href="/product/{{product.maker.slug}}/{{product.slug}}"><img class="product_image" src="/product_images/{{product_image.key}}" alt="{{product.name}}" title="{{product.name}}"/></a>
-           {% endfor%}
+		   <a href="/product/{{product.maker.slug}}/{{product.slug}}"><img class="product_image" src="/images/{{product.image}}" alt="{{product.name}}" title="{{product.name}}"/></a>
          </div>
 
 		 <span class="product_info_panel">

@@ -10,9 +10,7 @@
 		   <input type="hidden" name="_id" value="{{ id }}">
 		   <div id="image_upload_panel">
 			 {% if product %}
-			   {% for product_image in product.product_images %}
-			   <img src="/product_images/{{product_image.key}}" border="0" /></br>
-			   {% endfor%}
+			   <img src="/images/{{product.image}}" border="0" /></br>
 			 {% endif %}
 			 {{ upload_form }}
 		   </div>

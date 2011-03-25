@@ -191,6 +191,10 @@ class Product(db.Model):
     disable = db.BooleanProperty(default=False)
     when = db.StringProperty()
 
+    @property
+    def image(self):
+        return Image.all(keys_only=True).ancestor(self).get()
+
     @staticmethod
     def get_product_for_slug(slug):
         try:
@@ -223,11 +227,6 @@ class Product(db.Model):
             product.inventory = 0
         product.put()
 
-
-class ProductImage(db.Model):
-    """ An Image of a Product """
-    product = db.ReferenceProperty(Product, collection_name='product_images')
-    image = db.BlobProperty()
 
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """
@@ -367,6 +366,10 @@ class Advertisement(db.Model):
     PSA = db.BooleanProperty(default=False)
     notes = db.StringProperty()
 
+    @property
+    def image(self):
+        return Image.all(keys_only=True).ancestor(self).get()
+
     @staticmethod
     def get_slug_for_name(name):
         return slugify(name)
@@ -391,11 +394,6 @@ class Advertisement(db.Model):
 
     def refill_impressions(self, impressions):
         shardedcounter.increment(str(self.key()), impressions)
-
-class AdvertisementImage(db.Model):
-    """ An Image associated with an Advertisement """
-    advertisement = db.ReferenceProperty(Advertisement, collection_name='advertisement_images')
-    image = db.BlobProperty()
 
 class Image(db.Model):
     """ 

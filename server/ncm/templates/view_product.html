@@ -3,9 +3,7 @@
 {% block content %}
 {% block catalog %}{% endblock catalog %}
    <div>
-	 {% for product_image in product.product_images %}
-	 <img class="product_image" src="/product_images/{{product_image.key}}" alt="{{product.name}}" title="{{product.name}}"/></br>
-     {% endfor%}
+	 <img class="product_image" src="/images/{{product.image}}" alt="{{product.name}}" title="{{product.name}}"/></br>
    </div>
    <div>
 	 <p>{{product.inventory}} remaining</p>
