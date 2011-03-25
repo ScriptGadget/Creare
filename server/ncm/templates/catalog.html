@@ -20,6 +20,7 @@
 
 {% block content %}
 {% block catalog %}
+	{% if products %}
 	<table class="catalog">
     <tr>
 	{% for product in products %}
@@ -48,5 +49,8 @@
     {% endfor %}
 	</tr>
     </table>
+	{% else %}
+	   <p>No products found. Please check back soon.</p>
+	{% endif %}
 {% endblock catalog %}
 {% endblock content  %}
