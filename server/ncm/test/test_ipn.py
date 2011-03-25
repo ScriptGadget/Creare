@@ -27,7 +27,7 @@ class TestSandboxPayment(unittest.TestCase):
                 phone_number = '5305551212',
                 location = 'Test Place',
                 mailing_address = '111 Test Ave, Tester CA, 95945',
-                tags = 'tests, testing, stuff to test',
+                tags = ['tests', 'testing', 'stuff to test'],
                 )
             maker.put()
             self.makers.append(maker)
@@ -38,7 +38,7 @@ class TestSandboxPayment(unittest.TestCase):
                 short_description="Product #%d" % i,
                 description="Yes it is Product #%d!" % i,
                 price=9.95,
-                tags="Test, Item",
+                tags=['Test', 'Item'],
                 inventory=10 
                 )
             product.put()

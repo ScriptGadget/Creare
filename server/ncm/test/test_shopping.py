@@ -29,7 +29,7 @@ class TestShopping(unittest.TestCase):
                           phone_number = "530111121%d" % i,
                           location = "Right Here",
                           mailing_address = "111 Test Lane, Testable, CA 95945",
-                          tags="test, testy, testiferous")
+                          tags=['test', 'testy', 'testiferous'])
             self.makers.append(maker)
         db.put(self.makers)
 
@@ -42,7 +42,7 @@ class TestShopping(unittest.TestCase):
                               short_description='A product for testing.',
                               description="Just a product for testing, OK?",
                               price=price,
-                              tags='stuff, things',
+                              tags=['stuff', 'things'],
                               inventory=1000))
             count += 1
             i += 1
