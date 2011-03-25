@@ -184,7 +184,7 @@ class Product(db.Model):
     slug = db.StringProperty()
     short_description = db.StringProperty(required=True)
     description = db.TextProperty(required=True)
-    price = db.FloatProperty(required=True)
+    price = db.FloatProperty(required=True, verbose_name="Price (use 1234.56 no $ or comma)")
     tags = db.StringListProperty(required=True, verbose_name="Comma separated keywords")
     inventory = db.IntegerProperty(required=True, verbose_name="Items in inventory")
     show = db.BooleanProperty(default=True, verbose_name="Show in store")
