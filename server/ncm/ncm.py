@@ -534,8 +534,11 @@ class ViewProductPage(webapp.RequestHandler):
 
         product = Product.get_product_for_slug(product_slug)
 
-        template_values = { 'store' : product.maker,
-                            'product':product}
+        template_values = { 
+            'title' : product.name,
+            'store' : product.maker,
+            'product':product
+            }
         path = os.path.join(os.path.dirname(__file__), "templates/view_product.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
