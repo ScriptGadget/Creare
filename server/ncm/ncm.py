@@ -76,6 +76,13 @@ def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1
 def buildTagField(value):
     return """<tr><th><label for="id_tags">Comma Separated Keywords:</label></th><td><input type="text" name="tags" value="%s" id="id_tags" /></td></tr>""" % value
 
+def write_error_page(handler, message):
+    handler.error(403)
+    template_values = {"message":message}
+    path = os.path.join(os.path.dirname(__file__), "templates/error.html")
+    handler.response.out.write(template.render(path, add_base_values(template_values)))
+
+
 class MakerPage(webapp.RequestHandler):
     """ A page for adding a Maker  """
     prompt_base = "%s: (PNG or JPG, %dwx%dh, less than 1MB)"
@@ -676,9 +683,14 @@ class MakerStorePage(webapp.RequestHandler):
     def get(self, maker_slug):
         maker = Maker.get_maker_for_slug(maker_slug)
         products = []
-        for product in maker.products:
-            if product.show and not product.disable:
-                products.append(product)
+        if maker:
+            for product in maker.products:
+                if product.show and not product.disable:
+                    products.append(product)
+        else:
+            write_error_page(self, "I don't recognize that store.")
+            return
+
         template_values = { 'store':maker,
                             'products':products,
                             'user':users.get_current_user()
@@ -1325,9 +1337,8 @@ class CompletePurchase(webapp.RequestHandler):
             message = "Checkout cancelled.";
         else:
             message = "Thank you for supporting local makers, crafters and artists.";
-        template_values = {"message":message}
-        path = os.path.join(os.path.dirname(__file__), "templates/error.html")
-        self.response.out.write(template.render(path, add_base_values(template_values)))
+        
+        write_error_page(message)
 
     def get(self):
         self.handle()
@@ -1750,7 +1761,7 @@ class ProductSearch(webapp.RequestHandler):
 
         template_values = {
             'title':'Search Results',
-            'products':products,
+            'products':products.fetch(32),
             }
 
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
