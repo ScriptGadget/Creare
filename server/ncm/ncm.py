@@ -1825,7 +1825,6 @@ def main():
         (r'/(join)', RenderContentPage),
         (r'/(privacy)', RenderContentPage),
         (r'/(terms)', RenderContentPage),
-        (r'/(dmca)', RenderContentPage),
         ('/about', AboutPage),
         ('/advertisements', ListAdvertisements),
         ('/return', CompletePurchase),
