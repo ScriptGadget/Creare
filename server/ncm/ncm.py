@@ -1340,7 +1340,7 @@ class CompletePurchase(webapp.RequestHandler):
         else:
             message = "Thank you for supporting local makers, crafters and artists.";
         
-        write_error_page(message)
+        write_error_page(self, message)
 
     def get(self):
         self.handle()
