@@ -1671,19 +1671,25 @@ class RPCPostMethods:
                                                             shopping_cart_items=items)
 
             try:
-                payment = PaypalChainedPayment( primary_recipient=receivers['primary'],
-                                                additional_recipients=receivers['others'],
-                                                api_username=community.paypal_sandbox_api_username,
-                                                api_password=community.paypal_sandbox_api_password,
-                                                api_signature=community.paypal_sandbox_api_signature,
-                                                application_id=community.paypal_sandbox_application_id,
-                                                client_ip=request.remote_addr,
-                                                cancel_url=base_url+'/cancel?payKey=${payKey}',
-                                                return_url=base_url+'/return?payKey=${payKey}',
-                                                action_url='https://svcs.sandbox.paypal.com/AdaptivePayments/Pay',
-                                                ipn_url=base_url+'/ipn',
-                                                sandbox_email=community.paypal_sandbox_email_address,
-                                                )
+                if community.use_sandbox:
+                    action_url='https://svcs.sandbox.paypal.com/AdaptivePayments/Pay'
+                else:
+                    action_url='https://svcs.paypal.com/AdaptivePayments/Pay'
+
+                payment = PaypalChainedPayment( 
+                    primary_recipient=receivers['primary'],
+                    additional_recipients=receivers['others'],
+                    api_username=community.api_username,
+                    api_password=community.api_password,
+                    api_signature=community.api_signature,
+                    application_id=communityapplication_id,
+                    client_ip=request.remote_addr,
+                    cancel_url=base_url+'/cancel?payKey=${payKey}',
+                    return_url=base_url+'/return?payKey=${payKey}',
+                    action_url = action_url,
+                    ipn_url=base_url+'/ipn',
+                    sandbox_email=community.paypal_email_address,
+                    )
             except TooManyRecipientsException:
                 cart_transaction.delete()
                 return {"message":"Paypal allows no more than five different Makers' products in a cart. Please divide your purchase."}

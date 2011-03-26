@@ -65,6 +65,48 @@ class Community(db.Model):
     paypal_application_id = db.StringProperty()
 
     @property
+    def business_id(self):
+        if self.use_sandbox:
+            return self.paypal_sandbox_business_id
+        else:
+            return self.paypal_business_id
+
+    @property
+    def email_address(self):
+        if self.use_sandbox:
+            return self.paypal_sandbox_email_address
+        else:
+            return self.paypal_email_address
+
+    @property
+    def api_username(self):
+        if self.use_sandbox:
+            return self.paypal_sandbox_api_username
+        else:
+            return self.paypal_api_username
+
+    @property
+    def api_password(self):
+        if self.use_sandbox:
+            return self.paypal_sandbox_api_password
+        else:
+            return self.paypal_api_password
+    
+    @property
+    def api_signature(self):
+        if self.use_sandbox:
+            return self.paypal_sandbox_api_signature
+        else:
+            return self.paypal_api_signature
+
+    @property
+    def application_id(self):
+        if self.use_sandbox:
+            return self.paypal_sandbox_application_id
+        else:
+            return self.paypal_application_id
+
+    @property
     def photo(self):
         return Image.all(keys_only=True).filter('category =', 'Portrait').ancestor(self).get()
 
