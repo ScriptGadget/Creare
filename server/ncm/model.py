@@ -22,13 +22,15 @@ from gaesessions import get_current_session
 import logging
 import shardedcounter
 
-_punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
+_punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
 
 def slugify(text, delim=u'-'):
+    """ This slugify treats apostrophes special. They are simply removed. """
     result = []
     for word in _punct_re.split(text.lower()):
         if word:
-            result.append(word)
+            result.append(word.replace("'", ''))
+
     return unicode(delim.join(result))
 
 class Community(db.Model):
