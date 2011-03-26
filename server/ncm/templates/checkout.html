@@ -48,30 +48,25 @@
   function updateCartTable(response){
     products = response["products"];
 	amount = response["amount"];
-    content = "";
+
     if(products.length > 0) {
-        content = "<table>";
+        cart_content = "<table>";
         for(var i = 0; i < products.length; i++){
-	      removeButton = "<input class='button' type='button' value='-' onclick='doRemoveProductFromCart(\"" + products[i].key + "\")' />";
-	      addButton = "<input class='button' type='button' value='+' onclick='doAddProductToCart(\"" + products[i].key + "\")' />";
-          content += "<tr><td>" + removeButton + products[i].count + addButton + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
+	      removeButton = "<input class='decrement_button' type='button' value='-' onclick='doRemoveProductFromCart(\"" + products[i].key + "\")' />";
+	      addButton = "<input class='increment_button' type='button' value='+' onclick='doAddProductToCart(\"" + products[i].key + "\")' />";
+          cart_content += "<tr><td>" + removeButton + products[i].count + addButton + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
         }
-        content += "</table>";
-		content += '<p id="cart_total">$' + amount + ' &lt;-- Grand Total (all prices already include sales tax)</p>';
-		$("ShoppingCartProductList").innerHTML = content;
-
-		button = document.createElement("input");
-		button.setAttribute("type", "image");
-		button.setAttribute("src","https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif");
-		button.setAttribute("align", "left");
-		button.setAttribute("style", "margin-right:7px;");
-		button.setAttribute("onclick", "doOrderProductsInCart(" +  amount + ")");
-
-		$("PaymentOptions").innerHTML="";
-		$("PaymentOptions").appendChild(button);
+        cart_content += "</table>";
+		cart_content += '<p id="cart_total">$' + amount + ' &lt;-- Grand Total (all prices already include sales tax)</p>';
+		$("ShoppingCartProductList").innerHTML = cart_content;
+		$("ShippingInfo").style.display="block";
+		$("PaymentOptions").style.display="block";
+	    $("form_message").innerHTML="(all fields required)"
 	}else{
-		$("ShoppingCartProductList").innerHTML = "<p>(empty)</p>";
-		$("PaymentOptions").innerHTML="";
+	   $("ShoppingCartProductList").innerHTML = "";
+	   $("ShippingInfo").style.display="none";
+	   $("PaymentOptions").style.display="none";
+       $("form_message").innerHTML="(shopping cart is empty)"
     }
   }
 
@@ -111,13 +106,13 @@
 {% block content %}
 	<h1>{{ title }}</h1>
     <div id="ShoppingCartProductList"></div>
-	<table>
+	<table id="ShippingInfo">
 	<tr><th>Email:</th><td><input type="text" name="email" id="email_id" onchange="updateForm()"/></td></tr>
 	<tr><th>Name:</th><td><input type="text" name="name" id="name_id" onchange="updateForm()"/></td></tr>
 	<tr><th>Shipping Address or<br/>Pick-up time and Notes to Maker:</th><td><textarea name="shipping" id="shipping_id" onchange="updateForm()"></textarea></td></tr>
 	</table>
-	<p id="form_message" class="explanatory_message">(All fields required)</p>
-    <div id="PaymentOptions"></div> 
+	<p id="form_message" class="explanatory_message"></p>
+    <div id="PaymentOptions"><input onclick="doOrderProductsInCart()" style="margin-right: 7px;" src="https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif" class="pay_button" type="image" align="left"></div> 
 
 	
 {% endblock  %}

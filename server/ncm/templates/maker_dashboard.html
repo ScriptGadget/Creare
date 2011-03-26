@@ -67,7 +67,7 @@
     sales = response["sales"];
     start = response["start"];
     end = response["end"];
-    header = "<tr><th>Date</th><th>Items</th><th>Price</th><th>Fees</th><th>Net</th><th>Payment</th><th>Shipped?</th></tr>";
+    headings = "<tr><th>Date</th><th>Items</th><th>Price</th><th>Fees</th><th>Net</th><th>Payment</th><th>Shipped?</th></tr>";
     rows = " ";
 
     if(sales.length > 0){
@@ -79,9 +79,8 @@
 	}else{
 	  rows += "<td>No sales for that date range.</td>"
 	}
-
     totals ="<tr class='totals'><th>Volume</th><td>" + response["total_items"] + "</td><td>$" + response["total_sales"] + "</td></tr>";
-    $("transaction_table").innerHTML=header + rows + totals;
+    $("transaction_table").innerHTML="<table>\n" + headings + rows + totals + "\n</table>";
   }
 
   function tangram_init(){
@@ -91,7 +90,7 @@
 {% endblock functions %}
 
 {% block style %}
-  <!-- Temporary IE hack. TBD remove after restyle -->
+  /*Temporary IE hack. TBD remove after restyle */
   #menu { margin-top: 0em; }
   #content { top: 235px; }
   .add_button { display:none; }
@@ -123,8 +122,7 @@
 
 		<div id="transaction_table_controls"><a id="prev_control" class="control" onclick="doGetOlderTransactions()">&lt;-- older</a> <a id="next_control" class="control" onclick="doGetMakerActivityTable('', 'newer')">latest</a></div>
 
-		<table id="transaction_table">
-		</table>
+		<div id="transaction_table"> </div>
 
 		<div id="transaction_table_controls"><a id="prev_control" class="control" onclick="doGetOlderTransactions()">&lt;-- older</a> <a id="next_control" class="control" onclick="doGetMakerActivityTable('', 'newer')">latest</a></div>
 

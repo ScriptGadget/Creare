@@ -38,12 +38,8 @@ body {
 	height: 8em;
 }
 
-#content input {
-	width: 300px;
-}
-
-#content .choice {
-	width: 10%;
+#content input[type="text"] {
+	width: 100%;
 }
 
 #content .add_button {
@@ -199,7 +195,7 @@ body {
 	color: gray;
 }
 
-#transaction_table{
+#transaction_table table{
 	width:100%;
 	border-style: inset;
 	border-width: 1px;
@@ -339,7 +335,7 @@ body {
 }
 
 div.editable:hover {
-	background-color:FFFF66;
+	background-color:#FFFF66;
 }
 
 textarea.editable {
@@ -361,4 +357,12 @@ textarea.editable {
 	margin-left:auto;
 	text-align:right;
 	width:50em;
+}
+
+#ShippingInfo {
+	display:none;
+}
+
+#PaymentOptions {
+	display:none;
 }

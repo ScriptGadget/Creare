@@ -1682,7 +1682,7 @@ class RPCPostMethods:
                     api_username=community.api_username,
                     api_password=community.api_password,
                     api_signature=community.api_signature,
-                    application_id=communityapplication_id,
+                    application_id=community.application_id,
                     client_ip=request.remote_addr,
                     cancel_url=base_url+'/cancel?payKey=${payKey}',
                     return_url=base_url+'/return?payKey=${payKey}',
