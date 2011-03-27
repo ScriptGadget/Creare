@@ -74,7 +74,7 @@ def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1
 """ % (prompt, name)
 
 def buildTagField(value):
-    return """<tr><th><label for="id_tags">Comma Separated Keywords:</label></th><td><input type="text" name="tags" value="%s" id="id_tags" /></td></tr>""" % value
+    return """<tr><th><label for="id_tags">%s: </label></th><td><input type="text" name="tags" value="%s" id="id_tags" /></td></tr>""" % (Product.tags.verbose_name, value)
 
 def write_error_page(handler, message):
     handler.error(403)
