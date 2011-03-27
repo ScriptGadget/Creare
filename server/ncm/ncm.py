@@ -1760,16 +1760,21 @@ class DisplayImage(webapp.RequestHandler):
 class ProductSearch(webapp.RequestHandler):
     def get(self):
         search = self.request.get('search')
-        tags = []
-        products = Product.all()
+        products = []
+        p = Product.all()
         for tag in search.split(" "):
             tag = tag.strip().lower()
-            tags.append(tag)
-            products.filter('tags =', tag)
+            p.filter( 'tags =', tag).filter('show =', True).filter('disable = ', False)
+            products.extend(p.fetch(16))
+
+        approved_products = []
+        for product in products:
+            if product.maker.approval_status == 'Approved':
+                approved_products.append(product)
 
         template_values = {
             'title':'Search Results',
-            'products':products.fetch(32),
+            'products':approved_products,
             }
 
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
