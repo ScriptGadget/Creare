@@ -57,7 +57,7 @@
           cart_content += "<tr><td>" + removeButton + products[i].count + addButton + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
         }
         cart_content += "</table>";
-		cart_content += '<p id="cart_total">$' + amount + ' &lt;-- Grand Total (all prices already include sales tax)</p>';
+		cart_content += '<p id="cart_total">$' + amount + ' &lt;-- Grand Total (all prices already include shipping/handling and sales tax)</p>';
 		$("ShoppingCartProductList").innerHTML = cart_content;
 		$("ShippingInfo").style.display="block";
 		$("PaymentOptions").style.display="block";
