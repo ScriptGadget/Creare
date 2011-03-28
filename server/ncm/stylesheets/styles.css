@@ -140,6 +140,11 @@ body {
 	text-decoration: none;
 }
 
+#sidebar p {
+    padding-right: 10px;
+    margin-right: 10px;
+}
+
 #menubar { display: block; height: 2em; padding: 1px;}
 #menu { position:relative; float:right; right:50%; font-size: large; }
 #menu li {text-align: left; position: relative; float: left; left: 50%; list-style: none; padding: 3px 5px 3px 5px; margin: 3px 0.5em; border: 0px none #FFF;}
