@@ -61,6 +61,7 @@
 	  {% block bio_bar %}
 	  {% endblock %}
     </div>
+	{% block news %}
 	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
 	  {% if news_items %}
 	    {% for item in news_items %}
@@ -70,6 +71,7 @@
 	  {% else %}
 		<p>No news today.</p>
 	  {% endif %}
+	  {% endblock news %}
 	  <!-- Coming Soon -->
 	  <!--
 	  <h2>Events {% if admin %}(<a href="/events">edit</a>){% endif %}</h2>
