@@ -40,7 +40,11 @@
 		   <span class="product_short_description">{{product.short_description}}</span>
 		 </span>
 		 <span class="product_price_panel">
+		   {% if product.unique %}
+		   <p class="unique">Unique</p>
+		   {% else %}
 		   <p>{{product.inventory}} remaining</p>
+		   {% endif %}
 		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
 		 </span>
 	   </td>
