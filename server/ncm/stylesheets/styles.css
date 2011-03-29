@@ -115,7 +115,6 @@ body {
 
 #ShoppingCartWidget { 
 	font-size: small;
-	color: blue;
 }
 
 #sidebar {
@@ -373,4 +372,17 @@ textarea.editable {
 
 #PaymentOptions {
 	display:none;
+}
+
+#checkout_button a {
+	background:yellow;
+	color:blue;
+	font-weight:bold;
+	font-size:1em;
+	padding-left: 2px;
+	padding-right: 2px;
+	border-width:1px;
+	border-color:gold;
+	border-style:dotted;
+	margin:2px;
 }
