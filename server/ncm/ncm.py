@@ -684,10 +684,12 @@ class MakerStorePage(webapp.RequestHandler):
             write_error_page(self, "I don't recognize that store.")
             return
 
-        template_values = { 'store':maker,
-                            'products':products,
-                            'user':users.get_current_user()
-                            }
+        template_values = { 
+            'title':maker.store_name,
+            'store':maker,
+            'products':products,
+            'user':users.get_current_user()
+            }
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
