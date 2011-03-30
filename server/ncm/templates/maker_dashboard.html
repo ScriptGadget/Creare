@@ -117,19 +117,19 @@
 	{% ifequal store.approval_status "Approved" %}
     <div id="makerDashboardPanel">
 
-		<h2>Activity&nbsp;<a id="transaction_panel_control" class="control" onclick="hideOrShow('maker_transaction_panel', 'transaction_panel_control')">[show]</a></h2>
-	  <div id="maker_transaction_panel">
+		<h2>Activity&nbsp;<a id="transaction_panel_control" class="control" onclick="hideOrShow('maker_transaction_panel', 'transaction_panel_control')">[hide]</a></h2>
+	  <div id="maker_transaction_panel" style="display:block">
 
 		<div id="transaction_table_controls"><a id="prev_control" class="control" onclick="doGetOlderTransactions()">&lt;-- older</a> <a id="next_control" class="control" onclick="doGetMakerActivityTable('', 'newer')">latest</a></div>
 
-		<div id="transaction_table"> </div>
+		<div id="transaction_table" > </div>
 
 		<div id="transaction_table_controls"><a id="prev_control" class="control" onclick="doGetOlderTransactions()">&lt;-- older</a> <a id="next_control" class="control" onclick="doGetMakerActivityTable('', 'newer')">latest</a></div>
 
 	  </div>
 
 	  <h2>Products&nbsp;<a id="product_control" class="control" onclick="hideOrShow('maker_product_panel', 'product_control')">[hide]</a></h2>
-	  <div id="maker_product_panel">
+	  <div id="maker_product_panel" style="display:block">
 	  <p>(<a href="/product/add">Add Product</a>)</p>
 	  {{ block.super }}
 	  </div>

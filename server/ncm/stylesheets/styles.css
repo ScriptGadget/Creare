@@ -313,7 +313,7 @@ body {
 }
 
 #maker_transaction_panel{
-	display:none;
+	display:block;
 }
 
 #maker_product_panel{
