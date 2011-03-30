@@ -100,6 +100,28 @@ body {
 	font-size: small;
 }
 
+.product_sold_panel {
+	height: 60px;
+	text-align: center;
+	margin: auto;
+}
+
+.product_sold_panel p {
+	font-size: large;
+	color: black;
+	background: gold;
+}
+
+.unique {
+	padding-bottom:0.5em;
+}
+
+.unique p {
+	color:brown;
+	font-weight:bold;
+	font-size:large;
+}
+
 .product_name {
 	height:15px;
 	text-align: center;
@@ -387,9 +409,3 @@ textarea.editable {
 	margin:2px;
 }
 
-.unique {
-	color:brown;
-	font-weight:bold;
-	font-size:large;
-	padding-bottom:0.5em;
-}
