@@ -110,12 +110,12 @@ function $(id){
 }
 
 function hideOrShow(panel, control){
-	if($(panel).style.display!="block"){
-		$(control).innerHTML="[hide]";
-		$(panel).style.display="block";
-	}else{
+	if($(panel).style.display=="block"){
 		$(control).innerHTML="[show]";
 		$(panel).style.display="none";
+	}else{
+		$(control).innerHTML="[hide]";
+		$(panel).style.display="block";
 	}
 }
 
