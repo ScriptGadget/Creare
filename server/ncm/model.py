@@ -23,13 +23,13 @@ import logging
 import shardedcounter
 
 _punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
+_word_re = re.compile('[\W]+')
 
 def slugify(text, delim=u'-'):
-    """ This slugify treats apostrophes special. They are simply removed. """
     result = []
     for word in _punct_re.split(text.lower()):
         if word:
-            result.append(word.replace("'", ''))
+            result.append(_word_re.sub('', word))
 
     return unicode(delim.join(result))
 
