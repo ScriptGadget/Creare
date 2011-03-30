@@ -6,8 +6,20 @@
 	 <img class="product_image" src="/images/{{product.image}}" alt="{{product.name}}" title="{{product.name}}"/></br>
    </div>
    <div>
-	 <p>{{product.inventory}} remaining</p>
-	 <p class="price">${{product.price|floatformat:2}} <input class="button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		 {% if product.inventory %}
+		   {% if product.unique %}
+		   <span class="unique">
+			 <p>Unique</p>
+		   </span>
+		   {% else %}
+		   <p>{{product.inventory}} remaining</p>
+		   {% endif %}
+		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		 {% else %}
+		 <span class="product_sold_panel">
+		   <p>Sold!</p>
+		 </span>
+		 {% endif %}
    </div>
    <div>
      <p>{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.maker.slug}}/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <a href="/product/{{product.maker.slug}}/{{product.slug}}">{{product.name}}</a></p>
