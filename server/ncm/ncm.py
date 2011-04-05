@@ -1471,7 +1471,6 @@ class RPCGetMethods:
             q.order('-when')
 
         maker_transactions = q.fetch(15)
-
         sales = []
         total_sales = 0.0
         total_items = 0
@@ -1482,16 +1481,19 @@ class RPCGetMethods:
         fee_minimum = community.paypal_fee_minimum + community.fee_minimum
 
         for transaction in maker_transactions:
-            (sale, additional_items, additional_sales) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
-            total_items += additional_items
-            total_sales += additional_sales
-            sales.append(sale)
+            if transaction.status == 'Paid':
+                (sale, additional_items, additional_sales) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
+                total_items += additional_items
+                total_sales += additional_sales
+                sales.append(sale)
 
         sales.sort(key=lambda sale: sale['when'], reverse=True)
 
-        return { 'sales':sales,
-                 'total_sales': "%.2f" % total_sales,
-                 'total_items':total_items}
+        return { 
+            'sales':sales,
+            'total_sales': "%.2f" % total_sales,
+            'total_items':total_items
+            }
 
 
 class RPCPostMethods:
