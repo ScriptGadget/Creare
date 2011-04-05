@@ -612,36 +612,6 @@ class MakerDashboard(webapp.RequestHandler):
             self.redirect("/maker_store/" + maker_slug)
             return
         else:
-            q = db.Query(MakerTransaction)
-            q.filter('maker =', maker.key())
-            maker_transactions = q.fetch(60)
-            sales = []
-            class Sale:
-                pass
-            total_sales = 0.0
-            total_items = 0
-            total_fees = 0.0
-            total_net = 0.0
-            community = Community.get_current_community()
-            fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
-            fee_minimum = community.paypal_fee_minimum + community.fee_minimum
-            for transaction in maker_transactions:
-                for entry in transaction.detail:
-                    sale = Sale()
-                    (product_key, items, amount) = entry.split(':')
-                    sale.cart = transaction.parent()
-                    sale.timestamp = sale.cart.timestamp
-                    sale.product = Product.get(product_key)
-                    sale.items = int(items)
-                    sale.amount = float(amount)
-                    sale.fee = sale.amount * fee_percentage + fee_minimum
-                    sale.net = sale.amount - sale.fee
-                    sales.append(sale)
-                    total_items += sale.items
-                    total_sales += sale.amount * sale.items
-
-            sales.sort(key=lambda sale: sale.timestamp, reverse=True)
-
             q = db.Query(Advertisement)
             q.filter('show =', True).order('last_shown')
 
@@ -661,13 +631,12 @@ class MakerDashboard(webapp.RequestHandler):
                 ad.img = '/images/' + str(ad.image)
                 ad.width = AdvertisementPage.photo_width
                 ad.height = AdvertisementPage.photo_height
-            template_values = { 'title':'Maker Dashboard',
-                                'sales':sales,
-                                'ad':ad,
-                                'store':maker,
-                                'products':maker.products,
-                                'total_sales':total_sales,
-                                'total_items':total_items}
+            template_values = { 
+                'title':'Maker Dashboard',
+                'ad':ad,
+                'store':maker,
+                'products':maker.products,
+                }
             path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
 
