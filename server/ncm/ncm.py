@@ -302,7 +302,7 @@ class EditMakerPage(webapp.RequestHandler):
                         category='Logo',
                         content=logo,
                         ).put()
-                self.redirect('/')
+                self.redirect('/maker_dashboard/' + entity.slug)
             else:
                 messages = []
                 if not photo_is_valid:
