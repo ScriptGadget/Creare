@@ -4,6 +4,9 @@ from google.appengine.ext import db
 from model import *
 from payment import *
 
+def withinDelta(x, y, d=0.005):
+    return x - y < d and y - x < d
+
 class TestShopping(unittest.TestCase):
     """ Test buying Products from one or more Makers """
 
@@ -59,7 +62,7 @@ class TestShopping(unittest.TestCase):
         price = 2.2
         count = 12.2
         item = ShoppingCartItem(product_key='abcd1234', price=price, count=count)
-        self.assertTrue(item.subtotal == price * count)
+        self.assertTrue(withinDelta(item.subtotal, price * count))
 
     def testCreateReceiverList(self):
         cart_items = []
@@ -73,9 +76,6 @@ class TestShopping(unittest.TestCase):
                                                         shopping_cart_items=cart_items)
         self.assertTrue('primary' in receivers)
         self.assertTrue('others' in receivers)
-
-        def withinDelta(x, y, d=0.01):
-            return x - y < d and y - x < d
 
         (email, amount) = receivers['primary']
         self.assertTrue(email == self.community.paypal_sandbox_business_id)
