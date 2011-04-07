@@ -17,6 +17,9 @@
 #  along with Creare.  If not, see <http://www.gnu.org/licenses/>.
 #
 import os
+from google.appengine.dist import use_library
+use_library('django', '0.96')
+
 import logging
 from datetime import datetime
 import hashlib
