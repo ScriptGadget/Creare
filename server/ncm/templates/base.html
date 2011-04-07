@@ -37,13 +37,11 @@
 
     <body onload="tangram_init()">
 	  {% block banner %}
-	  <a href="/">
 		<div id="banner">
 		  {% if community.logo %}
-		  <img class="community_logo" src="/images/{{ community.logo }}" />
+		  	  <a href="/"> <img class="community_logo" src="/images/{{ community.logo }}" /></a> {% if admin %}<span id="maker_score" class="score">[Makers: {{community.maker_score}} Products: {{community.product_score}}]</span>{% endif %}
 		  {% endif %}
 		</div>
-	  </a>
       {% endblock %}
 
     <div id="sidebar">

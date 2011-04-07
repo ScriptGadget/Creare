@@ -151,6 +151,20 @@ class Community(db.Model):
 
         return community
 
+    @property
+    def maker_score(self):
+        return shardedcounter.get_count('maker_score')
+
+    @property
+    def product_score(self):
+        return shardedcounter.get_count('product_score')
+    
+    def increment_maker_score(self):
+        shardedcounter.increment('maker_score', 1)
+
+    def increment_product_score(self):
+        shardedcounter.increment('product_score', 1)
+
 class Page(db.Model):
     """ A miscellaneous content page like About, Privacy Policy, etc.  """
     name = db.StringProperty(required=True)
@@ -239,7 +253,7 @@ class Product(db.Model):
     @property
     def image(self):
         return Image.all(keys_only=True).ancestor(self).get()
-
+    
     @staticmethod
     def get_product_for_slug(slug):
         try:
@@ -271,7 +285,6 @@ class Product(db.Model):
         if product.inventory < 0:
             product.inventory = 0
         product.put()
-
 
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """

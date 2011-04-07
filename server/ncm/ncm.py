@@ -177,6 +177,7 @@ class MakerPage(webapp.RequestHandler):
                     category='Logo',
                     content=logo,
                     ).put()
+            community.increment_maker_score()
             self.redirect('/maker_dashboard/' + entity.slug)
         else:
             messages = []
@@ -392,6 +393,7 @@ class ProductPage(webapp.RequestHandler):
                     category='Product',
                     content=image,
                     ).put()
+                Community.get_current_community().increment_product_score()
                 self.redirect('/maker_dashboard/' + maker.slug)
             else:
                 messages = []

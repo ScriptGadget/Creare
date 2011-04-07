@@ -409,3 +409,12 @@ textarea.editable {
 	margin:2px;
 }
 
+.score {
+} 
+
+#maker_score {
+	display:block;
+	text-align:left;
+	color:orange;
+}
+
