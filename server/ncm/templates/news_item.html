@@ -23,7 +23,7 @@
       </form>
 	  {% else %}
 	  {%  if news_item %}
-	  <h2>{{news_item.title}}</h2>
+	  <h2>{{news_item.title}} {% if admin %}(<a href="/news_item/edit/{{news_item.slug}}">edit</a>){% endif %}</h2>
 	  <p>{{news_item.created|date:"M d"|upper}} - {{news_item.summary}}</p>
 	  <p>{{news_item.text}}</p>
 	  {% endif %}

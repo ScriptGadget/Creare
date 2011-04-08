@@ -6,7 +6,7 @@
 <a href="/news_item/add">Add an item</a>
 {% endif %}
     <div id="newsListPanel">
-	  {% for item in news_items  %}
+	  {% for item in items  %}
 	  <p class="news_item">
 		{% if admin %}
 		(<a href="/news_item/edit/{{item.slug}}">edit</a>)

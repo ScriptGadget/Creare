@@ -958,19 +958,17 @@ class ListNewsItems(webapp.RequestHandler):
     """ List news items. """
     def get(self):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
-
-        if not community:
-            self.error(404)
-            self.response.out.write("I don't recognize that community")
-            return
 
         q = db.Query(NewsItem)
+        if not users.is_current_user_admin():
+            q.filter('show =', True)
 
-        q.filter('show =', True).filter('community =', community)
-        news_items = q.fetch(limit=50)
-        logging.info('items :' + str(news_items))
-        template_values = { 'title':'News Items', 'news_items': news_items, 'user':users.get_current_user()}
+        items = q.fetch(50)
+
+        template_values = { 
+            'title':'News Items', 
+            'items': items, 
+            }
         path = os.path.join(os.path.dirname(__file__), "templates/news_items.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
@@ -980,7 +978,8 @@ class ViewNewsItem(webapp.RequestHandler):
     def get(self, slug):
         news_item = NewsItem.get_news_item_for_slug(slug)
         q = NewsItem.all()
-        q.filter('show =', True)
+        if not users.is_current_user_admin():
+            q.filter('show =', True)
         news_items = q.fetch(limit=3)
         template_values = { 'title':'News',
                             'news_item':news_item,
@@ -1036,7 +1035,7 @@ class EditNewsItem(webapp.RequestHandler):
             entity = data.save(commit=False)
             entity.slug = NewsItem.get_slug_for_title(entity.title)
             entity.put()
-            self.redirect('/news_items')
+            self.redirect('/news_item/' + entity.slug)
         else:
             # Reprint the form
             template_values = { 'title':'Create a NewsItem',
@@ -1091,7 +1090,7 @@ class AddNewsItem(webapp.RequestHandler):
             entity.community = community
             entity.slug = NewsItem.get_slug_for_title(entity.title)
             entity.put()
-            self.redirect('/news_items')
+            self.redirect('/news_item/' + entity.slug)
         else:
             # Reprint the form
             template_values = { 'title':'Create a NewsItem',
