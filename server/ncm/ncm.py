@@ -934,17 +934,7 @@ class CheckoutPage(webapp.RequestHandler):
                 self.response.out.write("I don't recognize that community")
                 return
 
-            items = session.get('ShoppingCartItems', [])
-            products = []
-            for item in items:
-                product = Product.get(item.product_key)
-                if product:
-                    product.count = item.count
-                    product.price = item.price
-                    product.total = '%3.2f' % item.subtotal
-                    products.append(product)
             template_values = { 'title':'Checkout',
-                                'products':products,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/checkout.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -1448,6 +1438,7 @@ class RPCGetMethods:
                 p = { "count": str(item.count),
                       "name": product.name,
                       "key": str(product.key()),
+                      "image": str(product.image),
                       "price":'%3.2f' % item.price,
                       "total":'%3.2f' % item.subtotal, }
                 products.append(p)
