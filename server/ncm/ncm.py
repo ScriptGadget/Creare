@@ -1537,7 +1537,7 @@ class RPCPostMethods:
         return results
 
     def RemoveProductFromCart(self, request, *args):
-        """ Remove and item from the shopping cart by key """
+        """ Remove an item from the shopping cart by key """
         product_id = args[0]
         session = get_current_session()
         if not session.is_active():
@@ -1550,6 +1550,22 @@ class RPCPostMethods:
                     item.count -= 1
                 else:
                     items.remove(item)
+                break
+
+        session['ShoppingCartItems'] = items
+        return {"result":"success"}
+
+    def RemoveAllProductFromCart(self, request, *args):
+        """ Remove all of an item from the shopping cart by key """
+        product_id = args[0]
+        session = get_current_session()
+        if not session.is_active():
+            session.regenerate_id()
+        items = session.get('ShoppingCartItems', [])
+
+        for item in items:
+            if item.product_key == product_id:
+                items.remove(item)
                 break
 
         session['ShoppingCartItems'] = items
@@ -1772,6 +1788,7 @@ def main():
         (r'/rpc/(SetApprovalStatus)', RPCHandler),
         (r'/rpc/(AddProductToCart)', RPCHandler),
         (r'/rpc/(RemoveProductFromCart)', RPCHandler),
+        (r'/rpc/(RemoveAllProductFromCart)', RPCHandler),
         (r'/rpc/(SetMakerTransactionShipped)', RPCHandler),
         (r'/rpc/(OrderProductsInCart)', RPCHandler),
         (r'/rpc/(EditContent)', RPCHandler),

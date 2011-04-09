@@ -12,10 +12,15 @@
   InstallFunction(server, 'OrderProductsInCart', false);
   InstallFunction(server, 'GetShoppingCart', true);
   InstallFunction(server, 'RemoveProductFromCart', false);
+  InstallFunction(server, 'RemoveAllProductFromCart', false);
   InstallFunction(server, 'AddProductToCart', false);
 
   function doRemoveProductFromCart(product){
     server.RemoveProductFromCart(product, doGetShoppingCart);
+  }
+
+  function doRemoveAllProductFromCart(product){
+    server.RemoveAllProductFromCart(product, doGetShoppingCart);
   }
 
   function doAddProductToCart(product){
@@ -55,7 +60,8 @@
           thumbnailImage = "<img class='product_thumbnail' src='/images/" + products[i].image  + "' />";
 	      removeButton = "<input class='decrement_button' type='button' value='-' onclick='doRemoveProductFromCart(\"" + products[i].key + "\")' />";
 	      addButton = "<input class='increment_button' type='button' value='+' onclick='doAddProductToCart(\"" + products[i].key + "\")' />";
-          cart_content += "<tr><td>" + thumbnailImage + "&nbsp;" + removeButton + products[i].count + addButton + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
+	      removeAllButton = "<input class='clear_button' type='button' value='x' onclick='doRemoveAllProductFromCart(\"" + products[i].key + "\")' />";
+          cart_content += "<tr><td>" + thumbnailImage + "&nbsp;" + removeButton + addButton + removeAllButton +"&nbsp;" + products[i].count + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
         }
         cart_content += "</table>";
 		cart_content += '<p id="cart_total">$' + amount + ' &lt;-- Grand Total (all prices already include shipping/handling and sales tax)</p>';
