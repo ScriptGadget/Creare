@@ -383,6 +383,8 @@ class ProductPage(webapp.RequestHandler):
                 entity.maker = maker
                 entity.slug = Product.get_slug_for_name(entity.name)
                 entity.when = "%s|%s" % (datetime.now(), hashlib.md5(str(maker.key())+get_current_session().sid).hexdigest())
+                if entity.unique:
+                    entity.inventory = 1
                 tags = self.request.get("tags").split(',')
                 entity.tags = []
                 for tag in tags:
@@ -487,6 +489,8 @@ class EditProductPage(webapp.RequestHandler):
           if data.is_valid() and image_is_valid:
               entity = data.save(commit=False)
               entity.slug = Product.get_slug_for_name(entity.name)
+              if entity.unique:
+                  entity.inventory = 1
               tags = self.request.get("tags").split(',')
               entity.tags = []
               for tag in tags:

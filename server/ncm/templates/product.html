@@ -1,4 +1,23 @@
 {% extends "base.html" %}
+{% block functions %}
+  function hide_show_inventory()
+  {
+	  inventory = $("id_inventory")
+	  style = inventory.parentNode.parentNode.style;
+	  if ($("id_unique").checked){
+		  style.display = 'none';
+		  inventory.value = 1
+	  } else {
+		  style.display = '';
+	  }
+  }
+
+  function tangram_init(){
+	  hide_show_inventory();
+	  $("id_unique").onclick = hide_show_inventory
+  }
+
+{% endblock functions%}
 
 {% block content %}
     <div id="product_panel">

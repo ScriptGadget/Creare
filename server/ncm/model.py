@@ -245,7 +245,7 @@ class Product(db.Model):
     price = db.FloatProperty(required=True, verbose_name="Price with shipping/handling and tax (no $ or commas)", default=10.0)
     tags = db.StringListProperty(required=True, verbose_name="Tags (search terms separated by commas)")
     unique = db.BooleanProperty(default=False)
-    inventory = db.IntegerProperty(required=True, verbose_name="Number of items you have (1 if unique)", default=1)
+    inventory = db.IntegerProperty(required=True, verbose_name="Number of items you have to sell", default=1)
     show = db.BooleanProperty(default=True, verbose_name="Show this item to shoppers")
     disable = db.BooleanProperty(default=False)
     when = db.StringProperty()
