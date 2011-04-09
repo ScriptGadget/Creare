@@ -419,5 +419,25 @@ textarea.editable {
 }
 
 .product_thumbnail {
-	width:20%;
+	width:64px;
+}
+
+#checkout_table{
+	width:100%
+}
+
+#checkout_table td {
+	border-width: 1px;
+	border-style: dotted;
+	border-color: gray;
+	padding: 2px;
+}
+
+.increment_button {
+}
+
+.decrement_button {
+}
+
+.clear_button {
 }

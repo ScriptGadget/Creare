@@ -55,13 +55,13 @@
 	amount = response["amount"];
 
     if(products.length > 0) {
-        cart_content = "<table>";
+        cart_content = "<table id='checkout_table'>";
         for(var i = 0; i < products.length; i++){
           thumbnailImage = "<img class='product_thumbnail' src='/images/" + products[i].image  + "' />";
 	      removeButton = "<input class='decrement_button' type='button' value='-' onclick='doRemoveProductFromCart(\"" + products[i].key + "\")' />";
 	      addButton = "<input class='increment_button' type='button' value='+' onclick='doAddProductToCart(\"" + products[i].key + "\")' />";
 	      removeAllButton = "<input class='clear_button' type='button' value='x' onclick='doRemoveAllProductFromCart(\"" + products[i].key + "\")' />";
-          cart_content += "<tr><td>" + thumbnailImage + "&nbsp;" + removeButton + addButton + removeAllButton +"&nbsp;" + products[i].count + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
+          cart_content += "<tr><td>" + thumbnailImage + "</td><td>(" + products[i].count + ")&nbsp;[" + removeButton + "&nbsp;" + addButton + "&nbsp;" + removeAllButton + "]&nbsp;-&nbsp;" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
         }
         cart_content += "</table>";
 		cart_content += '<p id="cart_total">$' + amount + ' &lt;-- Grand Total (all prices already include shipping/handling and sales tax)</p>';
