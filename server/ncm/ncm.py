@@ -1389,20 +1389,16 @@ def _buildTransactionRow(transaction, fee_percentage, fee_minimum):
     products = []
     sale_amount = 0.0
     sale_items = 0
-    additional_sales = 0.0
-    additional_items = 0
         
     for entry in transaction.detail:
         product = {}
         (product_key, items, amount) = entry.split(':')
         product_amount = float(amount)
         product_items = int(items)
-        sale_amount += product_amount
         sale_items += product_items
+        sale_amount += product_amount * product_items
         product['product_name'] = Product.get(product_key).name
         product['items'] = product_items
-        additional_items += product_items
-        additional_sales += product_amount * product_items
         products.append(product)
 
     sale_fee = sale_amount * fee_percentage + fee_minimum
@@ -1412,7 +1408,7 @@ def _buildTransactionRow(transaction, fee_percentage, fee_minimum):
     sale['amount'] = "%.2f" % sale_amount
     sale['net'] = "%.2f" % (sale_amount - sale_fee)
 
-    return (sale, additional_items, additional_sales)
+    return (sale, sale_items, sale_amount)
 
 
 class RPCGetMethods:
@@ -1476,9 +1472,9 @@ class RPCGetMethods:
 
         for transaction in maker_transactions:
             if transaction.status == 'Paid':
-                (sale, additional_items, additional_sales) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
-                total_items += additional_items
-                total_sales += additional_sales
+                (sale, sale_items, sale_amount) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
+                total_items += sale_items
+                total_sales += sale_amount
                 sales.append(sale)
 
         sales.sort(key=lambda sale: sale['when'], reverse=True)
