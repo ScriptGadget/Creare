@@ -1374,14 +1374,14 @@ class RPCHandler(webapp.RequestHandler):
         self.handle(action, self.postMethods)
    
 
-def _buildTransactionRow(transaction, fee_percentage, fee_minimum):
+def _buildTransactionRow(community, transaction, fee_percentage, fee_minimum):
     """ Put together information for a single row in the maker activity table  """
     sale = {}
     cart = transaction.parent()
     sale['transaction'] = str(transaction.key())
     sale['transaction_status'] = transaction.status
     sale['when'] = transaction.when
-    sale['date'] = str(cart.timestamp.date())
+    sale['date'] = str(cart.timestamp.replace(tzinfo=Utc_tzinfo()).astimezone(community.timeZone).date())
     sale['shipped'] = transaction.shipped        
     sale['shopper_name'] = cart.shopper_name
     sale['shopper_email'] = cart.shopper_email
@@ -1472,7 +1472,7 @@ class RPCGetMethods:
 
         for transaction in maker_transactions:
             if transaction.status == 'Paid':
-                (sale, sale_items, sale_amount) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
+                (sale, sale_items, sale_amount) = _buildTransactionRow(community, transaction, fee_percentage, fee_minimum)
                 total_items += sale_items
                 total_sales += sale_amount
                 sales.append(sale)

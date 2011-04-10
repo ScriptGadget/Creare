@@ -85,7 +85,7 @@ class TestRPCHandlers(unittest.TestCase):
         logging.info(str(fee_percentage))
         fee_minimum = self.community.paypal_fee_minimum + self.community.fee_minimum
         logging.info(str(fee_minimum))
-        (sale, additional_items, additional_sales) = ncm._buildTransactionRow(self.makerTransaction, fee_percentage, fee_minimum)
+        (sale, additional_items, additional_sales) = ncm._buildTransactionRow(self.community, self.makerTransaction, fee_percentage, fee_minimum)
         self.assertTrue(additional_items == 4)
         self.assertTrue(additional_sales == 26.00)
         self.assertTrue(sale['amount'] == '26.00')

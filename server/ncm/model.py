@@ -21,6 +21,7 @@ from google.appengine.ext import db
 from gaesessions import get_current_session
 import logging
 import shardedcounter
+import datetime as datetime_module
 
 _punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
 _word_re = re.compile('[\W]+')
@@ -32,6 +33,37 @@ def slugify(text, delim=u'-'):
             result.append(_word_re.sub('', word))
 
     return unicode(delim.join(result))
+
+class Utc_tzinfo(datetime_module.tzinfo):
+    def utcoffset(self, dt): return datetime_module.timedelta(0)
+    def dst(self, dt): return datetime_module.timedelta(0)
+    def tzname(self, dt): return 'UTC'
+    def olsen_name(self): return 'UTC'
+
+class Pacific_tzinfo(datetime_module.tzinfo):
+    """Implementation of the Pacific timezone. From GAE docs."""
+    def utcoffset(self, dt):
+        return datetime_module.timedelta(hours=-8) + self.dst(dt)
+
+    def _FirstSunday(self, dt):
+        """First Sunday on or after dt."""
+        return dt + datetime_module.timedelta(days=(6-dt.weekday()))
+
+    def dst(self, dt):
+        # 2 am on the second Sunday in March
+        dst_start = self._FirstSunday(datetime_module.datetime(dt.year, 3, 8, 2))
+        # 1 am on the first Sunday in November
+        dst_end = self._FirstSunday(datetime_module.datetime(dt.year, 11, 1, 1))
+
+        if dst_start <= dt.replace(tzinfo=None) < dst_end:
+            return datetime_module.timedelta(hours=1)
+        else:
+            return datetime_module.timedelta(hours=0)
+    def tzname(self, dt):
+        if self.dst(dt) == datetime_module.timedelta(hours=0):
+            return "PST"
+        else:
+            return "PDT"
 
 class Community(db.Model):
     """ A Community of Makers and Crafters  """
@@ -115,6 +147,14 @@ class Community(db.Model):
     @property
     def logo(self):
         return Image.all(keys_only=True).filter('category =', 'Logo').ancestor(self).get()
+
+    @property
+    def timeZone(self):
+        """ 
+        For now just return Pacific TZ. 
+        The more general case is going to take alot of work.
+        """
+        return Pacific_tzinfo()
 
     @staticmethod
     def get_community_for_slug(slug):
