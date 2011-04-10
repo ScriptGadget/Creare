@@ -1389,7 +1389,6 @@ def _buildTransactionRow(transaction, fee_percentage, fee_minimum):
     products = []
     sale_amount = 0.0
     sale_items = 0
-    sale_fee = 0.0
     additional_sales = 0.0
     additional_items = 0
         
@@ -1398,19 +1397,15 @@ def _buildTransactionRow(transaction, fee_percentage, fee_minimum):
         (product_key, items, amount) = entry.split(':')
         product_amount = float(amount)
         product_items = int(items)
-        fee = sale_amount * fee_percentage + fee_minimum
         sale_amount += product_amount
         sale_items += product_items
-        sale_fee += fee
         product['product_name'] = Product.get(product_key).name
         product['items'] = product_items
-        product['amount'] = "%.2f" % product_amount
-        product['fee'] = "%.2f" % fee
-        product['net'] = "%.2f" % (float(product_amount) - float(fee))
         additional_items += product_items
         additional_sales += product_amount * product_items
         products.append(product)
 
+    sale_fee = sale_amount * fee_percentage + fee_minimum
     sale['products'] = products
     sale['items'] = sale_items
     sale['fee'] = "%.2f" % sale_fee
