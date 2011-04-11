@@ -35,7 +35,7 @@
          </span>
 
 		 <span class="product_info_panel">
-		   <p class="product_name">{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.maker.slug}}/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <span><a href="/product/{{product.maker.slug}}/{{product.slug}}">{{product.name}}</a></span></p>
+		   <span class="product_name">{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.maker.slug}}/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <span><a href="/product/{{product.maker.slug}}/{{product.slug}}">{{product.name}}</a></span></span>
 		   <p class="store_name">by <span><a href="/maker_store/{{product.maker.slug}}">{{product.maker.store_name}}</a></span></p>
 		   <span class="product_short_description">{{product.short_description}}</span>
 		 </span>

@@ -22,12 +22,11 @@ body {
 }
 
 #content { 
-	position: absolute;
-	left: 260px;
-	top: 160px;
 	display:block;
-	margin-left: auto;
+	position: relative;
+	margin-left: 260px;
 	margin-right: auto;
+	margin-top: 30px;
 	padding: 3px 10px;
 	width: 750px;
 }
@@ -48,6 +47,7 @@ body {
 
 .catalog {
 	table-layout:fixed; 
+	background-color: white;
 }
 .catalog h3 {
 	font-size: small;
@@ -123,7 +123,6 @@ body {
 }
 
 .product_name {
-	height:15px;
 	text-align: center;
 	padding-bottom: 0.5em;
 	overflow: hidden;
