@@ -74,10 +74,12 @@ body {
 	text-align:center;
 	padding: 10px;
 	padding-bottom: 20px;
-	border-style: dotted;
+	border-style: solid;
 	border-color: gray;
 	border-width: 1px;
-	background-color: white;
+	background-color: #FCFCFC;
+	-moz-border-radius: 15px;
+	border-radius:15px;
 }
 
 .product_image_panel {
