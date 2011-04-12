@@ -48,7 +48,7 @@ def add_base_values(template_values):
         if not 'community' in template_values:
             template_values['community'] = community
         q = db.Query(NewsItem)
-        q.filter('show =', True).filter('community =', community)
+        q.filter('show =', True).order('-created')
         news_items = q.fetch(limit=50)
         template_values["news_items"] = news_items
 

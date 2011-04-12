@@ -20,3 +20,9 @@ indexes:
   - name: maker
   - name: when
     direction: desc
+
+- kind: NewsItem
+  properties:
+  - name: show
+  - name: created
+    direction: desc
