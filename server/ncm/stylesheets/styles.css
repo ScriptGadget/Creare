@@ -1,5 +1,5 @@
 body { 
-	background-color:white; 
+	background-color:#996600; 
 }
 
 .text { color:black; }
@@ -11,24 +11,30 @@ body {
 	margin-left: 10px;
 }
 
+#holder {
+	margin:auto;
+	width:100%;
+	background:white;
+	border-radius:15px;
+	-moz-border-radius:15px;
+	-webkit-border-radius:15px;
+}
+
 #banner { 
 	background-color: white;
-	background-repeat:no-repeat;
-    padding: 0 0 0 0px;
-	margin-left: 5px;
-    height: 108px;
+	margin:auto;
     width: 100%;
 	color: black;
+	border-radius:15px;
+	-moz-border-radius:15px;
+	-webkit-border-radius:15px;
 }
 
 #content { 
-	display:block;
-	position: relative;
-	margin-left: 260px;
-	margin-right: auto;
-	margin-top: 30px;
-	padding: 3px 10px;
-	width: 750px;
+	float: left;
+	margin: auto;
+	padding: 3px;
+	width: 65%;
 }
 
 
@@ -141,14 +147,9 @@ body {
 }
 
 #sidebar {
-	display:block;
-	width: 250px;
+	width: 30%;
+	float: left;
 	padding-left: 10px;
-	margin-top: 10px;
-	position: absolute; 
-	left: 5px; 
-	top:108px;
-	overflow:hidden;
 }
 
 #sidebar h2 {
@@ -187,14 +188,12 @@ body {
 }
 
 #footer {
-   height: 330px;
-   width: 750px;
-   margin-top: 2em;
-   margin-left: auto;
-   margin-right: auto;
-   text-align: center; 
-   font-size: normal;
-   padding: 3px 10px; 
+	clear:both;
+	width:100%;
+	margin: auto;
+	text-align: center; 
+	font-size: normal;
+	padding: 3px 10px; 
 }
 
 #footer a {
