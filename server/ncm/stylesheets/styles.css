@@ -99,22 +99,18 @@ body {
 	height: 100px;
 	width: 100%;
 	text-align: left;
+	
 }
 
 .product_price_panel {
-	height: 60px;
 	text-align: center;
-	margin: auto;
+	margin-top: 5em;
 	font-size: small;
 }
 
 .product_sold_panel {
-	height: 60px;
 	text-align: center;
 	margin: auto;
-}
-
-.product_sold_panel p {
 	font-size: large;
 	color: black;
 	background: gold;
@@ -122,9 +118,6 @@ body {
 
 .unique {
 	padding-bottom:0.5em;
-}
-
-.unique p {
 	color:brown;
 	font-weight:bold;
 	font-size:large;
