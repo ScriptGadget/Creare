@@ -14,10 +14,12 @@ body {
 #holder {
 	margin:auto;
 	width:100%;
+	min-height:100%;
 	background:white;
 	border-radius:15px;
 	-moz-border-radius:15px;
 	-webkit-border-radius:15px;
+	overflow:auto;
 }
 
 #banner { 
