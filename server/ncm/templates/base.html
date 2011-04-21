@@ -47,6 +47,30 @@
 		</div>
       {% endblock %}
 
+
+	<div id="menubar">
+	  <div id="menu">
+		{% block menu %}
+		<ul>
+		  <li><a href="/">Home</a></li>
+		  {% if maker %}
+		  {% ifequal maker.user.key user.key %}
+		  <li><a href="/maker_dashboard/{{maker.slug}}">Manage My Store</a></li>
+		  <li><a href="/maker/edit/{{maker.slug}}">Account</a></li>
+		  {% endifequal %}
+		  {% endif %}
+
+		  {% if user %}
+		  <li><a href="/logout">Logout</a></li>
+		  {% else %}
+		  <li><a href="/login">Login / Join</a></li>
+		  {% endif %}
+		  <li><form id="search_form" action="/search" method="get"><label for="id_search">Search:</label> <input type="text" name="search" id="id_seach" value="" onblur="doSearch('search_form')"/></form></li>
+		</ul>
+		{% endblock %}
+	  </div>	  
+	</div>
+
     <div id="sidebar">
 	  {% block sidebar %}
 	  <div id="alert1"></div>
@@ -110,30 +134,6 @@
       {% endblock %}
 	  -->
     </div>
-
-	<div id="menubar">
-	  <div id="menu">
-		{% block menu %}
-		<ul>
-		  <li><a href="/">Home</a></li>
-		  {% if maker %}
-		  {% ifequal maker.user.key user.key %}
-		  <li><a href="/maker_dashboard/{{maker.slug}}">Manage My Store</a></li>
-		  <li><a href="/maker/edit/{{maker.slug}}">Account</a></li>
-		  {% endifequal %}
-		  {% endif %}
-
-		  {% if user %}
-		  <li><a href="/logout">Logout</a></li>
-		  {% else %}
-		  <li><a href="/login">Login / Join</a></li>
-		  {% endif %}
-		  <li><form id="search_form" action="/search" method="get"><label for="id_search">Search:</label> <input type="text" name="search" id="id_seach" value="" onblur="doSearch('search_form')"/></form></li>
-		</ul>
-		{% endblock %}
-	  </div>	  
-	</div>
-
     <div id="content">
 	  {% if community.use_sandbox %}
 	  <p class="errorlist">THIS WEBSITE IS IN TEST ONLY MODE! No actual products are for sale, and all payments are processed though test accounts in the PayPal sandbox.</p>
