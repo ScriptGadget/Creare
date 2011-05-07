@@ -34,5 +34,3 @@ if not next_maker:
 if next_maker:
     community.featured_maker = str(next_maker)
     community.put()
-
-logging.info("updating featured Maker from: " + current.full_name + " to: " + Maker.get(next_maker).full_name)
