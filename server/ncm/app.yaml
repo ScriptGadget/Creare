@@ -30,6 +30,10 @@ handlers:
   script: cleanup_sessions.py
   login: admin
 
+- url: /update_featured
+  script: update_featured.py
+  login: admin
+
 - url: /ipn
   script: ipn.py
 

@@ -3,3 +3,6 @@ cron:
   url: /cleanup_sessions
   schedule: every 24 hours
 
+- description: Update Featured Maker
+  url: /update_featured
+  schedule: every Sunday 00:01

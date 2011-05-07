@@ -15,6 +15,11 @@ indexes:
   - name: show
   - name: last_shown
 
+- kind: Maker
+  properties:
+  - name: approval_status
+  - name: joined
+
 - kind: MakerTransaction
   properties:
   - name: maker
