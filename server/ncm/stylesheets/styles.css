@@ -203,7 +203,11 @@ body {
 
 .errorlist { 
 	font-size: small;
-	color:red; 
+	color: red; 
+}
+
+.warning {
+	color: red;
 }
 
 .byline { 

@@ -57,8 +57,9 @@ def add_base_values(template_values):
 
     if 'maker' not in template_values:
         template_values['maker'] = Maker.getMakerForUser(user)
-
-    template_values["admin"] = users.is_current_user_admin()
+    
+    if users.is_current_user_admin():
+        template_values['admin'] = True
 
     items = get_current_session().get('ShoppingCartItems', [])
     count = 0
@@ -1305,6 +1306,7 @@ class CompletePurchase(webapp.RequestHandler):
     """ Handle a redirect from Paypal for a successful purchase. """
     def handle(self):
         if self.request.uri.count('cancel') > 0:
+            Community.get_current_community().decrement_pending_score()
             message = "Checkout cancelled.";
         else:
             message = "Thank you for supporting local makers, crafters and artists.";
@@ -1687,6 +1689,7 @@ class RPCPostMethods:
                 cart_transaction.put()
                 db.put(maker_transactions)
                 session.pop('ShoppingCartItems')
+                community.increment_pending_score()
                 return {"redirect":"%s" % confirmation_url} 
             else:
                 logging.error("A Paypal checkout failed! Here's the cart: " + str(items))

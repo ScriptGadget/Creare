@@ -42,7 +42,7 @@
 	  {% block banner %}
 		<div id="banner">
 		  {% if community.logo %}
-		  	  <a href="/"> <img class="community_logo" src="/images/{{ community.logo }}" alt="{{ community.name }}"/></a> {% if admin %}<span id="maker_score" class="score">[Makers: {{community.maker_score}} Products: {{community.product_score}}]</span>{% endif %}
+		  	  <a href="/"> <img class="community_logo" src="/images/{{ community.logo }}" alt="{{ community.name }}"/></a> {% if admin %}<span id="maker_score" class="score">[Makers: {{community.maker_score}} Products: {{community.product_score}}{% if community.pending_score %} <span class="warning">Pending: {{community.pending_score}}</span>{% endif %}]</span>{% endif %}
 		  {% endif %}
 		</div>
       {% endblock %}
@@ -78,6 +78,7 @@
 	  {% block admin %}
 	  <div id="admin_menu">
 	  <h2>Community Coordination</h2>
+	  {% if pending %}<p class="errorlist"><a href="#">{{pending}} pending transactions</a></p>{% endif %}
 	  <ul>
 		<li><a href="/community/edit">Settings</a></li>
 		<li><a href="/advertisements">Ads</a></li>

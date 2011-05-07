@@ -198,12 +198,22 @@ class Community(db.Model):
     @property
     def product_score(self):
         return shardedcounter.get_count('product_score')
+
+    @property
+    def pending_score(self):
+        return shardedcounter.get_count('pending_score')
     
     def increment_maker_score(self):
         shardedcounter.increment('maker_score', 1)
 
     def increment_product_score(self):
         shardedcounter.increment('product_score', 1)
+
+    def increment_pending_score(self):
+        shardedcounter.increment('pending_score', 1)
+
+    def decrement_pending_score(self):
+        shardedcounter.decrement('pending_score')
 
 class Page(db.Model):
     """ A miscellaneous content page like About, Privacy Policy, etc.  """

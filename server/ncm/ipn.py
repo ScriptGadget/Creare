@@ -148,6 +148,8 @@ class IPNHandler(webapp.RequestHandler):
                                                                response=str(parameters))
                     paypalPaymentResponse.put();                    
                     IPNHandler.update_inventory(cart, status, parameters)
+                    community.decrement_pending_score()
+
 
     def post(self):
         self.ipn()
