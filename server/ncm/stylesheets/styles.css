@@ -105,10 +105,10 @@ body {
 }
 
 .product_info_panel {
-	height: 100px;
+	height: 100%;
 	width: 100%;
 	text-align: left;
-	
+	font-size: small;
 }
 
 .product_price_panel {
@@ -123,6 +123,13 @@ body {
 	font-size: large;
 	color: black;
 	background: gold;
+}
+
+.pickup {
+	padding-bottom: 0.5em;
+	color: black;
+	font-weight: bold;
+	font-size: large;
 }
 
 .unique {

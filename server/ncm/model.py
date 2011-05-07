@@ -301,6 +301,7 @@ class Product(db.Model):
     show = db.BooleanProperty(default=True, verbose_name="Show this item to shoppers")
     disable = db.BooleanProperty(default=False)
     when = db.StringProperty()
+    pickup_only = db.BooleanProperty(default=False, verbose_name="Pick-up only")
 
     @property
     def image(self):

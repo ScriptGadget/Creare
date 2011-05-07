@@ -7,13 +7,16 @@
    </div>
    <div>
 		 {% if product.inventory %}
+		   <p>
 		   {% if product.unique %}
-		   <span class="unique">
-			 <p>Unique</p>
-		   </span>
+		   <span class="unique">Unique</span>
 		   {% else %}
-		   <p>{{product.inventory}} remaining</p>
+		   {{product.inventory}} remaining
 		   {% endif %}
+		   {% if product.pickup_only %}
+		   <span class="pickup">(Pick-up Only)</span>
+		   {% endif %}
+		   </p>
 		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
 		 {% else %}
 		 <span class="product_sold_panel">

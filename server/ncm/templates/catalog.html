@@ -47,6 +47,9 @@
 		   {% else %}
 		   <p>{{product.inventory}} remaining</p>
 		   {% endif %}
+		   {% if product.pickup_only %}
+		   <p class="pickup">Pick-up Only</p>
+		   {% endif %}
 		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
 		 {% else %}
 		   <p class="product_sold_panel">Sold!</p>

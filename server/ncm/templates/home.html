@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "catalog.html" %}
 
 {% block content %}
 	{% if latest %}
@@ -29,6 +29,9 @@
 		   <p class="unique" >Unique</p>
 		   {% else %}
 		   <p>{{product.inventory}} remaining</p>
+		   {% endif %}
+		   {% if product.pickup_only %}
+		   <p class="pickup">Pick-up Only</p>
 		   {% endif %}
 		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
 		 {% else %}
@@ -70,6 +73,9 @@
 		   <p class="unique" >Unique</p>
 		   {% else %}
 		   <p>{{product.inventory}} remaining</p>
+		   {% endif %}
+		   {% if product.pickup_only %}
+		   <p class="pickup">Pick-up Only</p>
 		   {% endif %}
 		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
 		 {% else %}
