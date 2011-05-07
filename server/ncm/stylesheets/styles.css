@@ -1,5 +1,6 @@
 body { 
-	background-color:#996600; 
+	background-color:#996600;
+	font-family: serif;
 }
 
 .text { color:black; }
@@ -445,4 +446,16 @@ textarea.editable {
 }
 
 .clear_button {
+}
+
+.module {
+	background:white;
+	overflow:hidden;
+	margin-top: 10px;
+}
+
+.module h3 {
+	text-align: center;
+	font-size: small;
+	bottom-margin: -10px;
 }

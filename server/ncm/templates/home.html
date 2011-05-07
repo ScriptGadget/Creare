@@ -1,1 +1,85 @@
-{% extends "catalog.html" %}
+{% extends "base.html" %}
+
+{% block content %}
+	{% if latest %}
+    <div class="module">
+	<h3>New Stuff</h3>
+	<table class="catalog">
+    <tr>
+	{% for product in latest %}
+	   {% if not forloop.first %} 
+	   {% if forloop.counter0|divisibleby:"4" %}
+	   </tr><tr>
+	   {% endif %}
+	   {% endif %}
+       <td>
+		 <span class="product_image_panel">
+		   <a href="/product/{{product.maker.slug}}/{{product.slug}}"><img class="product_image" src="/images/{{product.image}}" alt="{{product.name}}" title="{{product.name}}"/></a>
+         </span>
+
+		 <div class="product_info_panel">
+		   <span class="product_name">{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.maker.slug}}/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <span><a href="/product/{{product.maker.slug}}/{{product.slug}}">{{product.name}}</a></span></span>
+		   <p class="store_name">by <span><a href="/maker_store/{{product.maker.slug}}">{{product.maker.store_name}}</a></span></p>
+		   <p class="product_short_description">{{product.short_description}}</p>
+		 </div>
+
+		 <div class="product_price_panel">
+		   {% if product.inventory %}
+		   {% if product.unique %}
+		   <p class="unique" >Unique</p>
+		   {% else %}
+		   <p>{{product.inventory}} remaining</p>
+		   {% endif %}
+		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		 {% else %}
+		   <p class="product_sold_panel">Sold!</p>
+		   {% endif %}
+		 </div>
+	   </td>
+    {% endfor %}
+	</tr>
+    </table>
+	</div>
+	{% endif %}
+
+	{% if featured_products %}
+    <div class="module">
+	<h3>Featured Maker: <a href="/maker_store/{{featured_maker.slug}}">{{featured_maker.full_name}}</a></h3>
+	<table class="catalog">
+    <tr>
+	{% for product in featured_products %}
+	   {% if not forloop.first %} 
+	   {% if forloop.counter0|divisibleby:"4" %}
+	   </tr><tr>
+	   {% endif %}
+	   {% endif %}
+       <td>
+		 <span class="product_image_panel">
+		   <a href="/product/{{product.maker.slug}}/{{product.slug}}"><img class="product_image" src="/images/{{product.image}}" alt="{{product.name}}" title="{{product.name}}"/></a>
+         </span>
+
+		 <div class="product_info_panel">
+		   <span class="product_name">{% if maker %} {% ifequal product.maker.key maker.key %}(<a href="/product/edit/{{product.maker.slug}}/{{product.slug}}">edit</a>){% endifequal %}{% endif %} <span><a href="/product/{{product.maker.slug}}/{{product.slug}}">{{product.name}}</a></span></span>
+		   <p class="store_name">by <span><a href="/maker_store/{{product.maker.slug}}">{{product.maker.store_name}}</a></span></p>
+		   <p class="product_short_description">{{product.short_description}}</p>
+		 </div>
+
+		 <div class="product_price_panel">
+		   {% if product.inventory %}
+		   {% if product.unique %}
+		   <p class="unique" >Unique</p>
+		   {% else %}
+		   <p>{{product.inventory}} remaining</p>
+		   {% endif %}
+		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		 {% else %}
+		   <p class="product_sold_panel">Sold!</p>
+		   {% endif %}
+		 </div>
+	   </td>
+    {% endfor %}
+	</tr>
+    </table>
+	</div>
+	{% endif %}
+{% endblock content %}

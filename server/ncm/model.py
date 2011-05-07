@@ -98,6 +98,9 @@ class Community(db.Model):
     paypal_api_signature = db.StringProperty()
     paypal_application_id = db.StringProperty()
 
+    # Site Stuff
+    featured_maker = db.StringProperty()
+
     @property
     def business_id(self):
         if self.use_sandbox:
@@ -283,7 +286,6 @@ class Maker(db.Model):
                 logging.debugging.error("Unexpected db.KindError: " + db.KindError)
 
         return maker;
-
 
 class Product(db.Model):
     """ Something a Maker can sell to a Shopper """

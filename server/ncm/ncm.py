@@ -578,6 +578,39 @@ class Logout(webapp.RequestHandler):
         self.redirect(users.create_logout_url('/'))
 
 class CommunityHomePage(webapp.RequestHandler):
+    def getLatest(self):
+        """ Get one item from the four stores with the most recent updates """
+        stuff = Product.all()
+        stuff.order('-when')
+        latest = []
+        makers = set([])
+        count = 0;
+        for product in stuff:
+            if  product.show and not product.disable and product.maker.approval_status == 'Approved' and product.maker.key() not in makers:
+                latest.append(product)
+                makers.add(product.maker.key())
+                count += 1
+                if count >= 4:
+                    break;
+        return latest;
+
+    def getFeatured(self, community):
+        """ Get four products from the featured Maker """
+        if community.featured_maker:
+            maker = Maker.get(community.featured_maker)
+            stuff = maker.products 
+            products = []
+            count = 0
+            for product in stuff:
+                if product.show and not product.disable:
+                    products.append(product)
+                    count += 1
+                    if count >= 4:
+                        break;
+            return (maker, products)
+        else:
+            return (None, None)
+
     """ Renders the home page template. """
     def get(self):
         session = get_current_session()
@@ -588,20 +621,13 @@ class CommunityHomePage(webapp.RequestHandler):
             return
 
         session['community'] = community.slug
-
-        stuff = Product.all()
-        stuff.order('-when')
-        products = []
-        count = 0;
-        for product in stuff:
-            if product.maker.approval_status == 'Approved' and product.show and not product.disable:
-                products.append(product)
-                count += 1
-                if count >= 16:
-                    break;
-
-        template_values = { 'title': community.name,
-                            'products':products}
+        (featured_maker, featured_products) = self.getFeatured(community)
+        template_values = { 
+            'title': community.name,
+            'latest': self.getLatest(),
+            'featured_products': featured_products,
+            'featured_maker': featured_maker,
+            }
 
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
