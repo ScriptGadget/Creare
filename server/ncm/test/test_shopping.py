@@ -39,6 +39,9 @@ class TestShopping(unittest.TestCase):
             self.makers.append(maker)
         db.put(self.makers)
 
+        self.community.featured_maker = str(self.makers[0].key())
+        self.community.put()
+
         self.products = []
         count = 0
         i = 0
@@ -150,3 +153,12 @@ class TestShopping(unittest.TestCase):
         self.assertTrue(latest[2].key() == self.products[6].key())
         self.assertTrue(latest[3].key() == self.products[5].key())
         
+    def testFeatured(self):
+        (maker, featured) = Product.getFeatured(4, self.community)
+        self.assertTrue(maker is not None)
+        self.assertTrue(str(maker.key()) == self.community.featured_maker)
+        self.assertTrue(featured is not None)
+        self.assertTrue(len(featured) == 2)
+        maker_key = maker.key()
+        for product in featured:
+            self.assertTrue(product.maker.key() == maker_key)

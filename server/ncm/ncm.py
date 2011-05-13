@@ -578,23 +578,6 @@ class Logout(webapp.RequestHandler):
         self.redirect(users.create_logout_url('/'))
 
 class CommunityHomePage(webapp.RequestHandler):
-    def getFeatured(self, community):
-        """ Get four products from the featured Maker """
-        if community.featured_maker:
-            maker = Maker.get(community.featured_maker)
-            stuff = maker.products 
-            products = []
-            count = 0
-            for product in stuff:
-                if product.show and not product.disable:
-                    products.append(product)
-                    count += 1
-                    if count >= 4:
-                        break;
-            return (maker, products)
-        else:
-            return (None, None)
-
     """ Renders the home page template. """
     def get(self):
         session = get_current_session()
@@ -605,7 +588,7 @@ class CommunityHomePage(webapp.RequestHandler):
             return
 
         session['community'] = community.slug
-        (featured_maker, featured_products) = self.getFeatured(community)
+        (featured_maker, featured_products) = Product.getFeatured(4, community)
         template_values = { 
             'title': community.name,
             'latest': Product.getLatest(4),

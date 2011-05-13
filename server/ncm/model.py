@@ -378,6 +378,24 @@ class Product(db.Model):
                     break;
         return latest;
 
+    @staticmethod
+    def getFeatured(number_to_return, community):
+        """ Get four products from the featured Maker """
+        if community.featured_maker:
+            maker = Maker.get(community.featured_maker)
+            stuff = maker.products 
+            products = []
+            count = 0
+            for product in stuff:
+                if product.show and not product.disable:
+                    products.append(product)
+                    count += 1
+                    if count >= 4:
+                        break;
+            return (maker, products)
+        else:
+            return (None, None)
+
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """
     def __init__(self, product_key, price, count = 0):
