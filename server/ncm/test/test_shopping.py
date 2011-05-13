@@ -32,6 +32,7 @@ class TestShopping(unittest.TestCase):
                           phone_number = "530111121%d" % i,
                           location = "Right Here",
                           mailing_address = "111 Test Lane, Testable, CA 95945",
+                          approval_status = 'Approved',
                           tags=['test', 'testy', 'testiferous'])
             self.makers.append(maker)
         db.put(self.makers)
@@ -108,3 +109,29 @@ class TestShopping(unittest.TestCase):
         self.assertTrue(email == 'maker5@gmail.com')
         self.assertTrue(withinDelta(amount, 4.63))
 
+    def testFindProductsByTag(self):
+        """ Test searching for products with a single tag. """
+        self.products[1].tags.append('grails')
+        self.products[1].put()
+        p = Product.findProductsByTag('grails')
+        self.assertTrue(p is not None)
+        result = p.fetch(10)
+        self.assertTrue(len(result) == 1)
+        self.assertTrue(result[0].key() == self.products[1].key())
+
+    def testProductSearch(self):
+        """ Test searching for products by multiple tags. """
+        self.products[1].tags.append('grails')
+        self.products[1].put()
+        self.products[2].tags.append('parrot')
+        self.products[2].put()
+        self.products[3].tags.append('parrot')
+        self.products[3].tags.append('grails')
+        self.products[3].put()
+        result = Product.searchByTag('grails parrot')
+        self.assertTrue(result is not None)
+        self.assertTrue(len(result) == 3)
+        for product in result:
+            self.assertTrue(product.key() == self.products[1].key()
+                            or product.key() == self.products[2].key()
+                            or product.key() == self.products[3].key())

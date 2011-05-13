@@ -339,6 +339,28 @@ class Product(db.Model):
             product.inventory = 0
         product.put()
 
+    @staticmethod
+    def findProductsByTag(tag):
+        """ Finds products by a single tag. """
+        p = Product.all()
+        p.filter('show =', True)
+        p.filter('disable = ', False)
+        p.filter( 'tags =', tag)
+        return p
+
+    @staticmethod
+    def searchByTag(tags):
+        """ Search for a product by one or more tags  """
+        p = []
+        for tag in tags.split(" "):
+            tag = tag.strip().lower()
+            p.extend(Product.findProductsByTag(tag).fetch(1000))
+        nodups = {}
+        for product in p:
+            if not product.key() in nodups and product.maker.approval_status == 'Approved':
+                nodups[product.key()] = product
+        return nodups.values()
+
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """
     def __init__(self, product_key, price, count = 0):
