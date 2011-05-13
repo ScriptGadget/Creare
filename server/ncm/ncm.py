@@ -578,22 +578,6 @@ class Logout(webapp.RequestHandler):
         self.redirect(users.create_logout_url('/'))
 
 class CommunityHomePage(webapp.RequestHandler):
-    def getLatest(self):
-        """ Get one item from the four stores with the most recent updates """
-        stuff = Product.all()
-        stuff.order('-when')
-        latest = []
-        makers = set([])
-        count = 0;
-        for product in stuff:
-            if  product.show and not product.disable and product.maker.approval_status == 'Approved' and product.maker.key() not in makers:
-                latest.append(product)
-                makers.add(product.maker.key())
-                count += 1
-                if count >= 4:
-                    break;
-        return latest;
-
     def getFeatured(self, community):
         """ Get four products from the featured Maker """
         if community.featured_maker:
@@ -624,7 +608,7 @@ class CommunityHomePage(webapp.RequestHandler):
         (featured_maker, featured_products) = self.getFeatured(community)
         template_values = { 
             'title': community.name,
-            'latest': self.getLatest(),
+            'latest': Product.getLatest(4),
             'featured_products': featured_products,
             'featured_maker': featured_maker,
             }

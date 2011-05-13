@@ -361,6 +361,23 @@ class Product(db.Model):
                 nodups[product.key()] = product
         return nodups.values()
 
+    @staticmethod
+    def getLatest(number_to_return):
+        """ Get one item from the four stores with the most recent updates """
+        stuff = Product.all()
+        stuff.order('-when')
+        latest = []
+        makers = set([])
+        count = 0;
+        for product in stuff:
+            if  product.show and not product.disable and product.maker.approval_status == 'Approved' and product.maker.key() not in makers:
+                latest.append(product)
+                makers.add(product.maker.key())
+                count += 1
+                if count >= number_to_return:
+                    break;
+        return latest;
+
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """
     def __init__(self, product_key, price, count = 0):

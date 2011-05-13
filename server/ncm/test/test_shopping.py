@@ -1,6 +1,8 @@
 import unittest
 import logging
 from google.appengine.ext import db
+from datetime import datetime
+import hashlib
 from model import *
 from payment import *
 
@@ -47,6 +49,9 @@ class TestShopping(unittest.TestCase):
                               description="Just a product for testing, OK?",
                               price=price,
                               tags=['stuff', 'things'],
+                              show=True,
+                              disable=False,
+                              when="%s|%s" % (datetime.now(), hashlib.md5(str(self.makers[i].key())+get_current_session().sid).hexdigest()),
                               inventory=1000))
             count += 1
             i += 1
@@ -135,3 +140,13 @@ class TestShopping(unittest.TestCase):
             self.assertTrue(product.key() == self.products[1].key()
                             or product.key() == self.products[2].key()
                             or product.key() == self.products[3].key())
+
+    def testLatest(self):
+        latest = Product.getLatest(4)
+        self.assertTrue(latest is not None)
+        self.assertTrue(len(latest) == 4)
+        self.assertTrue(latest[0].key() == self.products[8].key())
+        self.assertTrue(latest[1].key() == self.products[7].key())
+        self.assertTrue(latest[2].key() == self.products[6].key())
+        self.assertTrue(latest[3].key() == self.products[5].key())
+        
