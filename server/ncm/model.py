@@ -256,6 +256,10 @@ class Maker(db.Model):
     def logo(self):
         return Image.all(keys_only=True).filter('category =', 'Logo').ancestor(self).get()
 
+    @property
+    def tag_string(self):
+        return ','.join(self.tags)
+
     @staticmethod
     def get_maker_for_slug(slug):
         try:
@@ -306,7 +310,11 @@ class Product(db.Model):
     @property
     def image(self):
         return Image.all(keys_only=True).ancestor(self).get()
-    
+
+    @property
+    def tag_string(self):
+        return ','.join(self.tags)
+
     @staticmethod
     def get_product_for_slug(slug):
         try:

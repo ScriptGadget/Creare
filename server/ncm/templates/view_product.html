@@ -1,5 +1,7 @@
 {% extends "maker_space.html"  %}
 
+{% block description %}{{product.short_description}}{% endblock description %}
+{% block keywords %}{{product.tag_string}}{% endblock keywords %}
 {% block content %}
 {% block catalog %}{% endblock catalog %}
    <div>

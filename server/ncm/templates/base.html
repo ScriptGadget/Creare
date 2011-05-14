@@ -3,6 +3,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
     <head>
 	  <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+	  <meta name="description" content="{% block description %}{{community.description}}{% endblock description%}" />
+	  <meta name="keywords" content="{% block keywords %}local, art, crafts, gadgets, {{community.name}}{% endblock keywords%}" />
       <link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />
       <title>{% block title %} {{ title }} {% endblock %}</title>
       <script type="text/javascript" src="/static/json2.js"></script>	
