@@ -408,9 +408,7 @@ class Product(db.Model):
     @staticmethod
     def buildWhenStamp(maker):
         """ Build a when stamp for sorting based on the Maker's key."""
-        when = "%s|%s" % (datetime_module.datetime.now(), hashlib.md5(str(maker.key())).hexdigest())
-        logging.info("buildWhenStamp: " + when)
-        return when
+        return "%s|%s" % (datetime_module.datetime.now(), hashlib.md5(str(maker.key())).hexdigest())
 
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """
