@@ -1,8 +1,6 @@
 import unittest
 import logging
 from google.appengine.ext import db
-from datetime import datetime
-import hashlib
 from model import *
 from payment import *
 
@@ -54,7 +52,7 @@ class TestShopping(unittest.TestCase):
                               tags=['stuff', 'things'],
                               show=True,
                               disable=False,
-                              when="%s|%s" % (datetime.now(), hashlib.md5(str(self.makers[i].key())+get_current_session().sid).hexdigest()),
+                              when=Product.buildWhenStamp(self.makers[i]),
                               inventory=1000))
             count += 1
             i += 1

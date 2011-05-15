@@ -21,6 +21,7 @@ from google.appengine.ext import db
 from gaesessions import get_current_session
 import logging
 import shardedcounter
+import hashlib
 import datetime as datetime_module
 
 _punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
@@ -403,6 +404,13 @@ class Product(db.Model):
             return (maker, products)
         else:
             return (None, None)
+
+    @staticmethod
+    def buildWhenStamp(maker):
+        """ Build a when stamp for sorting based on the Maker's key."""
+        when = "%s|%s" % (datetime_module.datetime.now(), hashlib.md5(str(maker.key())).hexdigest())
+        logging.info("buildWhenStamp: " + when)
+        return when
 
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """

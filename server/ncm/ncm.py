@@ -383,10 +383,7 @@ class ProductPage(webapp.RequestHandler):
                 entity = data.save(commit=False)
                 entity.maker = maker
                 entity.slug = Product.get_slug_for_name(entity.name)
-                session = get_current_session()
-                if not session.is_active():
-                    session.start()
-                entity.when = "%s|%s" % (datetime.now(), hashlib.md5(str(maker.key())+session.sid).hexdigest())
+                entity.when = Product.buildWhenStamp(maker)
                 if entity.unique:
                     entity.inventory = 1
                 tags = self.request.get("tags").split(',')
