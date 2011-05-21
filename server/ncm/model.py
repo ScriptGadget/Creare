@@ -307,6 +307,7 @@ class Product(db.Model):
     short_description = db.StringProperty(required=True, verbose_name="three related, descriptive words")
     description = db.TextProperty(required=True, verbose_name="Everything amazing about your item")
     price = db.FloatProperty(required=True, verbose_name="Price with shipping/handling and tax (no $ or commas)", default=10.0)
+    discount_price = db.FloatProperty(required=False, verbose_name="Optional Discounted Price")
     tags = db.StringListProperty(required=True, verbose_name="Tags (search terms separated by commas)")
     unique = db.BooleanProperty(default=False)
     inventory = db.IntegerProperty(required=True, verbose_name="Number of items you have to sell", default=1)

@@ -172,6 +172,14 @@ class ProductForm(djangoforms.ModelForm):
         raise forms.ValidationError(u"Prices must be greater than $0.98")
       return data
 
+    def clean_discount_price(self):
+      """ This would have been better as a validator, but adding a validator seems problematic with the GAE ModelForm."""
+      data=self.clean_data['discount_price']
+      if not data is None and not len(data) == 0:
+        if float(data) < 0.99:
+          raise forms.ValidationError(u"Prices must be greater than $0.98")
+      return data
+
     class Meta:
         model = Product
         exclude = [

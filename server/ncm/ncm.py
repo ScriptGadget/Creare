@@ -41,6 +41,8 @@ from forms import *
 from payment import *
 from authentication import Authenticator
 
+template.register_template_library('common.catalog_tag')
+
 def add_base_values(template_values):
     community = Community.get_current_community()
 
@@ -595,6 +597,7 @@ class CommunityHomePage(webapp.RequestHandler):
             'featured_products': featured_products,
             'featured_maker': featured_maker,
             'categories':sorted(community.categories),
+            'width': 4,
             }
 
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
