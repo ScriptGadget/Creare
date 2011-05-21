@@ -466,3 +466,14 @@ textarea.editable {
 	font-size: small;
 	bottom-margin: -10px;
 }
+
+#introduction {
+	position: relative;
+	display: block;
+	width: 450px;
+	top: -100px;
+	left: 450px;
+	padding: 0px;
+	font-size: normal;
+	color: #996600;
+}

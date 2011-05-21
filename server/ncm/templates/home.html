@@ -1,4 +1,12 @@
 {% extends "catalog.html" %}
+{% block banner %}
+    {{ block.super }}
+    {% if community.motto %}
+	<div id="introduction">
+	  <em>{{community.motto}}</em>
+	</div>
+   {% endif %}
+{% endblock banner %}
 
 {% block content %}
 	{% if latest %}

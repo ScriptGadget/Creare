@@ -101,6 +101,7 @@ class Community(db.Model):
 
     # Site Stuff
     featured_maker = db.StringProperty()
+    motto = db.StringProperty()
 
     @property
     def business_id(self):
