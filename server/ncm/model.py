@@ -325,6 +325,13 @@ class Product(db.Model):
     def tag_string(self):
         return ','.join(self.tags)
 
+    @property
+    def actual_price(self):
+        price = self.price
+        if self.discount_price > 0.98:
+            price = self.discount_price
+        return price
+
     @staticmethod
     def get_product_for_slug(slug):
         try:

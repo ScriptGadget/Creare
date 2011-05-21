@@ -27,7 +27,15 @@
 		   {% if product.pickup_only %}
 		   <p class="pickup">Pick-up Only</p>
 		   {% endif %}
-		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		   <p class="price">
+			 {% if product.discount_price %}
+			   <span class="discounted">${{product.price|floatformat:2}}</span><br/>
+			   ${{product.discount_price|floatformat:2}}<br/>
+			 {% else %}
+			   ${{product.price|floatformat:2}}<br/>
+			 {% endif %}
+			 <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> 
+		   </p>
 		 {% else %}
 		   <p class="product_sold_panel">Sold!</p>
 		   {% endif %}

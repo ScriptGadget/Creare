@@ -507,3 +507,8 @@ textarea.editable {
 	text-decoration: none;
 	color: white;
 }
+
+.discounted {
+	text-decoration: line-through;
+	color: gray;
+}

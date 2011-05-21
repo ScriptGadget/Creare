@@ -1518,7 +1518,7 @@ class RPCPostMethods:
                     item.count += 1
                 break
         else:
-            newItem = ShoppingCartItem(product_key=product_id, price=product.price, count=1)
+            newItem = ShoppingCartItem(product_key=product_id, price=product.actual_price, count=1)
             items.append(newItem)
 
         total = 0
