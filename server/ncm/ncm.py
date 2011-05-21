@@ -594,6 +594,7 @@ class CommunityHomePage(webapp.RequestHandler):
             'latest': Product.getLatest(4),
             'featured_products': featured_products,
             'featured_maker': featured_maker,
+            'categories':sorted(community.categories),
             }
 
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
@@ -1746,6 +1747,23 @@ class ProductSearch(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/catalog.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
+class CategorySearch(webapp.RequestHandler):
+    def get(self):
+        category = self.request.get('category')
+
+        if(category):
+            category = urllib.unquote(category)
+
+        products = Product.findProductsByCategory(category)
+
+        template_values = {
+            'title':'Search Results',
+            'products':products,
+            }
+
+        path = os.path.join(os.path.dirname(__file__), "templates/catalog.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
+
 class AboutPage(webapp.RequestHandler):
     def get(self):
         community = Community.get_current_community()
@@ -1803,6 +1821,7 @@ def main():
         ('/cancel', CompletePurchase),
         (r'/images/(.*)', DisplayImage),
         ('/search', ProductSearch),
+        ('/category', CategorySearch),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

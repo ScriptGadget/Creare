@@ -52,6 +52,15 @@
     </table>
 	</div>
 	{% endif %}
+	
+	<div class="module">
+	  <h3>Discover More</h3>
+	  <ul id="categories">
+		{% for category in categories %}
+		<li><a href="/category?category={{category|urlencode}}">{{category}}</a></li>
+		{% endfor %}
+	  </ul>
+	</div>
 
 	{% if featured_products %}
     <div class="module">

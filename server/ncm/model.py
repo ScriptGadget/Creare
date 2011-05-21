@@ -24,6 +24,8 @@ import shardedcounter
 import hashlib
 import datetime as datetime_module
 
+_default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic']
+
 _punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
 _word_re = re.compile('[\W]+')
 
@@ -160,6 +162,10 @@ class Community(db.Model):
         The more general case is going to take alot of work.
         """
         return Pacific_tzinfo()
+
+    @property
+    def categories(self):
+        return _default_categories
 
     @staticmethod
     def get_community_for_slug(slug):
@@ -308,6 +314,7 @@ class Product(db.Model):
     disable = db.BooleanProperty(default=False)
     when = db.StringProperty()
     pickup_only = db.BooleanProperty(default=False, verbose_name="Pick-up only")
+    category = db.StringProperty(choices=set(_default_categories), default=_default_categories[0], required=True)
 
     @property
     def image(self):
@@ -371,6 +378,14 @@ class Product(db.Model):
                 nodups[product.key()] = product
         return nodups.values()
 
+    @staticmethod
+    def findProductsByCategory(category):
+        p = Product.all()
+        p.filter('show =', True)
+        p.filter('disable = ', False)
+        p.filter('category = ', category)
+        return p.fetch(1000)
+    
     @staticmethod
     def getLatest(number_to_return):
         """ Get one item from the four stores with the most recent updates """

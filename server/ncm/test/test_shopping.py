@@ -19,7 +19,8 @@ class TestShopping(unittest.TestCase):
                                    fee_percentage=10.0,
                                    fee_minimum=0.3,
                                    paypal_fee_percentage=2.9,
-                                   paypal_fee_minimum=0.3)
+                                   paypal_fee_minimum=0.3,
+                                   )
         self.community.put()
         self.makers = []
         for i in range(0,7):
@@ -53,7 +54,9 @@ class TestShopping(unittest.TestCase):
                               show=True,
                               disable=False,
                               when=Product.buildWhenStamp(self.makers[i]),
-                              inventory=1000))
+                              inventory=1000,
+                              category=self.community.categories[count % len(self.community.categories)]
+                                         ))
             count += 1
             i += 1
             i %= (len(self.makers) - 1)
@@ -160,3 +163,16 @@ class TestShopping(unittest.TestCase):
         maker_key = maker.key()
         for product in featured:
             self.assertTrue(product.maker.key() == maker_key)
+
+    def testCategorySearch(self):
+        """ Test searching for products by a single category. """
+        grails = Product.findProductsByCategory('grails')
+        self.assertTrue(grails is not None)
+        self.assertTrue(len(grails) == 0)
+        pics = Product.findProductsByCategory(self.community.categories[0])
+        self.assertTrue(len(pics) == 1)
+        self.assertTrue(pics[0].name == 'Test Product #0')
+        pots = Product.findProductsByCategory(self.community.categories[8])
+        self.assertTrue(len(pots) == 1)
+        self.assertTrue(pots[0].name == 'Test Product #8')
+        

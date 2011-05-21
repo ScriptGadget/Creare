@@ -456,6 +456,7 @@ textarea.editable {
 }
 
 .module {
+	clear: both;
 	background:white;
 	overflow:hidden;
 	margin-top: 10px;
@@ -484,4 +485,25 @@ textarea.editable {
 
 #pick-up_message {
 	display:none;
+}
+
+
+#categories {
+	padding-right: 50px;
+}
+
+#categories li {
+	float: right;
+	list-style: none;
+	padding: 3px 5px 3px 5px;
+	margin: 3px 0.5em;
+	border-width: 1px;
+	border-style: dotted;
+	border-color: brown;
+	background-color: #996600;
+}
+
+#categories a {
+	text-decoration: none;
+	color: white;
 }
