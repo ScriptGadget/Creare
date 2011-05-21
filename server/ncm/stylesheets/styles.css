@@ -159,6 +159,7 @@ body {
 	width: 30%;
 	float: left;
 	padding-left: 10px;
+	overflow: hidden;
 }
 
 #sidebar h2 {
@@ -511,4 +512,8 @@ textarea.editable {
 .discounted {
 	text-decoration: line-through;
 	color: gray;
+}
+
+#website {
+	font-size: 10px;
 }
