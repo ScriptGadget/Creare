@@ -1380,6 +1380,7 @@ def _buildTransactionRow(community, transaction, fee_percentage, fee_minimum):
     sale['shipped'] = transaction.shipped        
     sale['shopper_name'] = cart.shopper_name
     sale['shopper_email'] = cart.shopper_email
+    sale['shopper_phone'] = cart.shopper_phone
     sale['shopper_shipping'] = cart.shopper_shipping.encode('utf-8').replace("\n", "</br>")
     products = []
     sale_amount = 0.0
@@ -1426,7 +1427,9 @@ class RPCGetMethods:
                       "key": str(product.key()),
                       "image": str(product.image),
                       "price":'%3.2f' % item.price,
-                      "total":'%3.2f' % item.subtotal, }
+                      "total":'%3.2f' % item.subtotal,
+                      "pickup_only": product.pickup_only
+                      }
                 products.append(p)
                 amount += item.subtotal
             
@@ -1595,7 +1598,8 @@ class RPCPostMethods:
             cart_transaction = CartTransaction(transaction_type='Sale')
             cart_transaction.shopper_name = sanitizeHtml(args[0])
             cart_transaction.shopper_email = sanitizeHtml(args[1])
-            shipping = sanitizeHtml(args[2].decode('unicode_escape'))
+            cart_transaction.shopper_phone = sanitizeHtml(args[2])
+            shipping = sanitizeHtml(args[3].decode('unicode_escape'))
 
             logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping)
 

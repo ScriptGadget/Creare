@@ -41,6 +41,9 @@
 	  row += " </li> "
 	  row += "<li>Name: "+sale.shopper_name+"</li> "
 	  row += "<li>Email: "+sale.shopper_email+"</li> "
+	  if(sale.shopper_phone){
+	    row += "<li>Phone: "+sale.shopper_phone+"</li> "
+      }
 	  row += "<li>Shipping: <br/>"+sale.shopper_shipping+"</li> "
       row += "</ul></td><td>"+sale.items+"</td><td>"+sale.amount+"</td><td>"+sale.fee+"</td><td>"+sale.net+"</td><td>"+sale.transaction_status+"</td>";
 	  row += "<td><input type='checkbox' onclick='doSetMakerTransactionShipped(\"" + sale.transaction + "\", \"" + start + "\", \""  + end + "\")'";

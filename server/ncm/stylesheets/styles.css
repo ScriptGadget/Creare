@@ -477,3 +477,11 @@ textarea.editable {
 	font-size: normal;
 	color: #996600;
 }
+
+.shaded {
+	background-color: #996600;
+}
+
+#pick-up_message {
+	display:none;
+}

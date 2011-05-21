@@ -468,6 +468,7 @@ class CartTransaction(db.Model):
     paypal_pay_key = db.StringProperty()
     shopper_name = db.StringProperty()
     shopper_email = db.EmailProperty()
+    shopper_phone = db.PhoneNumberProperty()
     shopper_shipping = db.PostalAddressProperty()
     note = db.StringProperty()
     transaction_history = db.TextProperty()
