@@ -1,5 +1,5 @@
 application: nevadacountymakes
-version: beta-3
+version: v1-0
 runtime: python
 api_version: 1
 
