@@ -1767,6 +1767,20 @@ class CategorySearch(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "templates/catalog.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
+class MakerDirectory(webapp.RequestHandler):
+    def get(self):
+        makers = Maker.all()
+        makers.filter('approval_status =', 'Approved')
+        makers.filter('accepted_terms =', True)
+        makers.order('joined')
+        template_values = {
+            'title':'Maker Directory',
+            'stores':makers,
+            }
+
+        path = os.path.join(os.path.dirname(__file__), "templates/maker_directory.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
+
 class AboutPage(webapp.RequestHandler):
     def get(self):
         community = Community.get_current_community()
@@ -1825,6 +1839,7 @@ def main():
         (r'/images/(.*)', DisplayImage),
         ('/search', ProductSearch),
         ('/category', CategorySearch),
+        ('/maker_directory', MakerDirectory),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

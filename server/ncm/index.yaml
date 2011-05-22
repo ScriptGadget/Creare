@@ -17,6 +17,12 @@ indexes:
 
 - kind: Maker
   properties:
+  - name: accepted_terms
+  - name: approval_status
+  - name: joined
+
+- kind: Maker
+  properties:
   - name: approval_status
   - name: joined
 

@@ -67,6 +67,7 @@
 		  {% else %}
 		  <li><a href="/login">Login / Join</a></li>
 		  {% endif %}
+		  <li><a href="/maker_directory">Maker Directory</a></li>
 		  <li><form id="search_form" action="/search" method="get"><label for="id_search">Search:</label> <input type="text" name="search" id="id_seach" value="" onblur="doSearch('search_form')"/></form></li>
 		</ul>
 		{% endblock %}
@@ -95,9 +96,11 @@
 	  <p>(<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
 	</div>
 	  {% endblock cart_widget %}
+
 	  {% block join %}
-	  {% if not user %} <p id="join_link">Local maker? <a href="/join">Join Up</a>!</p> {% endif %}
+	  {% if not user %} <p id="join_link">Are you a local maker? <a href="/join">Join Up</a>!</p> {% endif %}
 	  {% endblock %}
+
 	  {% endif %}
 	<div id="bio_bar">
 	  {% block bio_bar %}
