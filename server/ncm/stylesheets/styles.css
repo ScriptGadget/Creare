@@ -3,6 +3,11 @@ body {
 	font-family: Georgia, Times New Roman, Times, serif;
 }
 
+img { 
+	border-width:0;
+	border-style:none;
+}
+
 .text { color:black; }
 
 #bio_bar {
