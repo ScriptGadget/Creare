@@ -316,6 +316,7 @@ class Product(db.Model):
     when = db.StringProperty()
     pickup_only = db.BooleanProperty(default=False, verbose_name="Pick-up only")
     category = db.StringProperty(choices=set(_default_categories), default=_default_categories[0], required=True)
+    video_link = db.StringProperty(verbose_name="Embedded Video Link");
 
     @property
     def image(self):
