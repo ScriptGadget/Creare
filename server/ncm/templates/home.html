@@ -8,6 +8,19 @@
    {% endif %}
 {% endblock banner %}
 
+{% block sidebar %}
+	{{ block.super }}
+	  <p>
+	  <!-- Facebook -->
+	   <iframe src="http://www.facebook.com/plugins/like.php?href={{url}}&amp;layout=button_count&amp;show_faces=true&amp;width=110&amp;action=like&amp;font&amp;colorscheme=light&amp;height=20" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:110px; height:20px;" allowTransparency="true"></iframe>
+	   <!-- Google Plus One -->
+	   <g:plusone></g:plusone>
+	   <!-- Twitter Follow -->
+	   <a href="http://www.twitter.com/{{community.twitter_account}}"><img src="http://twitter-badges.s3.amazonaws.com/twitter-c.png" alt="Follow {{community.name}} on Twitter"/></a>
+	  </p>
+
+{% endblock sidebar %}
+
 {% block content %}
 	{% if latest %}
     <div class="module">

@@ -104,6 +104,7 @@ class Community(db.Model):
     # Site Stuff
     featured_maker = db.StringProperty()
     motto = db.StringProperty()
+    twitter_account = db.StringProperty()
 
     @property
     def business_id(self):
@@ -316,7 +317,7 @@ class Product(db.Model):
     when = db.StringProperty()
     pickup_only = db.BooleanProperty(default=False, verbose_name="Pick-up only")
     category = db.StringProperty(choices=set(_default_categories), default=_default_categories[0], required=True)
-    video_link = db.StringProperty(verbose_name="Embedded Video Link");
+    video_link = db.StringProperty(verbose_name="Embedded Video Link")
 
     @property
     def image(self):

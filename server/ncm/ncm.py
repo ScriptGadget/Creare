@@ -599,6 +599,7 @@ class CommunityHomePage(webapp.RequestHandler):
             'featured_maker': featured_maker,
             'categories':sorted(community.categories),
             'width': 4,
+            'url':self.request.url,
             }
 
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")

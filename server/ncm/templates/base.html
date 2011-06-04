@@ -9,6 +9,7 @@
       <title>{% block title %} {{ title }} {% endblock %}</title>
       <script type="text/javascript" src="/static/json2.js"></script>	
       <script type="text/javascript" src="/static/async_utils.js"></script>
+	  <script type="text/javascript" src="http://apis.google.com/js/plusone.js"></script>
       <script type="text/javascript">
 		{% block search_functions %}
 		function doSearch(form){
@@ -117,32 +118,7 @@
 		<p>No news today.</p>
 	  {% endif %}
 	  {% endblock news %}
-	  <!-- Coming Soon -->
-	  <!--
-	  <h2>Events {% if admin %}(<a href="/events">edit</a>){% endif %}</h2>
-	  {% if events %}
-	    {% for event in events %}
-	      <h3>{{event.title}}</h3>
-	      <p>{{event.summary}}</p>
-	    {% endfor %}
-	  {% else %}
-		<p>No events today.</p>
-	  {% endif %}
-	  <h2>Tips {% if admin %}(<a href="/tips">edit</a>){% endif %}</h2>
-	  {% if tips %}
-	    {% for tip in tips %}
-	      <h3>{{tip.title}}</h3>
-	      <p>{{tip.summary}}</p>
-	    {% endfor %}
-	  {% else %}
-		<p>Watch here for helpful tips.</p>
-	  {% endif %}
       {% endblock %}
-	  -->
-	  <p>
-	  <!-- Facebook -->
-	   <iframe src="http://www.facebook.com/plugins/like.php?href=http://nevadacountymakes.com&amp;layout=button_count&amp;show_faces=true&amp;width=110&amp;action=like&amp;font&amp;colorscheme=light&amp;height=20" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:110px; height:20px;" allowTransparency="true"></iframe> &nbsp; <a href="http://www.twitter.com/NCMakes"><img src="http://twitter-badges.s3.amazonaws.com/twitter-c.png" alt="Follow Nevada County Makes (NCMakes) on Twitter"/></a>
-	  </p>
     </div>
     <div id="content">
 	  {% if community.use_sandbox %}
