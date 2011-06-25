@@ -51,7 +51,7 @@ def add_base_values(template_values):
             template_values['community'] = community
         q = db.Query(NewsItem)
         q.filter('show =', True).order('-created')
-        news_items = q.fetch(limit=50)
+        news_items = q.fetch(limit=3)
         template_values["news_items"] = news_items
 
     user = users.get_current_user()
