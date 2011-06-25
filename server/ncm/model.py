@@ -389,12 +389,13 @@ class Product(db.Model):
         return nodups.values()
 
     @staticmethod
-    def findProductsByCategory(category):
+    def findProductsByCategory(category, number_to_return=9, where_to_start=0):
         p = Product.all()
         p.filter('show =', True)
         p.filter('disable = ', False)
-        p.filter('category = ', category)
-        return p.fetch(1000)
+        if category:
+            p.filter('category = ', category)
+        return p.fetch(number_to_return, where_to_start)
     
     @staticmethod
     def getLatest(number_to_return):

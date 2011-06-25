@@ -1759,11 +1759,36 @@ class CategorySearch(webapp.RequestHandler):
         if(category):
             category = urllib.unquote(category)
 
-        products = Product.findProductsByCategory(category)
+        number_to_return = 9;
+        where_to_start = 0
+        start = self.request.get('start')
+        if start:
+            try:
+                where_to_start = int(start)
+            except:                
+                return
+        products = Product.findProductsByCategory(category, number_to_return, where_to_start)
+
+        next = 0
+        num_products = len(products)
+        if num_products >= number_to_return:
+            next = where_to_start + num_products
+        if num_products == number_to_return:
+            products.pop()
+
+        previous = 0
+        show_previous = False
+        if where_to_start >= number_to_return:
+            show_previous = True
+            previous = where_to_start - number_to_return
 
         template_values = {
             'title':'Search Results',
+            'category':category,
             'products':products,
+            'next':next,
+            'show_previous':show_previous,
+            'previous':previous,
             }
 
         path = os.path.join(os.path.dirname(__file__), "templates/catalog.html")
