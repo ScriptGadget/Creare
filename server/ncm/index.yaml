@@ -37,3 +37,18 @@ indexes:
   - name: show
   - name: created
     direction: desc
+
+- kind: Product
+  properties:
+  - name: category
+  - name: disable
+  - name: show
+  - name: when
+    direction: desc
+
+- kind: Product
+  properties:
+  - name: disable
+  - name: show
+  - name: when
+    direction: desc

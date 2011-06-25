@@ -395,6 +395,7 @@ class Product(db.Model):
         p.filter('disable = ', False)
         if category:
             p.filter('category = ', category)
+        p.order('-when')
         return p.fetch(number_to_return, where_to_start)
     
     @staticmethod
