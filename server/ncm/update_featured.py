@@ -19,6 +19,16 @@
 import logging
 from model import *
 
+def get_maker_with_products(makers):
+    if makers:
+        next_maker = None
+        for maker in makers:
+            product = Product.all(keys_only=True).filter('maker =', maker).filter('disable =', False).filter('show =', True).get()
+            if product:
+                next_maker = maker
+                break
+    return next_maker
+        
 community = Community.all().get()
 current = None
 if community.featured_maker:
@@ -26,11 +36,14 @@ if community.featured_maker:
 
 next_maker = None
 if current:
-    next_maker = Maker.all(keys_only=True).order('joined').filter('joined >', current.joined).filter('approval_status =', 'Approved').get()
+    makers = Maker.all(keys_only=True).order('joined').filter('joined >', current.joined).filter('approval_status =', 'Approved')
+    next_maker = get_maker_with_products(makers)
 
 if not next_maker:
-    next_maker = Maker.all(keys_only=True).order('joined').filter('approval_status =', 'Approved').get()
+    makers = Maker.all(keys_only=True).order('joined').filter('approval_status =', 'Approved')
+    next_maker = get_maker_with_products(makers)
 
 if next_maker:
     community.featured_maker = str(next_maker)
     community.put()
+    
