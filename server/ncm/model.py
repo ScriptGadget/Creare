@@ -24,7 +24,7 @@ import shardedcounter
 import hashlib
 import datetime as datetime_module
 
-_default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic']
+_default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic', 'Metalwork', 'Woodwork', 'Cards & Papercraft']
 
 _punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
 _word_re = re.compile('[\W]+')
