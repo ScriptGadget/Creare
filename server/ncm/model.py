@@ -68,6 +68,15 @@ class Pacific_tzinfo(datetime_module.tzinfo):
         else:
             return "PDT"
 
+#common validators
+def validateEmail(value):
+    if len(value) > 255:
+        raise db.BadValueError("Email address too long")
+    allowed = re.compile("[a-z0-9.\-_]+@[0-9a-z\-]+\.[0-9a-z\-]+", re.IGNORECASE)
+    if not allowed.match(value):
+        raise db.BadValueError("Bad email address: " + value)
+
+
 class Community(db.Model):
     """ A Community of Makers and Crafters  """
     name = db.StringProperty(required=True)
@@ -249,7 +258,7 @@ class Maker(db.Model):
     full_name = db.StringProperty(required=True, verbose_name="Your name")
     email = db.EmailProperty(required=True, verbose_name="Your email")
     website = db.LinkProperty()
-    paypal_business_account_email = db.EmailProperty(verbose_name="Paypal business or premier account username")
+    paypal_business_account_email = db.EmailProperty(verbose_name="Paypal business or premier account email", validator=validateEmail)
     phone_number = db.PhoneNumberProperty(required=True)
     mailing_address = db.PostalAddressProperty(required=True)
     store_description = db.TextProperty(required=True, verbose_name="About you and your creations")
