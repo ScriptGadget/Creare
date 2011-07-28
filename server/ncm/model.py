@@ -256,7 +256,7 @@ class Maker(db.Model):
     store_name = db.StringProperty(required=True, verbose_name="Your store name")
     slug = db.StringProperty()
     full_name = db.StringProperty(required=True, verbose_name="Your name")
-    email = db.EmailProperty(required=True, verbose_name="Your email")
+    email = db.EmailProperty(required=True, verbose_name="Your email", validator=validateEmail)
     website = db.LinkProperty()
     paypal_business_account_email = db.EmailProperty(verbose_name="Paypal business or premier account email", validator=validateEmail)
     phone_number = db.PhoneNumberProperty(required=True)
