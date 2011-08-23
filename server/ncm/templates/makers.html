@@ -29,8 +29,9 @@
       <p><a href="/maker_store/{{maker.slug}}"><img class="maker_logo" src="/images/{{maker.logo}}"/></a></p>
 	  <p><a href="/maker_store/{{maker.slug}}"><img class="maker_photo" src="/images/{{maker.photo}}"/></a></p>
 	  <p>"{{maker.store_description}}"</p>
-	  <p>Tags: {% for tag in maker.tags %} {{tag}} {% endfor %}</p>
+	  <p>tags: {% for tag in maker.tags %} {{tag}} {% endfor %}</p>
       <p>email: <a target="_email" href="https://mail.google.com/?view=cm&fs=1&tf=1&source=mailto&to={{maker.email}}&su=Your%20Application%20To%20%20Nevada%20County%20Makes">{{maker.email}}</a></p>
+	  <p>paypal ID: {{maker.paypal_business_account_email}}</p>
 	  <p>phone: {{maker.phone_number}}</p>
 	  <p>location: {{maker.location}}</p>
 	  <p>mail: {{maker.mailing_address}}</p>
