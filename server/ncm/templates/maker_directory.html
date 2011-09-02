@@ -4,13 +4,11 @@
 {% endblock %}
 
 {% block content %}
-<div class="module">
-<h3>{{title}}</h3>
 <table id="maker_gallery">
 <tr>
   {% for store in stores %}
     {% if not forloop.first %} 
-      {% if forloop.counter0|divisibleby:"2" %}
+      {% if forloop.counter0|divisibleby:"3" %}
       </tr><tr>
       {% endif %}
     {% endif %}
