@@ -533,3 +533,9 @@ textarea.editable {
 #website {
 	font-size: 10px;
 }
+
+#maker_gallery {
+	width: 100%;
+	padding-left: 7px;
+	text-align: left;
+}
