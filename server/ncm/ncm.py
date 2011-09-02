@@ -24,6 +24,7 @@ import logging
 from datetime import datetime
 import hashlib
 import urllib
+from operator import attrgetter
 
 from django.utils import simplejson
 
@@ -661,11 +662,11 @@ class MakerStorePage(webapp.RequestHandler):
         else:
             write_error_page(self, "I don't recognize that store.")
             return
-
+        
         template_values = { 
             'title':maker.store_name,
             'store':maker,
-            'products':products,
+            'products':sorted(products, key=attrgetter('when'), reverse=True),
             'user':users.get_current_user()
             }
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
