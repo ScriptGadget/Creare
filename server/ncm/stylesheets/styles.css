@@ -535,7 +535,6 @@ textarea.editable {
 }
 
 #maker_gallery {
-	width: 100%;
-	padding-left: 7px;
+	width: 105%;
 	text-align: left;
 }
