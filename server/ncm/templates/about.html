@@ -18,19 +18,10 @@
 
 <p>Contact Us:</p>
 <ul>
-  <li><strong>email</strong>: <a href="mailto:nevadacountymakes.com">{{community.support_email}}</a></li>
+  <li><strong>email</strong>: <a href="mailto:{{community.support_email}}">{{community.support_email}}</a></li>
   <li><strong>phone</strong>: ({{community.support_phone|slice:":3"}}) {{community.support_phone|slice:"3:6"}}-{{community.support_phone|slice:"6:"}}</li>
   <li><strong>mail</strong>: {{community.address}}</li>
   <li><strong>forum</strong>: <a href="{{community.forum_link}}">{{community.forum_link}}</a></li>
 </ul>
-
-<h3>Makers</h3>
-<div id="maker_gallery">
-  {% for maker in makers %}
-  <div>
-	<div><a href="/maker_store/{{maker.slug}}">{{ maker.store_name }}</a></div>
-	<div>{{maker.store_description}}</div>
-  </div>
-  {% endfor %}
 {% endblock %}
 

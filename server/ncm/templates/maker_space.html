@@ -6,6 +6,9 @@
 	<p><a href="/maker_store/{{store.slug}}"><img class="maker_photo" src="/images/{{store.photo}}"/></a></p>
     <p class="byline">by {{store.full_name}}</p>
 	<p>{{store.location}}</p>
+	{% if store.website %}
+	<p>on the web: <a href="{{store.website}}" id="website">{{store.website}}</a></p>
+	{% endif %}
 	<p>{{store.store_description}}</p>
     </span>
 {% endblock  %}

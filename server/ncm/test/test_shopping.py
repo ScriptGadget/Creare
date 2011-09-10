@@ -4,6 +4,9 @@ from google.appengine.ext import db
 from model import *
 from payment import *
 
+def withinDelta(x, y, d=0.005):
+    return x - y < d and y - x < d
+
 class TestShopping(unittest.TestCase):
     """ Test buying Products from one or more Makers """
 
@@ -16,7 +19,8 @@ class TestShopping(unittest.TestCase):
                                    fee_percentage=10.0,
                                    fee_minimum=0.3,
                                    paypal_fee_percentage=2.9,
-                                   paypal_fee_minimum=0.3)
+                                   paypal_fee_minimum=0.3,
+                                   )
         self.community.put()
         self.makers = []
         for i in range(0,7):
@@ -29,9 +33,13 @@ class TestShopping(unittest.TestCase):
                           phone_number = "530111121%d" % i,
                           location = "Right Here",
                           mailing_address = "111 Test Lane, Testable, CA 95945",
+                          approval_status = 'Approved',
                           tags=['test', 'testy', 'testiferous'])
             self.makers.append(maker)
         db.put(self.makers)
+
+        self.community.featured_maker = str(self.makers[0].key())
+        self.community.put()
 
         self.products = []
         count = 0
@@ -43,7 +51,12 @@ class TestShopping(unittest.TestCase):
                               description="Just a product for testing, OK?",
                               price=price,
                               tags=['stuff', 'things'],
-                              inventory=1000))
+                              show=True,
+                              disable=False,
+                              when=Product.buildWhenStamp(self.makers[i]),
+                              inventory=1000,
+                              category=self.community.categories[count % len(self.community.categories)]
+                                         ))
             count += 1
             i += 1
             i %= (len(self.makers) - 1)
@@ -59,7 +72,7 @@ class TestShopping(unittest.TestCase):
         price = 2.2
         count = 12.2
         item = ShoppingCartItem(product_key='abcd1234', price=price, count=count)
-        self.assertTrue(item.subtotal == price * count)
+        self.assertTrue(withinDelta(item.subtotal, price * count))
 
     def testCreateReceiverList(self):
         cart_items = []
@@ -73,9 +86,6 @@ class TestShopping(unittest.TestCase):
                                                         shopping_cart_items=cart_items)
         self.assertTrue('primary' in receivers)
         self.assertTrue('others' in receivers)
-
-        def withinDelta(x, y, d=0.01):
-            return x - y < d and y - x < d
 
         (email, amount) = receivers['primary']
         self.assertTrue(email == self.community.paypal_sandbox_business_id)
@@ -108,3 +118,61 @@ class TestShopping(unittest.TestCase):
         self.assertTrue(email == 'maker5@gmail.com')
         self.assertTrue(withinDelta(amount, 4.63))
 
+    def testFindProductsByTag(self):
+        """ Test searching for products with a single tag. """
+        self.products[1].tags.append('grails')
+        self.products[1].put()
+        p = Product.findProductsByTag('grails')
+        self.assertTrue(p is not None)
+        result = p.fetch(10)
+        self.assertTrue(len(result) == 1)
+        self.assertTrue(result[0].key() == self.products[1].key())
+
+    def testProductSearch(self):
+        """ Test searching for products by multiple tags. """
+        self.products[1].tags.append('grails')
+        self.products[1].put()
+        self.products[2].tags.append('parrot')
+        self.products[2].put()
+        self.products[3].tags.append('parrot')
+        self.products[3].tags.append('grails')
+        self.products[3].put()
+        result = Product.searchByTag('grails parrot')
+        self.assertTrue(result is not None)
+        self.assertTrue(len(result) == 3)
+        for product in result:
+            self.assertTrue(product.key() == self.products[1].key()
+                            or product.key() == self.products[2].key()
+                            or product.key() == self.products[3].key())
+
+    def testLatest(self):
+        latest = Product.getLatest(4)
+        self.assertTrue(latest is not None)
+        self.assertTrue(len(latest) == 4)
+        self.assertTrue(latest[0].key() == self.products[8].key())
+        self.assertTrue(latest[1].key() == self.products[7].key())
+        self.assertTrue(latest[2].key() == self.products[6].key())
+        self.assertTrue(latest[3].key() == self.products[5].key())
+        
+    def testFeatured(self):
+        (maker, featured) = Product.getFeatured(4, self.community)
+        self.assertTrue(maker is not None)
+        self.assertTrue(str(maker.key()) == self.community.featured_maker)
+        self.assertTrue(featured is not None)
+        self.assertTrue(len(featured) == 2)
+        maker_key = maker.key()
+        for product in featured:
+            self.assertTrue(product.maker.key() == maker_key)
+
+    def testCategorySearch(self):
+        """ Test searching for products by a single category. """
+        grails = Product.findProductsByCategory('grails')
+        self.assertTrue(grails is not None)
+        self.assertTrue(len(grails) == 0)
+        pics = Product.findProductsByCategory(self.community.categories[0])
+        self.assertTrue(len(pics) == 1)
+        self.assertTrue(pics[0].name == 'Test Product #0')
+        pots = Product.findProductsByCategory(self.community.categories[8])
+        self.assertTrue(len(pots) == 1)
+        self.assertTrue(pots[0].name == 'Test Product #8')
+        

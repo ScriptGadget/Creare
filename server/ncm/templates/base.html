@@ -1,10 +1,15 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
     <head>
+	  <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+	  <meta name="description" content="{% block description %}{{community.description}}{% endblock description%}" />
+	  <meta name="keywords" content="{% block keywords %}local, art, crafts, gadgets, {{community.name}}{% endblock keywords%}" />
       <link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />
       <title>{% block title %} {{ title }} {% endblock %}</title>
       <script type="text/javascript" src="/static/json2.js"></script>	
       <script type="text/javascript" src="/static/async_utils.js"></script>
+	  <script type="text/javascript" src="http://apis.google.com/js/plusone.js"></script>
       <script type="text/javascript">
 		{% block search_functions %}
 		function doSearch(form){
@@ -20,82 +25,31 @@
 		{% block style %}
 		{% endblock %}
 	  </style>
+	  <script type="text/javascript">
+
+		  var _gaq = _gaq || [];
+		    _gaq.push(['_setAccount', 'UA-22111434-1']);
+		    _gaq.push(['_trackPageview']);
+
+		    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		    })();
+
+	  </script>
 	</head>
 
     <body onload="tangram_init()">
+	  <div id="holder">
 	  {% block banner %}
-	  <a href="/">
 		<div id="banner">
 		  {% if community.logo %}
-		  <img class="community_logo" src="/images/{{ community.logo }}" />
+		  	  <a href="/"> <img class="community_logo" src="/images/{{ community.logo }}" alt="{{ community.name }}"/></a> {% if admin %}<span id="maker_score" class="score">[Makers: {{community.maker_score}} Products: {{community.product_score}}{% if community.pending_score %} <span class="warning">Pending: {{community.pending_score}}</span>{% endif %}]</span>{% endif %}
 		  {% endif %}
 		</div>
-	  </a>
       {% endblock %}
 
-    <div id="sidebar">
-	  {% block sidebar %}
-	  <div id="alert1"></div>
-	  {% if admin %}
-	  {% block admin %}
-	  <div id="admin_menu">
-	  <h2>Community Coordination</h2>
-	  <ul>
-		<li><a href="/community/edit">Settings</a></li>
-		<li><a href="/advertisements">Ads</a></li>
-		<li><a href="/makers">Makers</a></li>
-	  </ul>
-	  </div>
-	  {% endblock admin %}
-	  {% else %}
-	  {% block cart_widget %}
-    <div id="ShoppingCartWidget">
-	  <p>Your Shopping Cart:</p>
-	  <p>(<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
-	</div>
-	  {% endblock cart_widget %}
-	  {% block join %}
-	  {% if not user %} <p id="join_link">Local maker? <a href="/join">Join Up</a>!</p> {% endif %}
-	  {% endblock %}
-	  {% endif %}
-	<div id="bio_bar">
-	  {% block bio_bar %}
-	  {% endblock %}
-    </div>
-	{% block news %}
-	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
-	  {% if news_items %}
-	    {% for item in news_items %}
-	      <h3><a href="/news_item/{{item.slug}}">{{item.title}}</a></h3>
-	      <p>{{item.summary}}</p>
-	    {% endfor %}
-	  {% else %}
-		<p>No news today.</p>
-	  {% endif %}
-	  {% endblock news %}
-	  <!-- Coming Soon -->
-	  <!--
-	  <h2>Events {% if admin %}(<a href="/events">edit</a>){% endif %}</h2>
-	  {% if events %}
-	    {% for event in events %}
-	      <h3>{{event.title}}</h3>
-	      <p>{{event.summary}}</p>
-	    {% endfor %}
-	  {% else %}
-		<p>No events today.</p>
-	  {% endif %}
-	  <h2>Tips {% if admin %}(<a href="/tips">edit</a>){% endif %}</h2>
-	  {% if tips %}
-	    {% for tip in tips %}
-	      <h3>{{tip.title}}</h3>
-	      <p>{{tip.summary}}</p>
-	    {% endfor %}
-	  {% else %}
-		<p>Watch here for helpful tips.</p>
-	  {% endif %}
-      {% endblock %}
-	  -->
-    </div>
 
 	<div id="menubar">
 	  <div id="menu">
@@ -112,21 +66,69 @@
 		  {% if user %}
 		  <li><a href="/logout">Logout</a></li>
 		  {% else %}
-		  <li><a href="/login">Login</a></li>
+		  <li><a href="/login">Login / Join</a></li>
 		  {% endif %}
-		  <li><form id="search_form" name="search" action="/search" method="GET"><label for="id_search">Search:</label> <input type="text" name="search" id="id_seach" value="" onblur="doSearch('search_form')"/></form></li>
+		  <li><a href="/maker_directory">Maker Directory</a></li>
+		  <li><form id="search_form" action="/search" method="get"><label for="id_search">Search:</label> <input type="text" name="search" id="id_seach" value="" onblur="doSearch('search_form')"/></form></li>
 		</ul>
 		{% endblock %}
 	  </div>	  
 	</div>
 
-	<div id="container">
+    <div id="sidebar">
+	  {% block sidebar %}
+	  <div id="alert1"></div>
+	  {% if admin %}
+	  {% block admin %}
+	  <div id="admin_menu">
+	  <h2>Community Coordination</h2>
+	  {% if pending %}<p class="errorlist"><a href="#">{{pending}} pending transactions</a></p>{% endif %}
+	  <ul>
+		<li><a href="/community/edit">Settings</a></li>
+		<li><a href="/advertisements">Ads</a></li>
+		<li><a href="/makers">Makers</a></li>
+	  </ul>
+	  </div>
+	  {% endblock admin %}
+	  {% else %}
+	  {% block cart_widget %}
+    <div id="ShoppingCartWidget">
+	  <p>Your Shopping Cart:</p>
+	  <p>(<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
+	</div>
+	  {% endblock cart_widget %}
+
+	  {% block join %}
+	  {% if not user %} <p id="join_link">Are you a local maker? <a href="/join">Join Up</a>!</p> {% endif %}
+	  {% endblock %}
+
+	  {% endif %}
+	<div id="bio_bar">
+	  {% block bio_bar %}
+	  {% endblock %}
+    </div>
+	{% block news %}
+	  <h2>News {% if admin %}(<a href="/news_items">edit</a>){% endif %}</h2>
+	  {% if news_items %}
+	    {% for item in news_items %}
+	      <h3><a href="/news_item/{{item.slug}}">{{item.title}}</a></h3>
+	      <p>{{item.summary}}</p>
+	    {% endfor %}
+	  {% else %}
+		<p>No news today.</p>
+	  {% endif %}
+	  {% endblock news %}
+      {% endblock %}
+    </div>
     <div id="content">
 	  {% if community.use_sandbox %}
 	  <p class="errorlist">THIS WEBSITE IS IN TEST ONLY MODE! No actual products are for sale, and all payments are processed though test accounts in the PayPal sandbox.</p>
 	  {% endif %}
+	  <!--[if lt IE 9]> <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;'> <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode"><img src="http://www.theie6countdown.com/images/banners/warning_bar_0000_us.jpg" border="0" height="42" width="820" alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today." /></a></div> <![endif]-->
+	  <noscript class="errorlist">THIS SITE REQUIRES JAVASCRIPT TO WORK. Please use a browser which support javascript or turn on javascript if you have blocked it.</noscript>
 	  {% block content %}
       {% endblock %}
+    </div>
 
 	<div id="footer">
 	  {% block footer %}
@@ -134,7 +136,6 @@
 	  <p>Powered&nbsp;by&nbsp;ScriptGadget</p>
 	  {% endblock %}
 	</div>
-    </div>
 	</div>
     </body>
 

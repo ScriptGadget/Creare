@@ -1,5 +1,6 @@
 {% extends "maker_space.html" %}
-
+{% block description %}{{store.store_name}} by {{store.full_name}}{% endblock description %}
+{% block keywords %}{{store.tag_string}}{% endblock keywords %}
 
 {% block content %}
 	<h1>{{store.store_name}}</h1>

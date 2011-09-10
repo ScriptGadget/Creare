@@ -15,8 +15,40 @@ indexes:
   - name: show
   - name: last_shown
 
+- kind: Maker
+  properties:
+  - name: accepted_terms
+  - name: approval_status
+  - name: joined
+
+- kind: Maker
+  properties:
+  - name: approval_status
+  - name: joined
+
 - kind: MakerTransaction
   properties:
   - name: maker
+  - name: when
+    direction: desc
+
+- kind: NewsItem
+  properties:
+  - name: show
+  - name: created
+    direction: desc
+
+- kind: Product
+  properties:
+  - name: category
+  - name: disable
+  - name: show
+  - name: when
+    direction: desc
+
+- kind: Product
+  properties:
+  - name: disable
+  - name: show
   - name: when
     direction: desc

@@ -1,5 +1,5 @@
 application: maker-sites
-version: second-alpha-3
+version: v1-0
 runtime: python
 api_version: 1
 
@@ -22,8 +22,16 @@ handlers:
   script: $PYTHON_LIB/google/appengine/ext/remote_api/handler.py
   login: admin
 
+- url: /admin/.*
+  script: $PYTHON_LIB/google/appengine/ext/admin
+  login: admin
+
 - url: /cleanup_sessions
   script: cleanup_sessions.py
+  login: admin
+
+- url: /update_featured
+  script: update_featured.py
   login: admin
 
 - url: /ipn

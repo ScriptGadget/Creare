@@ -17,10 +17,14 @@
 #  along with Creare.  If not, see <http://www.gnu.org/licenses/>.
 #
 import os
+from google.appengine.dist import use_library
+use_library('django', '0.96')
+
 import logging
 from datetime import datetime
 import hashlib
 import urllib
+from operator import attrgetter
 
 from django.utils import simplejson
 
@@ -38,6 +42,8 @@ from forms import *
 from payment import *
 from authentication import Authenticator
 
+template.register_template_library('common.catalog_tag')
+
 def add_base_values(template_values):
     community = Community.get_current_community()
 
@@ -45,8 +51,8 @@ def add_base_values(template_values):
         if not 'community' in template_values:
             template_values['community'] = community
         q = db.Query(NewsItem)
-        q.filter('show =', True).filter('community =', community)
-        news_items = q.fetch(limit=50)
+        q.filter('show =', True).order('-created')
+        news_items = q.fetch(limit=3)
         template_values["news_items"] = news_items
 
     user = users.get_current_user()
@@ -54,8 +60,9 @@ def add_base_values(template_values):
 
     if 'maker' not in template_values:
         template_values['maker'] = Maker.getMakerForUser(user)
-
-    template_values["admin"] = users.is_current_user_admin()
+    
+    if users.is_current_user_admin():
+        template_values['admin'] = True
 
     items = get_current_session().get('ShoppingCartItems', [])
     count = 0
@@ -174,6 +181,7 @@ class MakerPage(webapp.RequestHandler):
                     category='Logo',
                     content=logo,
                     ).put()
+            community.increment_maker_score()
             self.redirect('/maker_dashboard/' + entity.slug)
         else:
             messages = []
@@ -302,7 +310,7 @@ class EditMakerPage(webapp.RequestHandler):
                         category='Logo',
                         content=logo,
                         ).put()
-                self.redirect('/')
+                self.redirect('/maker_dashboard/' + entity.slug)
             else:
                 messages = []
                 if not photo_is_valid:
@@ -378,7 +386,9 @@ class ProductPage(webapp.RequestHandler):
                 entity = data.save(commit=False)
                 entity.maker = maker
                 entity.slug = Product.get_slug_for_name(entity.name)
-                entity.when = "%s|%s" % (datetime.now(), hashlib.md5(str(maker.key())+get_current_session().sid).hexdigest())
+                entity.when = Product.buildWhenStamp(maker)
+                if entity.unique:
+                    entity.inventory = 1
                 tags = self.request.get("tags").split(',')
                 entity.tags = []
                 for tag in tags:
@@ -389,6 +399,7 @@ class ProductPage(webapp.RequestHandler):
                     category='Product',
                     content=image,
                     ).put()
+                Community.get_current_community().increment_product_score()
                 self.redirect('/maker_dashboard/' + maker.slug)
             else:
                 messages = []
@@ -482,6 +493,8 @@ class EditProductPage(webapp.RequestHandler):
           if data.is_valid() and image_is_valid:
               entity = data.save(commit=False)
               entity.slug = Product.get_slug_for_name(entity.name)
+              if entity.unique:
+                  entity.inventory = 1
               tags = self.request.get("tags").split(',')
               entity.tags = []
               for tag in tags:
@@ -527,7 +540,8 @@ class ViewProductPage(webapp.RequestHandler):
         template_values = { 
             'title' : product.name,
             'store' : product.maker,
-            'product':product
+            'product':product,
+            'url':self.request.url,
             }
         path = os.path.join(os.path.dirname(__file__), "templates/view_product.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -578,20 +592,16 @@ class CommunityHomePage(webapp.RequestHandler):
             return
 
         session['community'] = community.slug
-
-        stuff = Product.all()
-        stuff.order('-when')
-        products = []
-        count = 0;
-        for product in stuff:
-            if product.maker.approval_status == 'Approved' and product.show and not product.disable:
-                products.append(product)
-                count += 1
-                if count >= 16:
-                    break;
-
-        template_values = { 'title': community.name,
-                            'products':products}
+        (featured_maker, featured_products) = Product.getFeatured(4, community)
+        template_values = { 
+            'title': community.name,
+            'latest': Product.getLatest(4),
+            'featured_products': featured_products,
+            'featured_maker': featured_maker,
+            'categories':sorted(community.categories),
+            'width': 4,
+            'url':self.request.url,
+            }
 
         path = os.path.join(os.path.dirname(__file__), "templates/home.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -652,11 +662,11 @@ class MakerStorePage(webapp.RequestHandler):
         else:
             write_error_page(self, "I don't recognize that store.")
             return
-
+        
         template_values = { 
             'title':maker.store_name,
             'store':maker,
-            'products':products,
+            'products':sorted(products, key=attrgetter('when'), reverse=True),
             'user':users.get_current_user()
             }
         path = os.path.join(os.path.dirname(__file__), "templates/maker_store.html")
@@ -925,17 +935,7 @@ class CheckoutPage(webapp.RequestHandler):
                 self.response.out.write("I don't recognize that community")
                 return
 
-            items = session.get('ShoppingCartItems', [])
-            products = []
-            for item in items:
-                product = Product.get(item.product_key)
-                if product:
-                    product.count = item.count
-                    product.price = item.price
-                    product.total = '%3.2f' % item.subtotal
-                    products.append(product)
             template_values = { 'title':'Checkout',
-                                'products':products,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/checkout.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -953,19 +953,17 @@ class ListNewsItems(webapp.RequestHandler):
     """ List news items. """
     def get(self):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
-
-        if not community:
-            self.error(404)
-            self.response.out.write("I don't recognize that community")
-            return
 
         q = db.Query(NewsItem)
+        if not users.is_current_user_admin():
+            q.filter('show =', True)
 
-        q.filter('show =', True).filter('community =', community)
-        news_items = q.fetch(limit=50)
-        logging.info('items :' + str(news_items))
-        template_values = { 'title':'News Items', 'news_items': news_items, 'user':users.get_current_user()}
+        items = q.fetch(50)
+
+        template_values = { 
+            'title':'News Items', 
+            'items': items, 
+            }
         path = os.path.join(os.path.dirname(__file__), "templates/news_items.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
@@ -975,7 +973,8 @@ class ViewNewsItem(webapp.RequestHandler):
     def get(self, slug):
         news_item = NewsItem.get_news_item_for_slug(slug)
         q = NewsItem.all()
-        q.filter('show =', True)
+        if not users.is_current_user_admin():
+            q.filter('show =', True)
         news_items = q.fetch(limit=3)
         template_values = { 'title':'News',
                             'news_item':news_item,
@@ -1031,7 +1030,7 @@ class EditNewsItem(webapp.RequestHandler):
             entity = data.save(commit=False)
             entity.slug = NewsItem.get_slug_for_title(entity.title)
             entity.put()
-            self.redirect('/news_items')
+            self.redirect('/news_item/' + entity.slug)
         else:
             # Reprint the form
             template_values = { 'title':'Create a NewsItem',
@@ -1086,7 +1085,7 @@ class AddNewsItem(webapp.RequestHandler):
             entity.community = community
             entity.slug = NewsItem.get_slug_for_title(entity.title)
             entity.put()
-            self.redirect('/news_items')
+            self.redirect('/news_item/' + entity.slug)
         else:
             # Reprint the form
             template_values = { 'title':'Create a NewsItem',
@@ -1307,6 +1306,7 @@ class CompletePurchase(webapp.RequestHandler):
     """ Handle a redirect from Paypal for a successful purchase. """
     def handle(self):
         if self.request.uri.count('cancel') > 0:
+            Community.get_current_community().decrement_pending_score()
             message = "Checkout cancelled.";
         else:
             message = "Thank you for supporting local makers, crafters and artists.";
@@ -1376,50 +1376,42 @@ class RPCHandler(webapp.RequestHandler):
         self.handle(action, self.postMethods)
    
 
-def _buildTransactionRow(transaction, fee_percentage, fee_minimum):
+def _buildTransactionRow(community, transaction, fee_percentage, fee_minimum):
     """ Put together information for a single row in the maker activity table  """
     sale = {}
     cart = transaction.parent()
     sale['transaction'] = str(transaction.key())
     sale['transaction_status'] = transaction.status
     sale['when'] = transaction.when
-    sale['date'] = str(cart.timestamp.date())
+    sale['date'] = str(cart.timestamp.replace(tzinfo=Utc_tzinfo()).astimezone(community.timeZone).date())
     sale['shipped'] = transaction.shipped        
     sale['shopper_name'] = cart.shopper_name
     sale['shopper_email'] = cart.shopper_email
+    sale['shopper_phone'] = cart.shopper_phone
     sale['shopper_shipping'] = cart.shopper_shipping.encode('utf-8').replace("\n", "</br>")
     products = []
     sale_amount = 0.0
     sale_items = 0
-    sale_fee = 0.0
-    additional_sales = 0.0
-    additional_items = 0
         
     for entry in transaction.detail:
         product = {}
         (product_key, items, amount) = entry.split(':')
         product_amount = float(amount)
         product_items = int(items)
-        fee = sale_amount * fee_percentage + fee_minimum
-        sale_amount += product_amount
         sale_items += product_items
-        sale_fee += fee
+        sale_amount += product_amount * product_items
         product['product_name'] = Product.get(product_key).name
         product['items'] = product_items
-        product['amount'] = "%.2f" % product_amount
-        product['fee'] = "%.2f" % fee
-        product['net'] = "%.2f" % (float(product_amount) - float(fee))
-        additional_items += product_items
-        additional_sales += product_amount * product_items
         products.append(product)
 
+    sale_fee = sale_amount * fee_percentage + fee_minimum
     sale['products'] = products
     sale['items'] = sale_items
     sale['fee'] = "%.2f" % sale_fee
     sale['amount'] = "%.2f" % sale_amount
     sale['net'] = "%.2f" % (sale_amount - sale_fee)
 
-    return (sale, additional_items, additional_sales)
+    return (sale, sale_items, sale_amount)
 
 
 class RPCGetMethods:
@@ -1440,8 +1432,11 @@ class RPCGetMethods:
                 p = { "count": str(item.count),
                       "name": product.name,
                       "key": str(product.key()),
+                      "image": str(product.image),
                       "price":'%3.2f' % item.price,
-                      "total":'%3.2f' % item.subtotal, }
+                      "total":'%3.2f' % item.subtotal,
+                      "pickup_only": product.pickup_only
+                      }
                 products.append(p)
                 amount += item.subtotal
             
@@ -1482,9 +1477,9 @@ class RPCGetMethods:
 
         for transaction in maker_transactions:
             if transaction.status == 'Paid':
-                (sale, additional_items, additional_sales) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
-                total_items += additional_items
-                total_sales += additional_sales
+                (sale, sale_items, sale_amount) = _buildTransactionRow(community, transaction, fee_percentage, fee_minimum)
+                total_items += sale_items
+                total_sales += sale_amount
                 sales.append(sale)
 
         sales.sort(key=lambda sale: sale['when'], reverse=True)
@@ -1526,7 +1521,7 @@ class RPCPostMethods:
                     item.count += 1
                 break
         else:
-            newItem = ShoppingCartItem(product_key=product_id, price=product.price, count=1)
+            newItem = ShoppingCartItem(product_key=product_id, price=product.actual_price, count=1)
             items.append(newItem)
 
         total = 0
@@ -1538,7 +1533,7 @@ class RPCPostMethods:
         return results
 
     def RemoveProductFromCart(self, request, *args):
-        """ Remove and item from the shopping cart by key """
+        """ Remove an item from the shopping cart by key """
         product_id = args[0]
         session = get_current_session()
         if not session.is_active():
@@ -1551,6 +1546,22 @@ class RPCPostMethods:
                     item.count -= 1
                 else:
                     items.remove(item)
+                break
+
+        session['ShoppingCartItems'] = items
+        return {"result":"success"}
+
+    def RemoveAllProductFromCart(self, request, *args):
+        """ Remove all of an item from the shopping cart by key """
+        product_id = args[0]
+        session = get_current_session()
+        if not session.is_active():
+            session.regenerate_id()
+        items = session.get('ShoppingCartItems', [])
+
+        for item in items:
+            if item.product_key == product_id:
+                items.remove(item)
                 break
 
         session['ShoppingCartItems'] = items
@@ -1594,7 +1605,8 @@ class RPCPostMethods:
             cart_transaction = CartTransaction(transaction_type='Sale')
             cart_transaction.shopper_name = sanitizeHtml(args[0])
             cart_transaction.shopper_email = sanitizeHtml(args[1])
-            shipping = sanitizeHtml(args[2].decode('unicode_escape'))
+            cart_transaction.shopper_phone = sanitizeHtml(args[2])
+            shipping = sanitizeHtml(args[3].decode('unicode_escape'))
 
             logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping)
 
@@ -1681,6 +1693,7 @@ class RPCPostMethods:
                 cart_transaction.put()
                 db.put(maker_transactions)
                 session.pop('ShoppingCartItems')
+                community.increment_pending_score()
                 return {"redirect":"%s" % confirmation_url} 
             else:
                 logging.error("A Paypal checkout failed! Here's the cart: " + str(items))
@@ -1722,35 +1735,83 @@ class RPCPostMethods:
 
 class DisplayImage(webapp.RequestHandler):
     def get(self, image_id):
-        image = db.get(image_id)
-        if image.content:
+        try:
+            image = db.get(image_id)
+        except:
+            image = None
+
+        if image and image.content:
             self.response.headers['Content-Type'] = "image/png"
             self.response.headers['Cache-Control'] = "max-age=2592000, must-revalidate"
             self.response.out.write(image.content)
         else:
             self.error(404)
+            self.response.out.write("I don't recognize that image.")
 
 class ProductSearch(webapp.RequestHandler):
     def get(self):
-        search = self.request.get('search')
-        products = []
-        p = Product.all()
-        for tag in search.split(" "):
-            tag = tag.strip().lower()
-            p.filter( 'tags =', tag).filter('show =', True).filter('disable = ', False)
-            products.extend(p.fetch(16))
+        template_values = {
+            'title':'Search Results',
+            'products':Product.searchByTag(self.request.get('search')),
+            }
 
-        approved_products = []
-        for product in products:
-            if product.maker.approval_status == 'Approved':
-                approved_products.append(product)
+        path = os.path.join(os.path.dirname(__file__), "templates/catalog.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
+
+class CategorySearch(webapp.RequestHandler):
+    def get(self):
+        category = self.request.get('category')
+
+        if(category):
+            category = urllib.unquote(category)
+
+        number_to_return = 9;
+        where_to_start = 0
+        start = self.request.get('start')
+        if start:
+            try:
+                where_to_start = int(start)
+            except:                
+                return
+        products = Product.findProductsByCategory(category, number_to_return, where_to_start)
+
+        next = 0
+        num_products = len(products)
+        if num_products >= number_to_return:
+            next = where_to_start + num_products
+        if num_products == number_to_return:
+            products.pop()
+
+        previous = 0
+        show_previous = False
+        if where_to_start >= number_to_return:
+            show_previous = True
+            previous = where_to_start - number_to_return
 
         template_values = {
             'title':'Search Results',
-            'products':approved_products,
+            'category':category,
+            'products':products,
+            'next':next,
+            'show_previous':show_previous,
+            'previous':previous,
             }
 
-        path = os.path.join(os.path.dirname(__file__), "templates/home.html")
+        path = os.path.join(os.path.dirname(__file__), "templates/catalog.html")
+        self.response.out.write(template.render(path, add_base_values(template_values)))
+
+class MakerDirectory(webapp.RequestHandler):
+    def get(self):
+        makers = Maker.all()
+        makers.filter('approval_status =', 'Approved')
+        makers.filter('accepted_terms =', True)
+        makers.order('joined')
+        template_values = {
+            'title':'Maker Directory',
+            'stores':makers,
+            }
+
+        path = os.path.join(os.path.dirname(__file__), "templates/maker_directory.html")
         self.response.out.write(template.render(path, add_base_values(template_values)))
 
 class AboutPage(webapp.RequestHandler):
@@ -1773,6 +1834,7 @@ def main():
         (r'/rpc/(SetApprovalStatus)', RPCHandler),
         (r'/rpc/(AddProductToCart)', RPCHandler),
         (r'/rpc/(RemoveProductFromCart)', RPCHandler),
+        (r'/rpc/(RemoveAllProductFromCart)', RPCHandler),
         (r'/rpc/(SetMakerTransactionShipped)', RPCHandler),
         (r'/rpc/(OrderProductsInCart)', RPCHandler),
         (r'/rpc/(EditContent)', RPCHandler),
@@ -1809,6 +1871,8 @@ def main():
         ('/cancel', CompletePurchase),
         (r'/images/(.*)', DisplayImage),
         ('/search', ProductSearch),
+        ('/category', CategorySearch),
+        ('/maker_directory', MakerDirectory),
         (r'.*', NotFoundErrorHandler)
         ], debug=True)
     util.run_wsgi_app(app)

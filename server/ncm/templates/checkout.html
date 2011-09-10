@@ -5,6 +5,7 @@
   form = new Object()
   form.name = "";
   form.email = "";
+  form.phone = "";
   form.shipping = "";
 
   orderInProgress = false;
@@ -12,10 +13,15 @@
   InstallFunction(server, 'OrderProductsInCart', false);
   InstallFunction(server, 'GetShoppingCart', true);
   InstallFunction(server, 'RemoveProductFromCart', false);
+  InstallFunction(server, 'RemoveAllProductFromCart', false);
   InstallFunction(server, 'AddProductToCart', false);
 
   function doRemoveProductFromCart(product){
     server.RemoveProductFromCart(product, doGetShoppingCart);
+  }
+
+  function doRemoveAllProductFromCart(product){
+    server.RemoveAllProductFromCart(product, doGetShoppingCart);
   }
 
   function doAddProductToCart(product){
@@ -28,7 +34,7 @@
         alert("Please do not click the button\nwhile an order is in progress.");
       }else{
         orderInProgress = true;
-        server.OrderProductsInCart(form.name, form.email, form.shipping, displayOrderResultOrRedirect);
+        server.OrderProductsInCart(form.name, form.email, form.phone, form.shipping, displayOrderResultOrRedirect);
       }
     }
   }
@@ -48,13 +54,22 @@
   function updateCartTable(response){
     products = response["products"];
 	amount = response["amount"];
+    $("pick-up_message").style.display="none";
 
     if(products.length > 0) {
-        cart_content = "<table>";
+        cart_content = "<table id='checkout_table'>";
         for(var i = 0; i < products.length; i++){
+          thumbnailImage = "<img class='product_thumbnail' src='/images/" + products[i].image  + "' />";
 	      removeButton = "<input class='decrement_button' type='button' value='-' onclick='doRemoveProductFromCart(\"" + products[i].key + "\")' />";
 	      addButton = "<input class='increment_button' type='button' value='+' onclick='doAddProductToCart(\"" + products[i].key + "\")' />";
-          cart_content += "<tr><td>" + removeButton + products[i].count + addButton + "</td><td>" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
+	      removeAllButton = "<input class='clear_button' type='button' value='x' onclick='doRemoveAllProductFromCart(\"" + products[i].key + "\")' />";		  
+		  if(products[i].pickup_only){
+		    cart_content += '<tr class="shaded"><td>';
+			$("pick-up_message").style.display="block";
+		  } else {
+		    cart_content += '<tr><td>';
+          }
+          cart_content += thumbnailImage + "</td><td>(" + products[i].count + ")&nbsp;[" + removeButton + "&nbsp;" + addButton + "&nbsp;" + removeAllButton + "]&nbsp;-&nbsp;" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price + "ea)</td></tr>";
         }
         cart_content += "</table>";
 		cart_content += '<p id="cart_total">$' + amount + ' &lt;-- Grand Total (all prices already include shipping/handling and sales tax)</p>';
@@ -84,8 +99,9 @@
   function updateForm(){
     form.name = $("name_id").value;
     form.email = $("email_id").value;
+    form.phone = $("phone_id").value;
     form.shipping = $("shipping_id").value;
-	return form.name != "" && form.email != "" && form.shipping != "";
+	return form.name != "" && form.email != "" && form.phone != "" && form.shipping != "";
   }
 
   function validateForm(){
@@ -105,10 +121,12 @@
 
 {% block content %}
 	<h1>{{ title }}</h1>
+	<em id="pick-up_message">* Shaded rows are pick-up only items. Please provide a phone number to arrange pick-up.</em>
     <div id="ShoppingCartProductList"></div>
 	<table id="ShippingInfo">
-	<tr><th>Email:</th><td><input type="text" name="email" id="email_id" onchange="updateForm()"/></td></tr>
 	<tr><th>Name:</th><td><input type="text" name="name" id="name_id" onchange="updateForm()"/></td></tr>
+	<tr><th>Email:</th><td><input type="text" name="email" id="email_id" onchange="updateForm()"/></td></tr>
+	<tr><th>Phone (for pick-up):</th><td><input type="text" name="phone" id="phone_id" onchange="updateForm()"/></td></tr>
 	<tr><th>Shipping Address or<br/>Pick-up time and Notes to Maker:</th><td><textarea name="shipping" id="shipping_id" onchange="updateForm()"></textarea></td></tr>
 	</table>
 	<p id="form_message" class="explanatory_message"></p>

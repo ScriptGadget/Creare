@@ -1,1 +1,46 @@
 {% extends "catalog.html" %}
+{% block banner %}
+    {{ block.super }}
+    {% if community.motto %}
+	<div id="introduction">
+	  <em>{{community.motto}}</em>
+	</div>
+   {% endif %}
+{% endblock banner %}
+
+{% block sidebar %}
+	{{ block.super }}
+	  <p>
+	  <!-- Facebook -->
+	   <iframe src="http://www.facebook.com/plugins/like.php?href={{url}}&amp;layout=button_count&amp;show_faces=true&amp;width=110&amp;action=like&amp;font&amp;colorscheme=light&amp;height=20" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:110px; height:20px;" allowTransparency="true"></iframe>
+	   <!-- Google Plus One -->
+	   <g:plusone></g:plusone>
+	   <!-- Twitter Follow -->
+	   <a href="http://www.twitter.com/{{community.twitter_account}}"><img src="http://twitter-badges.s3.amazonaws.com/twitter-c.png" alt="Follow {{community.name}} on Twitter"/></a>
+	  </p>
+
+{% endblock sidebar %}
+
+{% block content %}
+	{% if latest %}
+    <div class="module">
+	<h3>New Stuff</h3>
+	{% catalog latest width maker %}
+	{% endif %}
+	
+	<div class="module">
+	  <h3>Discover More</h3>
+	  <ul id="categories">
+		{% for category in categories %}
+		<li><a href="/category?category={{category|urlencode}}">{{category}}</a></li>
+		{% endfor %}
+		<li><a href="/category?category=">Everything</a></li>
+	  </ul>
+	</div>
+
+	{% if featured_products %}
+    <div class="module">
+	<h3>Featured Maker: <a href="/maker_store/{{featured_maker.slug}}">{{featured_maker.full_name}}</a></h3>
+	{% catalog featured_products width maker %}
+	{% endif %}
+{% endblock content %}

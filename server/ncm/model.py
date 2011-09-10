@@ -21,6 +21,10 @@ from google.appengine.ext import db
 from gaesessions import get_current_session
 import logging
 import shardedcounter
+import hashlib
+import datetime as datetime_module
+
+_default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic', 'Metalwork', 'Woodwork', 'Cards & Papercraft']
 
 _punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
 _word_re = re.compile('[\W]+')
@@ -32,6 +36,46 @@ def slugify(text, delim=u'-'):
             result.append(_word_re.sub('', word))
 
     return unicode(delim.join(result))
+
+class Utc_tzinfo(datetime_module.tzinfo):
+    def utcoffset(self, dt): return datetime_module.timedelta(0)
+    def dst(self, dt): return datetime_module.timedelta(0)
+    def tzname(self, dt): return 'UTC'
+    def olsen_name(self): return 'UTC'
+
+class Pacific_tzinfo(datetime_module.tzinfo):
+    """Implementation of the Pacific timezone. From GAE docs."""
+    def utcoffset(self, dt):
+        return datetime_module.timedelta(hours=-8) + self.dst(dt)
+
+    def _FirstSunday(self, dt):
+        """First Sunday on or after dt."""
+        return dt + datetime_module.timedelta(days=(6-dt.weekday()))
+
+    def dst(self, dt):
+        # 2 am on the second Sunday in March
+        dst_start = self._FirstSunday(datetime_module.datetime(dt.year, 3, 8, 2))
+        # 1 am on the first Sunday in November
+        dst_end = self._FirstSunday(datetime_module.datetime(dt.year, 11, 1, 1))
+
+        if dst_start <= dt.replace(tzinfo=None) < dst_end:
+            return datetime_module.timedelta(hours=1)
+        else:
+            return datetime_module.timedelta(hours=0)
+    def tzname(self, dt):
+        if self.dst(dt) == datetime_module.timedelta(hours=0):
+            return "PST"
+        else:
+            return "PDT"
+
+#common validators
+def validateEmail(value):
+    if len(value) > 255:
+        raise db.BadValueError("Email address too long")
+    allowed = re.compile("[a-z0-9.\-_]+@[0-9a-z\-]+\.[0-9a-z\-]+", re.IGNORECASE)
+    if not allowed.match(value):
+        raise db.BadValueError("Bad email address: " + value)
+
 
 class Community(db.Model):
     """ A Community of Makers and Crafters  """
@@ -65,6 +109,11 @@ class Community(db.Model):
     paypal_api_password = db.StringProperty()
     paypal_api_signature = db.StringProperty()
     paypal_application_id = db.StringProperty()
+
+    # Site Stuff
+    featured_maker = db.StringProperty()
+    motto = db.StringProperty()
+    twitter_account = db.StringProperty()
 
     @property
     def business_id(self):
@@ -116,6 +165,18 @@ class Community(db.Model):
     def logo(self):
         return Image.all(keys_only=True).filter('category =', 'Logo').ancestor(self).get()
 
+    @property
+    def timeZone(self):
+        """ 
+        For now just return Pacific TZ. 
+        The more general case is going to take alot of work.
+        """
+        return Pacific_tzinfo()
+
+    @property
+    def categories(self):
+        return _default_categories
+
     @staticmethod
     def get_community_for_slug(slug):
         try:
@@ -151,6 +212,30 @@ class Community(db.Model):
 
         return community
 
+    @property
+    def maker_score(self):
+        return shardedcounter.get_count('maker_score')
+
+    @property
+    def product_score(self):
+        return shardedcounter.get_count('product_score')
+
+    @property
+    def pending_score(self):
+        return shardedcounter.get_count('pending_score')
+    
+    def increment_maker_score(self):
+        shardedcounter.increment('maker_score', 1)
+
+    def increment_product_score(self):
+        shardedcounter.increment('product_score', 1)
+
+    def increment_pending_score(self):
+        shardedcounter.increment('pending_score', 1)
+
+    def decrement_pending_score(self):
+        shardedcounter.decrement('pending_score')
+
 class Page(db.Model):
     """ A miscellaneous content page like About, Privacy Policy, etc.  """
     name = db.StringProperty(required=True)
@@ -171,9 +256,9 @@ class Maker(db.Model):
     store_name = db.StringProperty(required=True, verbose_name="Your store name")
     slug = db.StringProperty()
     full_name = db.StringProperty(required=True, verbose_name="Your name")
-    email = db.EmailProperty(required=True, verbose_name="Your email")
+    email = db.EmailProperty(required=True, verbose_name="Your email", validator=validateEmail)
     website = db.LinkProperty()
-    paypal_business_account_email = db.EmailProperty(verbose_name="Paypal business or premier account username")
+    paypal_business_account_email = db.EmailProperty(required=True, verbose_name="Paypal business or premier account email", validator=validateEmail)
     phone_number = db.PhoneNumberProperty(required=True)
     mailing_address = db.PostalAddressProperty(required=True)
     store_description = db.TextProperty(required=True, verbose_name="About you and your creations")
@@ -188,6 +273,10 @@ class Maker(db.Model):
     @property
     def logo(self):
         return Image.all(keys_only=True).filter('category =', 'Logo').ancestor(self).get()
+
+    @property
+    def tag_string(self):
+        return ','.join(self.tags)
 
     @staticmethod
     def get_maker_for_slug(slug):
@@ -220,7 +309,6 @@ class Maker(db.Model):
 
         return maker;
 
-
 class Product(db.Model):
     """ Something a Maker can sell to a Shopper """
     maker = db.ReferenceProperty(Maker, collection_name='products')
@@ -229,16 +317,31 @@ class Product(db.Model):
     short_description = db.StringProperty(required=True, verbose_name="three related, descriptive words")
     description = db.TextProperty(required=True, verbose_name="Everything amazing about your item")
     price = db.FloatProperty(required=True, verbose_name="Price with shipping/handling and tax (no $ or commas)", default=10.0)
+    discount_price = db.FloatProperty(required=False, verbose_name="Optional Discounted Price")
     tags = db.StringListProperty(required=True, verbose_name="Tags (search terms separated by commas)")
     unique = db.BooleanProperty(default=False)
-    inventory = db.IntegerProperty(required=True, verbose_name="Number of items you have (1 if unique)", default=1)
+    inventory = db.IntegerProperty(required=True, verbose_name="Number of items you have to sell", default=1)
     show = db.BooleanProperty(default=True, verbose_name="Show this item to shoppers")
     disable = db.BooleanProperty(default=False)
     when = db.StringProperty()
+    pickup_only = db.BooleanProperty(default=False, verbose_name="Pick-up only")
+    category = db.StringProperty(choices=set(_default_categories), default=_default_categories[0], required=True)
+    video_link = db.StringProperty(verbose_name="Embedded Video Link")
 
     @property
     def image(self):
         return Image.all(keys_only=True).ancestor(self).get()
+
+    @property
+    def tag_string(self):
+        return ','.join(self.tags)
+
+    @property
+    def actual_price(self):
+        price = self.price
+        if self.discount_price > 0.98:
+            price = self.discount_price
+        return price
 
     @staticmethod
     def get_product_for_slug(slug):
@@ -272,6 +375,77 @@ class Product(db.Model):
             product.inventory = 0
         product.put()
 
+    @staticmethod
+    def findProductsByTag(tag):
+        """ Finds products by a single tag. """
+        p = Product.all()
+        p.filter('show =', True)
+        p.filter('disable = ', False)
+        p.filter( 'tags =', tag)
+        return p
+
+    @staticmethod
+    def searchByTag(tags):
+        """ Search for a product by one or more tags  """
+        p = []
+        for tag in tags.split(" "):
+            tag = tag.strip().lower()
+            p.extend(Product.findProductsByTag(tag).fetch(1000))
+        nodups = {}
+        for product in p:
+            if not product.key() in nodups and product.maker.approval_status == 'Approved':
+                nodups[product.key()] = product
+        return nodups.values()
+
+    @staticmethod
+    def findProductsByCategory(category, number_to_return=9, where_to_start=0):
+        p = Product.all()
+        p.filter('show =', True)
+        p.filter('disable = ', False)
+        if category:
+            p.filter('category = ', category)
+        p.order('-when')
+        return p.fetch(number_to_return, where_to_start)
+    
+    @staticmethod
+    def getLatest(number_to_return):
+        """ Get one item from the four stores with the most recent updates """
+        stuff = Product.all()
+        stuff.order('-when')
+        latest = []
+        makers = set([])
+        count = 0;
+        for product in stuff:
+            if  product.show and not product.disable and product.maker.approval_status == 'Approved' and product.maker.key() not in makers:
+                latest.append(product)
+                makers.add(product.maker.key())
+                count += 1
+                if count >= number_to_return:
+                    break;
+        return latest;
+
+    @staticmethod
+    def getFeatured(number_to_return, community):
+        """ Get four products from the featured Maker """
+        if community.featured_maker:
+            maker = Maker.get(community.featured_maker)
+            stuff = maker.products 
+            products = []
+            count = 0
+            for product in stuff:
+                if product.show and not product.disable:
+                    products.append(product)
+                    count += 1
+                    if count >= 4:
+                        break;
+            return (maker, products)
+        else:
+            return (None, None)
+
+    @staticmethod
+    def buildWhenStamp(maker):
+        """ Build a when stamp for sorting based on the Maker's key."""
+        return "%s|%s" % (datetime_module.datetime.now(), hashlib.md5(str(maker.key())).hexdigest())
 
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """
@@ -330,6 +504,7 @@ class CartTransaction(db.Model):
     paypal_pay_key = db.StringProperty()
     shopper_name = db.StringProperty()
     shopper_email = db.EmailProperty()
+    shopper_phone = db.PhoneNumberProperty()
     shopper_shipping = db.PostalAddressProperty()
     note = db.StringProperty()
     transaction_history = db.TextProperty()

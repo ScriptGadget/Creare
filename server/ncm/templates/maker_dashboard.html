@@ -41,6 +41,9 @@
 	  row += " </li> "
 	  row += "<li>Name: "+sale.shopper_name+"</li> "
 	  row += "<li>Email: "+sale.shopper_email+"</li> "
+	  if(sale.shopper_phone){
+	    row += "<li>Phone: "+sale.shopper_phone+"</li> "
+      }
 	  row += "<li>Shipping: <br/>"+sale.shopper_shipping+"</li> "
       row += "</ul></td><td>"+sale.items+"</td><td>"+sale.amount+"</td><td>"+sale.fee+"</td><td>"+sale.net+"</td><td>"+sale.transaction_status+"</td>";
 	  row += "<td><input type='checkbox' onclick='doSetMakerTransactionShipped(\"" + sale.transaction + "\", \"" + start + "\", \""  + end + "\")'";
@@ -138,7 +141,7 @@
 		<p>Your application has been submitted.</p> 
 		<p>Once your account has been activated, this is where you will be able to add and manage your product listings and track your sales.</p>
 		<p>We may call or email you if we have any questions about your new store. If you have any questions please don't hesitate to call or email Jerri.</p>	
-		<p><strong>email</strong>: <a href="mailto:nevadacountymakes.com">{{community.support_email}}</a></p>
+		<p><strong>email</strong>: <a href="mailto:{{community.support_email}}">{{community.support_email}}</a></p>
 		<p><strong>phone</strong>: ({{community.support_phone|slice:":3"}}) {{community.support_phone|slice:"3:6"}}-{{community.support_phone|slice:"6:"}}</p>
 	  </div>
 	  {% endifequal %}
