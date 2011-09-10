@@ -1,6 +1,12 @@
 Creare (cray-are-ay) -v (Latin) 1. To create 
 
-Creare is the engine for our local maker, crafter and creator site, Nevada County Makes. It is PRE BETA and is currently full of exploratory false starts, duplication and brain twiddling. No sane person should attempt to use this code for any reason whatsoever until I get a chance to clean it up later this week. Which is not to imply it would be a great idea even then until I've run it for awhile.
+Creare is the engine for our local maker, crafter and creator site, Nevada County Makes. This is currently running without issues for about 43 Makers and over 300 products. It hasn't faced heavy actual load yet, but it performs well in testing.
+
+We're sharing this as an example of what worked for us. There is no warranty express or implied for this work and you use it at your own risk. The Creare code is under GPL3. (Please see COPYING in the same directory as this README file). 
+
+To find the latest source please visit: https://github.com/Scriptgadget/Creare
+
+Currently the sessions code is included in this repository for convenience. It is licensed under Apache License Version 2.0, and it comes from https://github.com/dound/gae-sessions. As soon as we have time we will be pulling all of that code out of this repository and referring folks to dound in the install instructions. (When we write installation instructions).
 
 -bill
 Script Gadget
