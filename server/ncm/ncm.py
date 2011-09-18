@@ -244,7 +244,7 @@ class EditMakerPage(webapp.RequestHandler):
 
     def post(self, id):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
 
         if not community:
             self.error(404)
@@ -429,7 +429,7 @@ class EditProductPage(webapp.RequestHandler):
 
         if not maker:
             session = get_current_session()
-            community = Community.get_community_for_slug(session.get('community'))
+            community = Community.get_current_community()
 
             if not community:
                 self.error(404)
@@ -528,7 +528,7 @@ class ViewProductPage(webapp.RequestHandler):
     """ View a Product """
     def get(self, maker_slug, product_slug):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
 
         if not community:
             self.error(404)
@@ -929,7 +929,7 @@ class CheckoutPage(webapp.RequestHandler):
             self.response.out.write("I don't see anything in your cart")
             return
         else:
-            community = Community.get_community_for_slug(session.get('community'))        
+            community = Community.get_current_community()        
             if not community:
                 self.error(404)
                 self.response.out.write("I don't recognize that community")
@@ -1076,7 +1076,7 @@ class AddNewsItem(webapp.RequestHandler):
         if data.is_valid():
             entity = data.save(commit=False)
             session = get_current_session()
-            community = Community.get_community_for_slug(session.get('community'))
+            community = Community.get_current_community()
 
             if not community:
                 self.error(404)
@@ -1139,7 +1139,7 @@ class AdvertisementPage(webapp.RequestHandler):
             return
         else:
             session = get_current_session()
-            community = Community.get_community_for_slug(session.get('community'))
+            community = Community.get_current_community()
 
             data = AdvertisementForm(data=self.request.POST)
             if data.is_valid():
@@ -1234,7 +1234,7 @@ class ViewAdvertisementPage(webapp.RequestHandler):
     """ View a Advertisement """
     def get(self, advertisement_slug):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
         
         if not community:
             self.error(404)
@@ -1255,7 +1255,7 @@ class ListAdvertisements(webapp.RequestHandler):
     """ List news items. """
     def get(self):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
         
         if not community:
             self.error(404)
@@ -1284,7 +1284,7 @@ class ListMakers(webapp.RequestHandler):
             self.response.out.write("You don't have permission to coordinate Makers.")
             
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
         
         if not community:
             self.error(404)
