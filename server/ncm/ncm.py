@@ -527,7 +527,6 @@ class EditProductPage(webapp.RequestHandler):
 class ViewProductPage(webapp.RequestHandler):
     """ View a Product """
     def get(self, maker_slug, product_slug):
-        session = get_current_session()
         community = Community.get_current_community()
 
         if not community:
@@ -536,6 +535,13 @@ class ViewProductPage(webapp.RequestHandler):
             return
 
         product = Product.get_product_for_slug(product_slug)
+        if product.disable or not product.show:
+            product = None
+
+        if not product:
+            self.error(404)
+            self.response.out.write("I don't recognize that product.")
+            return
 
         template_values = { 
             'title' : product.name,
