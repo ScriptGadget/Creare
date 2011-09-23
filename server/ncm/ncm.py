@@ -623,7 +623,11 @@ class MakerDashboard(webapp.RequestHandler):
             # Return immediately
             return
 
-        if not maker or not maker.slug == maker_slug:
+        if not maker:
+            self.redirect("/maker_store/" + maker_slug)
+            return
+
+        if not maker.slug == maker_slug:
             logging.info('=== MakerDashboard.get(): ' + maker.slug + ' does not equal ' + maker_slug)
             self.redirect("/maker_store/" + maker_slug)
             return
