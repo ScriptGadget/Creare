@@ -44,6 +44,11 @@ from authentication import Authenticator
 
 template.register_template_library('common.catalog_tag')
 
+
+# some settings
+MAX_PRODUCT_IMAGE_HEIGHT=320
+MAX_PRODUCT_IMAGE_WIDTH=320
+
 def add_base_values(template_values):
     community = Community.get_current_community()
 
@@ -73,12 +78,13 @@ def add_base_values(template_values):
     template_values['cartItems'] = count
     return template_values;
 
-def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1MB)", name="img"):
+def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, %(height)sx%(width)s, less then 1MB)", name="img", height=MAX_PRODUCT_IMAGE_HEIGHT, width=MAX_PRODUCT_IMAGE_WIDTH):
     """ Build a form to upload images with a configurable prompt message. """
+    new_prompt = prompt % {'height':height, 'width':width}
     return """
-<div><label>%s</label></div> 
-<div><input type="file" name="%s"/></div>
-""" % (prompt, name)
+<div><label>%(prompt)s</label></div> 
+<div><input type="file" name="%(name)s"/></div>
+""" % {'prompt':new_prompt, 'name':name}
 
 def buildTagField(value):
     return """<tr><th><label for="id_tags">%s: </label></th><td><input type="text" name="tags" value="%s" id="id_tags" /></td></tr>""" % (Product.tags.verbose_name, value)
@@ -335,7 +341,7 @@ class ProductPage(webapp.RequestHandler):
 
     @staticmethod
     def buildImageUploadForm():
-        return buildImageUploadForm("Product Image: (PNG or JPG, 240x240, less then 1MB)")
+        return buildImageUploadForm("Product Image: (PNG or JPG, %(height)sx%(width)s, less then 1MB)", height=MAX_PRODUCT_IMAGE_HEIGHT, width=MAX_PRODUCT_IMAGE_WIDTH)
 
     def get(self):
         authenticator = Authenticator(self)
@@ -378,7 +384,7 @@ class ProductPage(webapp.RequestHandler):
             image_is_valid = image_is_valid and len(uploaded_file) < 1024*1024
             if image_is_valid:
                 try:
-                    image = images.resize(uploaded_file, 240, 240)
+                    image = images.resize(uploaded_file, MAX_PRODUCT_IMAGE_WIDTH, MAX_PRODUCT_IMAGE_HEIGHT)
                 except:
                     image_is_valid = False
 
@@ -404,7 +410,7 @@ class ProductPage(webapp.RequestHandler):
             else:
                 messages = []
                 if not image_is_valid:
-                    messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+                    messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square %(height)s pixels high by %(width)s pixels wide." % {'height':MAX_PRODUCT_IMAGE_HEIGHT, 'width':MAX_PRODUCT_IMAGE_WIDTH})
 
                 # Reprint the form
                 template_values = { 'form' : data,
@@ -485,7 +491,7 @@ class EditProductPage(webapp.RequestHandler):
               image_is_valid = len(uploaded_file) < 1024*1024
               if image_is_valid:
                   try:
-                      image = images.resize(uploaded_file, 240, 240)
+                      image = images.resize(uploaded_file, MAX_PRODUCT_IMAGE_WIDTH, MAX_PRODUCT_IMAGE_HEIGHT)
                   except:
                       image = None
                       image_is_valid = False
@@ -512,7 +518,7 @@ class EditProductPage(webapp.RequestHandler):
           else:
               messages = []
               if not image_is_valid:
-                  messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+                  messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square %(height)s pixels high by %(width)s pixels wide." % {'height':MAX_PRODUCT_IMAGE_HEIGHT, 'width':MAX_PRODUCT_IMAGE_WIDTH})
               # Reprint the form
               template_values = { 'form' : data,
                                   'tag_field':buildTagField(self.request.get('tags')),
