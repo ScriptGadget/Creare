@@ -1,5 +1,5 @@
-application: nevadacountymakes
-version: v1-8
+application: nevadacountymakes-hrd
+version: v1-8-hrd
 runtime: python
 api_version: 1
 
