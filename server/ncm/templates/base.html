@@ -94,7 +94,7 @@
 	  {% block cart_widget %}
     <div id="ShoppingCartWidget">
 	  <p>Your Shopping Cart:</p>
-	  <p>(<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
+	  <p>(<span id="ShoppingCartCount">{% if cartItems %}{{cartItems}} items{% else %}empty{% endif %}</span>) <span id="checkout_button" class="ncm_button" style={% if cartItems %}"display:inline"{% else %}"display:none"{% endif %}><a href="/checkout">Checkout</a></span></p>
 	</div>
 	  {% endblock cart_widget %}
 

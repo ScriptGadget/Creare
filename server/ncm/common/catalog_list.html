@@ -33,7 +33,7 @@
 			 {% else %}
 			   ${{product.price|floatformat:2}}<br/>
 			 {% endif %}
-			 <input class="add_button" type="button" value="Buy" onclick="doAddProductToCart('{{product.key}}')" /> 
+			 <input class="ncm_button add_button" type="button" value="Take me Home" onclick="doAddProductToCart('{{product.key}}')" /> 
 		   </p>
 		 {% else %}
 		   <p class="product_sold_panel">Sold!</p>

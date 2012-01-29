@@ -44,6 +44,27 @@ img {
 	-webkit-border-radius:15px;
 }
 
+.ncm_button {
+	padding: 3px 5px 3px 5px;
+	margin: 3px 0.5em;
+	border-width: 1px;
+	border-style: dotted;
+	border-color: brown;
+	background-color: #996600;
+	border-radius:15px;
+	-moz-border-radius:15px;
+	-webkit-border-radius:15px;
+	overflow:hidden;
+	-moz-box-shadow: 3px 3px 4px #000;
+	-webkit-box-shadow: 3px 3px 4px #000;
+	box-shadow: 3px 3px 4px #000;
+	/* For IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+	/* For IE 5.5 - 7 */
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
+
+}
+
 #content { 
 	float: left;
 	margin: auto;
@@ -62,7 +83,8 @@ img {
 }
 
 #content .add_button {
-	width:85px;
+	color:yellow;
+	font-weight: bold;
 }
 
 .catalog {
@@ -415,16 +437,9 @@ textarea.editable {
 }
 
 #checkout_button a {
-	background:yellow;
-	color:blue;
+	color:yellow;
 	font-weight:bold;
 	font-size:1em;
-	padding-left: 2px;
-	padding-right: 2px;
-	border-width:1px;
-	border-color:gold;
-	border-style:dotted;
-	margin:2px;
 }
 
 .score {
@@ -519,23 +534,6 @@ textarea.editable {
 #categories li {
 	float: left;
 	list-style: none;
-	padding: 3px 5px 3px 5px;
-	margin: 3px 0.5em;
-	border-width: 1px;
-	border-style: dotted;
-	border-color: brown;
-	background-color: #996600;
-	border-radius:15px;
-	-moz-border-radius:15px;
-	-webkit-border-radius:15px;
-	overflow:hidden;
-	-moz-box-shadow: 3px 3px 4px #000;
-	-webkit-box-shadow: 3px 3px 4px #000;
-	box-shadow: 3px 3px 4px #000;
-	/* For IE 8 */
-	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
-	/* For IE 5.5 - 7 */
-	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
 }
 
 #categories a {
