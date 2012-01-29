@@ -1408,24 +1408,34 @@ def _buildTransactionRow(community, transaction, fee_percentage, fee_minimum):
     products = []
     sale_amount = 0.0
     sale_items = 0
-        
+    sale_shipping = 0.0
+    
     for entry in transaction.detail:
         product = {}
-        (product_key, items, amount) = entry.split(':')
+
+        entry_fields = entry.split(':')
+        if len(entry_fields) == 4:
+            (product_key, items, amount, shipping) = entry_fields
+        else:
+            (product_key, items, amount) = entry_fields
+            shipping = 0.0
+
         product_amount = float(amount)
         product_items = int(items)
         sale_items += product_items
         sale_amount += product_amount * product_items
+        sale_shipping += float(shipping) * product_items
         product['product_name'] = Product.get(product_key).name
         product['items'] = product_items
         products.append(product)
 
-    sale_fee = sale_amount * fee_percentage + fee_minimum
+    sale_fee = (sale_amount + sale_shipping) * fee_percentage + fee_minimum
     sale['products'] = products
     sale['items'] = sale_items
     sale['fee'] = "%.2f" % sale_fee
     sale['amount'] = "%.2f" % sale_amount
-    sale['net'] = "%.2f" % (sale_amount - sale_fee)
+    sale['shipping'] = "%.2f" % sale_shipping
+    sale['net'] = "%.2f" % ((sale_amount + sale_shipping) - sale_fee)
 
     return (sale, sale_items, sale_amount)
 
@@ -1450,6 +1460,7 @@ class RPCGetMethods:
                       "key": str(product.key()),
                       "image": str(product.image),
                       "price":'%3.2f' % item.price,
+                      "shipping":'%3.2f' % item.shipping,
                       "total":'%3.2f' % item.subtotal,
                       "pickup_only": product.pickup_only
                       }
@@ -1537,7 +1548,7 @@ class RPCPostMethods:
                     item.count += 1
                 break
         else:
-            newItem = ShoppingCartItem(product_key=product_id, price=product.actual_price, count=1)
+            newItem = ShoppingCartItem(product_key=product_id, shipping=product.shipping, price=product.actual_price, count=1)
             items.append(newItem)
 
         total = 0
@@ -1607,7 +1618,7 @@ class RPCPostMethods:
         fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
         fee_minimum = community.paypal_fee_minimum + community.fee_minimum
         
-        (sale, additional_items, additional_sales) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
+        (sale, additional_items, additional_sales) = _buildTransactionRow(community, transaction, fee_percentage, fee_minimum)
         return {"sale":sale}
 
     def OrderProductsInCart(self, request, *args):
@@ -1622,11 +1633,11 @@ class RPCPostMethods:
             cart_transaction.shopper_name = sanitizeHtml(args[0])
             cart_transaction.shopper_email = sanitizeHtml(args[1])
             cart_transaction.shopper_phone = sanitizeHtml(args[2])
-            shipping = sanitizeHtml(args[3].decode('unicode_escape'))
+            shipping_info = sanitizeHtml(args[3].decode('unicode_escape'))
 
-            logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping)
+            logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping_info)
 
-            cart_transaction.shopper_shipping = shipping
+            cart_transaction.shopper_shipping = shipping_info
             cart_transaction.put()
 
             maker_transactions = []
@@ -1644,9 +1655,10 @@ class RPCPostMethods:
 
                 for maker_transaction in maker_transactions:
                     if maker_transaction.maker.key() == product.maker.key():
-                        entry = "%s:%s:%s" % (str(product.key()),
+                        entry = "%s:%s:%s:%s" % (str(product.key()),
                                               str(item.count),
-                                              str(item.price))
+                                              str(item.price),
+                                              str(item.shipping))
                         maker_transaction.detail.append(entry)
                         break
                     else:
@@ -1658,9 +1670,10 @@ class RPCPostMethods:
                                                          email=product.maker.paypal_business_account_email,
                                                          when=when)
 
-                    entry = "%s:%s:%s" % (str(product.key()),
+                    entry = "%s:%s:%s:%s" % (str(product.key()),
                                           str(item.count),
-                                          str(item.price))
+                                          str(item.price),
+                                          str(item.shipping))
                     maker_transaction.detail.append(entry)
                     maker_transactions.append(maker_transaction)
                     maker_business_ids.append((product.maker.paypal_business_account_email, 1.00))

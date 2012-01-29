@@ -19,7 +19,20 @@
 		   <span class="pickup">(Pick-up Only)</span>
 		   {% endif %}
 		   </p>
-		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		   <p class="price">
+			 {% if product.discount_price %}
+			   <span class="discounted">${{product.price|floatformat:2}}</span> &nbsp;
+			   ${{product.discount_price|floatformat:2}}
+			 {% else %}
+			   ${{product.price|floatformat:2}}
+			 {% endif %}			 
+			 {% if product.shipping %}
+			   <br/>
+			   plus shipping and handling: ${{product.shipping|floatformat:2}}
+			 {% endif %}
+			 <br/>
+			 <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" />
+		   </p>
 		 {% else %}
 		 <span class="product_sold_panel">
 		   <p>Sold!</p>

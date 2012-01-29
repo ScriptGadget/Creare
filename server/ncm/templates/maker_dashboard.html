@@ -45,7 +45,7 @@
 	    row += "<li>Phone: "+sale.shopper_phone+"</li> "
       }
 	  row += "<li>Shipping: <br/>"+sale.shopper_shipping+"</li> "
-      row += "</ul></td><td>"+sale.items+"</td><td>"+sale.amount+"</td><td>"+sale.fee+"</td><td>"+sale.net+"</td><td>"+sale.transaction_status+"</td>";
+      row += "</ul></td><td>"+sale.items+"</td><td>"+sale.amount+"</td><td>"+sale.shipping+"</td><td>"+sale.fee+"</td><td>"+sale.net+"</td><td>"+sale.transaction_status+"</td>";
 	  row += "<td><input type='checkbox' onclick='doSetMakerTransactionShipped(\"" + sale.transaction + "\", \"" + start + "\", \""  + end + "\")'";
 	  if(sale.shipped){
 	    row += " checked/></td>";
@@ -70,7 +70,7 @@
     sales = response["sales"];
     start = response["start"];
     end = response["end"];
-    headings = "<tr><th>Date</th><th>Items</th><th>Price</th><th>Fees</th><th>Net</th><th>Payment</th><th>Shipped?</th></tr>";
+    headings = "<tr><th>Date</th><th>Items</th><th>Price</th><th>Shipping</th><th>Fees</th><th>Net</th><th>Payment</th><th>Shipped?</th></tr>";
     rows = " ";
 
     if(sales.length > 0){

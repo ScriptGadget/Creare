@@ -316,8 +316,9 @@ class Product(db.Model):
     slug = db.StringProperty()
     short_description = db.StringProperty(required=True, verbose_name="three related, descriptive words")
     description = db.TextProperty(required=True, verbose_name="Everything amazing about your item")
-    price = db.FloatProperty(required=True, verbose_name="Price with shipping/handling and tax (no $ or commas)", default=10.0)
-    discount_price = db.FloatProperty(required=False, verbose_name="Optional Discounted Price")
+    price = db.FloatProperty(required=True, verbose_name="Price including tax (no $ or commas)", default=10.0)
+    discount_price = db.FloatProperty(required=False, verbose_name="Optional discounted price")
+    shipping = db.FloatProperty(required=False, verbose_name="Optional shipping & handling")
     tags = db.StringListProperty(required=True, verbose_name="Tags (search terms separated by commas)")
     unique = db.BooleanProperty(default=False)
     inventory = db.IntegerProperty(required=True, verbose_name="Number of items you have to sell", default=1)
@@ -449,14 +450,19 @@ class Product(db.Model):
 
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """
-    def __init__(self, product_key, price, count = 0):
+    def __init__(self, product_key, price, shipping = 0.0, count = 0):
         self.product_key = product_key
         self.price = price
         self.count = count
+        if(shipping is not None):
+            self.shipping = shipping
+        else:
+            self.shipping = 0.0
+        
 
     @property
     def subtotal(self):
-        return self.price * self.count
+        return (self.price + self.shipping) * self.count
 
     @staticmethod
     def createReceiverList(community, shopping_cart_items):
@@ -469,7 +475,7 @@ class ShoppingCartItem():
         total_amount = 0.0
         makers = {}
         for item in shopping_cart_items:
-            subtotal = item.count * item.price
+            subtotal = item.subtotal
             total_amount += subtotal
             product = Product.get(item.product_key)
             if product.maker.key() in makers:
