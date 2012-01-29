@@ -1,6 +1,9 @@
 body { 
 	background-color:#996600;
 	font-family: Georgia, Times New Roman, Times, serif;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#996600', endColorstr='#ccbbbb'); /* for IE */
+	background: -webkit-gradient(linear, left top, left bottom, from(#996600), to(#ccbbbb)); /* for webkit browsers */
+	background: -moz-linear-gradient(top,  #996600,  #ccbbbb); /* for firefox 3.6+ */ 
 }
 
 img { 
@@ -48,8 +51,12 @@ img {
 	padding: 3px 5px 3px 5px;
 	margin: 3px 0.5em;
 	border-width: 1px;
-	border-style: dotted;
+	border-style: solid;
 	border-color: brown;
+	border-top-color: #ccbbbb;
+	border-bottom-color: #996600;
+	border-left-color: #ccbbbb;
+	border-right-color: #996600;
 	background-color: #996600;
 	border-radius:15px;
 	-moz-border-radius:15px;
@@ -63,6 +70,9 @@ img {
 	/* For IE 5.5 - 7 */
 	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
 
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ccbbbb', endColorstr='#996600'); /* for IE */
+	background: -webkit-gradient(linear, left top, left bottom, from(#ccbbbb), to(#996600)); /* for webkit browsers */
+	background: -moz-linear-gradient(top,  #ccbbbb,  #996600); /* for firefox 3.6+ */ 
 }
 
 #content { 
