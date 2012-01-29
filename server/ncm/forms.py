@@ -118,7 +118,7 @@ class MakerForm(djangoforms.ModelForm):
           if self.instance.store_name != data:
             raise forms.ValidationError(u'Store names cannot be changed.')
 
-        maker = Maker.all().filter('store_name = ', data).get()
+        maker = Maker.all().filter('slug = ', Maker.get_slug_for_store_name(data)).get()
         if maker:
             if not self.instance or self.instance.key() != maker.key():
                 raise forms.ValidationError(u'That store name is already taken.')
@@ -157,7 +157,7 @@ class ProductForm(djangoforms.ModelForm):
         else:
           if self.maker:
             p = Product.all()
-            p.filter('name = ', data)
+            p.filter('slug = ', Product.get_slug_for_name(data))
             p.filter('maker == ', self.maker.key())
             product = p.get()
             if product:
