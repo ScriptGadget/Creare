@@ -463,7 +463,8 @@ textarea.editable {
 }
 
 #checkout_table a:hover{
-	background: yellow;
+	background: orange;
+	color: black;
 }
 
 .increment {
