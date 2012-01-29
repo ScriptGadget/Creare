@@ -467,15 +467,15 @@ textarea.editable {
 }
 
 .increment {
-	background:green;
+	background:#33AA33;
 }
 
 .decrement {
-	background:red;
+	background:#CC3333;
 }
 
 .clear {
-	background:red;
+	background:#CC3333;
 }
 
 .module {
