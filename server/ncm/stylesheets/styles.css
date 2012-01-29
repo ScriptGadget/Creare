@@ -451,13 +451,31 @@ textarea.editable {
 	padding: 2px;
 }
 
-.increment_button {
+#checkout_table a {
+	font-family:'Courier New', monospace;
+	font-weight: bold;
+	font-size: 1em;
+	text-decoration: none;
+	border-width: 1px;
+	border-style: outset;
+	padding:1px;
+	color: white;
 }
 
-.decrement_button {
+#checkout_table a:hover{
+	background: yellow;
 }
 
-.clear_button {
+.increment {
+	background:green;
+}
+
+.decrement {
+	background:red;
+}
+
+.clear {
+	background:red;
 }
 
 .module {
