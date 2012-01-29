@@ -16,7 +16,6 @@
 		   <p class="store_name">by <span><a href="/maker_store/{{product.maker.slug}}">{{product.maker.store_name}}</a></span></p>
 		   <p class="product_short_description">{{product.short_description}}</p>
 		 </div>
-
 		 <div class="product_price_panel">
 		   {% if product.inventory %}
 		   {% if product.unique %}
@@ -29,8 +28,8 @@
 		   {% endif %}
 		   <p class="price">
 			 {% if product.discount_price %}
-			   <span class="discounted">${{product.price|floatformat:2}}</span><br/>
-			   ${{product.discount_price|floatformat:2}}<br/>
+			   <div class="price"><span class="discounted">${{product.price|floatformat:2}}</span>
+			   ${{product.discount_price|floatformat:2}}</div>
 			 {% else %}
 			   ${{product.price|floatformat:2}}<br/>
 			 {% endif %}
