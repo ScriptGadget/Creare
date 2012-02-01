@@ -437,7 +437,7 @@ class Product(db.Model):
             for product in stuff:
                 if product.show and not product.disable:
                     products.append(product)
-            products = sorted(products, key=attrgetter('when'), reverse=True)[0:4]
+            products = sorted(products, key=attrgetter('when'), reverse=True)[0:number_to_return]
             return (maker, products)
         else:
             return (None, None)
