@@ -34,6 +34,8 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext import db
+from google.appengine.api import memcache
+from google.appengine.datastore import entity_pb
 
 from gaesessions import get_current_session
 
@@ -48,6 +50,30 @@ template.register_template_library('common.catalog_tag')
 # some settings
 MAX_PRODUCT_IMAGE_HEIGHT=320
 MAX_PRODUCT_IMAGE_WIDTH=320
+
+
+# These two methods are from an article at
+# http://blog.notdot.net/2009/9/Efficient-model-memcaching
+def serialize_entities(models):
+    "Convert db.Models into protobufs which work great in Memcached"
+    if models is None:
+        return None
+    elif isinstance(models, db.Model):
+        # Just one instance
+        return db.model_to_protobuf(models).Encode()
+    else:
+        # A list
+        return [db.model_to_protobuf(x).Encode() for x in models]
+
+def deserialize_entities(data):
+    "Convert a protobuf or list of protobufs into db.Models"
+    if data is None:
+        return None
+    elif isinstance(data, str):
+        # Just one instance
+        return db.model_from_protobuf(entity_pb.EntityProto(data))
+    else:
+        return [db.model_from_protobuf(entity_pb.EntityProto(x)) for x in data]
 
 def add_base_values(template_values):
     community = Community.get_current_community()
@@ -604,7 +630,15 @@ class CommunityHomePage(webapp.RequestHandler):
             return
 
         session['community'] = community.slug
-        (featured_maker, featured_products) = Product.getFeatured(4, community)
+
+        featured_maker = deserialize_entities(memcache.get("featured_maker"))
+        featured_products = deserialize_entities(memcache.get("featured_products"))
+        if not featured_maker:
+            (featured_maker, featured_products) = Product.getFeatured(4, community)
+            cache_map = { "featured_maker" : serialize_entities(featured_maker),
+                          "featured_products" : serialize_entities(featured_products)}
+            memcache.set_multi(cache_map, time=3600)
+
         template_values = { 
             'title': community.name,
             'latest': Product.getLatest(4),
