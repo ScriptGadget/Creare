@@ -23,6 +23,7 @@ import logging
 import shardedcounter
 import hashlib
 import datetime as datetime_module
+from operator import attrgetter
 
 _default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic', 'Metalwork', 'Woodwork', 'Cards & Papercraft']
 
@@ -436,9 +437,7 @@ class Product(db.Model):
             for product in stuff:
                 if product.show and not product.disable:
                     products.append(product)
-                    count += 1
-                    if count >= 4:
-                        break;
+            products = sorted(products, key=attrgetter('when'), reverse=True)[0:4]
             return (maker, products)
         else:
             return (None, None)
