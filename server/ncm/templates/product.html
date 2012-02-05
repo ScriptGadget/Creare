@@ -22,8 +22,7 @@
 		  upload_field.form.reset();
 		  return false;
 	  }
-	  // document.getElementById('picture_preview').innerHTML = '<img src="/static/images/loading.gif" border="0" />';
-      document.getElementById('picture_preview').innerHTML = "Loading...";
+	  document.getElementById('picture_preview').innerHTML = '<img src="/static/images/loading.gif" border="0" />';
 	  upload_field.form.action = '/image/upload';
 	  upload_field.form.target = 'upload_iframe';
 	  upload_field.form.submit();
@@ -68,6 +67,9 @@
 			 <span>Upload Picture :</span>
 			 <input type="file" name="img" id="picture" onchange="return ajaxFileUpload(this);" />
 			 <input type="hidden" name="parent_form" value="product_form" />
+			   <input type="hidden" name="max_width" value={{max_width}} />
+			   <input type="hidden" name="max_height" value={{max_height}} />
+			   <input type="hidden" name="image_field" value="image_key" />
 			 <span id="picture_error"></span>
 		   </div>
 		 </form>

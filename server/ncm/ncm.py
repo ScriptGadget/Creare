@@ -381,6 +381,8 @@ class ProductPage(webapp.RequestHandler):
         else:
             template_values = { 'form' : ProductForm(maker=maker), 
                                 'tag_field':buildTagField(''),
+                                'max_width':MAX_PRODUCT_IMAGE_WIDTH,
+                                'max_height':MAX_PRODUCT_IMAGE_HEIGHT,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -436,6 +438,8 @@ class ProductPage(webapp.RequestHandler):
                 template_values = { 'form' : data,
                                     'tag_field':buildTagField(self.request.get('tags')),
                                     'messages':messages,
+                                    'max_width':MAX_PRODUCT_IMAGE_WIDTH,
+                                    'max_height':MAX_PRODUCT_IMAGE_HEIGHT,
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/product.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -479,6 +483,8 @@ class EditProductPage(webapp.RequestHandler):
                                 'tag_field':buildTagField(tags),
                                 'product':product,
                                 'id' : product.key(),
+                                'max_width':MAX_PRODUCT_IMAGE_WIDTH,
+                                'max_height':MAX_PRODUCT_IMAGE_HEIGHT,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -539,6 +545,8 @@ class EditProductPage(webapp.RequestHandler):
                                   'messages': messages,
                                   'product':product,
                                   'id' : _id,
+                                  'max_width':MAX_PRODUCT_IMAGE_WIDTH,
+                                  'max_height':MAX_PRODUCT_IMAGE_HEIGHT,
                                   'uri':self.request.uri}
               path = os.path.join(os.path.dirname(__file__), "templates/product.html")
               self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -1788,6 +1796,10 @@ class UploadImage(webapp.RequestHandler):
     def post(self):
         photo_file = self.request.get("img")
         parent_form = self.request.get("parent_form")
+        max_width = int(self.request.get("max_width"))
+        max_height = int(self.request.get("max_height"))
+        image_field = self.request.get("image_field")
+        logging.info("width: %s height: %s" % (max_width, max_height))
         photo_is_valid = photo_file is not None and photo_file != ''
         photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
         output = """<script language="JavaScript" type="text/javascript">
@@ -1796,9 +1808,10 @@ class UploadImage(webapp.RequestHandler):
                      var picture_preview = parDoc.getElementById("picture_preview"); """
         if photo_is_valid:
             try:
-                photo = images.resize(photo_file, 320, 320)
+                photo = images.resize(photo_file, max_width, max_height)
             except:
-                photo_is_valid = False
+                photo = None;
+
             if photo:
                 image = Image( 
                     category='Temporary',
@@ -1806,17 +1819,17 @@ class UploadImage(webapp.RequestHandler):
                     )
                 image.put()
                 output += """ picture_error.innerHTML = ""; """
-                output += """ hidden_element = parDoc.getElementById("image_key");
+                output += """ hidden_element = parDoc.getElementById("%(image_field)s");
                               if(!hidden_element) {
                                 parent_form = parDoc.getElementById("%(parent_form)s");
                                 var hidden_element = document.createElement("input");
                                 hidden_element.type="hidden";
-                                hidden_element.name="image_key";
-                                hidden_element.id="image_key";
+                                hidden_element.name="%(image_field)s";
+                                hidden_element.id="%(image_field)s";
                                 parent_form.appendChild(hidden_element); 
                               }
                               hidden_element.value="%(image_key)s";
-                          """ % {'parent_form':parent_form, 'image_key':str(image.key())}
+                          """ % {'image_field':image_field, 'parent_form':parent_form, 'image_key':str(image.key())}
                 output += """ picture_preview.innerHTML = "<img src='/images/%s' id='preview_picture_tag' \>"; """ % (str(image.key()))
             else:
                 output += """ picture_error.innerHTML = "Resize failed."; picture_preview.innerHTML = '';""";
