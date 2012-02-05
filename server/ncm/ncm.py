@@ -1799,13 +1799,14 @@ class UploadImage(webapp.RequestHandler):
         max_width = int(self.request.get("max_width"))
         max_height = int(self.request.get("max_height"))
         image_field = self.request.get("image_field")
-        logging.info("width: %s height: %s" % (max_width, max_height))
+        preview = self.request.get("preview")
+        error = self.request.get("error")
         photo_is_valid = photo_file is not None and photo_file != ''
         photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
         output = """<script language="JavaScript" type="text/javascript">
                      var parDoc = window.parent.document;
-                     var picture_error = parDoc.getElementById("picture_error");
-                     var picture_preview = parDoc.getElementById("picture_preview"); """
+                     var picture_error = parDoc.getElementById("%(error)s");
+                     var picture_preview = parDoc.getElementById("%(preview)s"); """ % {'preview':preview, 'error':error}
         if photo_is_valid:
             try:
                 photo = images.resize(photo_file, max_width, max_height)
@@ -1837,7 +1838,7 @@ class UploadImage(webapp.RequestHandler):
             output += """  picture_error.innerHTML = "Not a valid image."; picture_preview.innerHTML = '';""";
         
         output += "</script>"
-        self.response.out.write(output);
+        self.response.out.write(output)
 
 
 class DisplayImage(webapp.RequestHandler):
