@@ -206,6 +206,7 @@ class ProductForm(djangoforms.ModelForm):
           'disable',
           'when',
           'tags',
+          'primary_image',
           ]
 
 ProductForm = autostrip(ProductForm)

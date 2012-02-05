@@ -104,7 +104,7 @@ def add_base_values(template_values):
     template_values['cartItems'] = count
     return template_values;
 
-def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, %(height)sx%(width)s, less then 1MB)", name="img", height=MAX_PRODUCT_IMAGE_HEIGHT, width=MAX_PRODUCT_IMAGE_WIDTH):
+def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, %(height)sx%(width)s, less then 1MB)", name="img", height=MAX_PRODUCT_IMAGE_HEIGHT, width=MAX_PRODUCT_IMAGE_WIDTH, count=1):
     """ Build a form to upload images with a configurable prompt message. """
     new_prompt = prompt % {'height':height, 'width':width}
     return """
@@ -365,10 +365,6 @@ class EditMakerPage(webapp.RequestHandler):
 class ProductPage(webapp.RequestHandler):
     """ Add a Product """
 
-    @staticmethod
-    def buildImageUploadForm():
-        return buildImageUploadForm("Product Image: (PNG or JPG, %(height)sx%(width)s, less then 1MB)", height=MAX_PRODUCT_IMAGE_HEIGHT, width=MAX_PRODUCT_IMAGE_WIDTH)
-
     def get(self):
         authenticator = Authenticator(self)
 
@@ -385,7 +381,6 @@ class ProductPage(webapp.RequestHandler):
         else:
             template_values = { 'form' : ProductForm(maker=maker), 
                                 'tag_field':buildTagField(''),
-                                'upload_form': ProductPage.buildImageUploadForm(),
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -405,14 +400,8 @@ class ProductPage(webapp.RequestHandler):
             return
         else:
             data = ProductForm(data=self.request.POST, maker=maker)
-            uploaded_file = self.request.get("img")
-            image_is_valid = uploaded_file is not None and uploaded_file != ''
-            image_is_valid = image_is_valid and len(uploaded_file) < 1024*1024
-            if image_is_valid:
-                try:
-                    image = images.resize(uploaded_file, MAX_PRODUCT_IMAGE_WIDTH, MAX_PRODUCT_IMAGE_HEIGHT)
-                except:
-                    image_is_valid = False
+            image_key = self.request.get("image_key")
+            image_is_valid = image_key is not None and image_key != ''
 
             if data.is_valid() and image_is_valid:
                 entity = data.save(commit=False)
@@ -426,11 +415,16 @@ class ProductPage(webapp.RequestHandler):
                 for tag in tags:
                     entity.tags.append(tag.strip().lower())
                 entity.put()
-                Image(
+                temp_image = db.get(image_key)
+                primary_image = Image(
                     parent=entity,
                     category='Product',
-                    content=image,
-                    ).put()
+                    content=temp_image.content,
+                    )
+                primary_image.put()
+                temp_image.delete()
+                entity.primary_image = primary_image
+                entity.put()
                 Community.get_current_community().increment_product_score()
                 self.redirect('/maker_dashboard/' + maker.slug)
             else:
@@ -442,7 +436,6 @@ class ProductPage(webapp.RequestHandler):
                 template_values = { 'form' : data,
                                     'tag_field':buildTagField(self.request.get('tags')),
                                     'messages':messages,
-                                    'upload_form': ProductPage.buildImageUploadForm(),
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/product.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -484,7 +477,6 @@ class EditProductPage(webapp.RequestHandler):
                 tags = ''
             template_values = { 'form' : ProductForm(instance=product),
                                 'tag_field':buildTagField(tags),
-                                'upload_form': ProductPage.buildImageUploadForm(),
                                 'product':product,
                                 'id' : product.key(),
                                 'uri':self.request.uri}
@@ -508,19 +500,8 @@ class EditProductPage(webapp.RequestHandler):
           return
       else:
           data = ProductForm(data=self.request.POST, instance=product)
-          uploaded_file = self.request.get("img")
-
-          if not uploaded_file:
-              image_is_valid = True
-              image = None
-          else:
-              image_is_valid = len(uploaded_file) < 1024*1024
-              if image_is_valid:
-                  try:
-                      image = images.resize(uploaded_file, MAX_PRODUCT_IMAGE_WIDTH, MAX_PRODUCT_IMAGE_HEIGHT)
-                  except:
-                      image = None
-                      image_is_valid = False
+          image_key = self.request.get("image_key")
+          image_is_valid = True
 
           if data.is_valid() and image_is_valid:
               entity = data.save(commit=False)
@@ -531,15 +512,22 @@ class EditProductPage(webapp.RequestHandler):
               entity.tags = []
               for tag in tags:
                   entity.tags.append(tag.strip().lower())
-              entity.put()
-              if image:
+
+              temp_image = None;
+              if image_key is not None and image_key != '':
+                  temp_image = db.get(image_key)
+              if temp_image:
                   if product.image:
                       db.delete(product.image)
-                  Image(
+                  primary_image = Image(
                       parent=entity,
                       category='Product',
-                      content=image,
-                      ).put()
+                      content=temp_image.content,
+                      )
+                  primary_image.put()
+                  temp_image.delete()
+                  entity.primary_image = primary_image
+              entity.put()
               self.redirect('/maker_dashboard/' + maker.slug)
           else:
               messages = []
@@ -549,7 +537,6 @@ class EditProductPage(webapp.RequestHandler):
               template_values = { 'form' : data,
                                   'tag_field':buildTagField(self.request.get('tags')),
                                   'messages': messages,
-                                  'upload_form': ProductPage.buildImageUploadForm(),
                                   'product':product,
                                   'id' : _id,
                                   'uri':self.request.uri}
@@ -1796,6 +1783,50 @@ class RPCPostMethods:
             page.content=args[1].replace(u'\u201c', '"').replace(u'\u201d', '"').decode('unicode_escape')
             page.put()
 
+class UploadImage(webapp.RequestHandler):
+    """ Handle temporary image uploads."""
+    def post(self):
+        photo_file = self.request.get("img")
+        parent_form = self.request.get("parent_form")
+        photo_is_valid = photo_file is not None and photo_file != ''
+        photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
+        output = """<script language="JavaScript" type="text/javascript">
+                     var parDoc = window.parent.document;
+                     var picture_error = parDoc.getElementById("picture_error");
+                     var picture_preview = parDoc.getElementById("picture_preview"); """
+        if photo_is_valid:
+            try:
+                photo = images.resize(photo_file, 320, 320)
+            except:
+                photo_is_valid = False
+            if photo:
+                image = Image( 
+                    category='Temporary',
+                    content=photo,
+                    )
+                image.put()
+                output += """ picture_error.innerHTML = ""; """
+                output += """ hidden_element = parDoc.getElementById("image_key");
+                              if(!hidden_element) {
+                                parent_form = parDoc.getElementById("%(parent_form)s");
+                                var hidden_element = document.createElement("input");
+                                hidden_element.type="hidden";
+                                hidden_element.name="image_key";
+                                hidden_element.id="image_key";
+                                parent_form.appendChild(hidden_element); 
+                              }
+                              hidden_element.value="%(image_key)s";
+                          """ % {'parent_form':parent_form, 'image_key':str(image.key())}
+                output += """ picture_preview.innerHTML = "<img src='/images/%s' id='preview_picture_tag' \>"; """ % (str(image.key()))
+            else:
+                output += """ picture_error.innerHTML = "Resize failed."; picture_preview.innerHTML = '';""";
+        else:
+            output += """  picture_error.innerHTML = "Not a valid image."; picture_preview.innerHTML = '';""";
+        
+        output += "</script>"
+        self.response.out.write(output);
+
+
 class DisplayImage(webapp.RequestHandler):
     def get(self, image_id):
         try:
@@ -1933,6 +1964,7 @@ def main():
         ('/return', CompletePurchase),
         ('/cancel', CompletePurchase),
         (r'/images/(.*)', DisplayImage),
+        ('/image/upload', UploadImage),
         ('/search', ProductSearch),
         ('/category', CategorySearch),
         ('/maker_directory', MakerDirectory),

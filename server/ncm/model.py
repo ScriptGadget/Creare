@@ -77,6 +77,13 @@ def validateEmail(value):
     if not allowed.match(value):
         raise db.BadValueError("Bad email address: " + value)
 
+class Image(db.Model):
+    """ 
+    An icon, photo or graphic. 
+    Use ancestry to associate with Makers, Products and Communities.
+    """
+    category = db.StringProperty(choices=set(['Product','Advertisement','Portrait','Logo','Banner','Temporary']), required=True)
+    content = db.BlobProperty(required=True)
 
 class Community(db.Model):
     """ A Community of Makers and Crafters  """
@@ -329,10 +336,16 @@ class Product(db.Model):
     pickup_only = db.BooleanProperty(default=False, verbose_name="Pick-up only")
     category = db.StringProperty(choices=set(_default_categories), default=_default_categories[0], required=True)
     video_link = db.StringProperty(verbose_name="Embedded Video Link")
+    primary_image = db.ReferenceProperty(Image)
 
     @property
     def image(self):
-        return Image.all(keys_only=True).ancestor(self).get()
+        image_key = None
+        if self.primary_image is None:
+            image_key = Image.all(keys_only=True).ancestor(self).get()
+        else:
+            image_key = Product.primary_image.get_value_for_datastore(self)
+        return image_key
 
     @property
     def tag_string(self):
@@ -619,11 +632,3 @@ class Advertisement(db.Model):
 
     def refill_impressions(self, impressions):
         shardedcounter.increment(str(self.key()), impressions)
-
-class Image(db.Model):
-    """ 
-    An icon, photo or graphic. 
-    Use ancestry to associate with Makers, Products and Communities.
-    """
-    category = db.StringProperty(choices=set(['Product','Advertisement','Portrait','Logo','Banner']), required=True)
-    content = db.BlobProperty(required=True)
