@@ -402,7 +402,7 @@ class ProductPage(webapp.RequestHandler):
             return
         else:
             data = ProductForm(data=self.request.POST, maker=maker)
-            image_key = self.request.get("image_key")
+            image_key = self.request.get("img0")
             image_is_valid = image_key is not None and image_key != ''
 
             if data.is_valid() and image_is_valid:
@@ -506,7 +506,7 @@ class EditProductPage(webapp.RequestHandler):
           return
       else:
           data = ProductForm(data=self.request.POST, instance=product)
-          image_key = self.request.get("image_key")
+          image_key = self.request.get("img0")
           image_is_valid = True
 
           if data.is_valid() and image_is_valid:
