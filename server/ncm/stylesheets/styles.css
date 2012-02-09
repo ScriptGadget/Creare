@@ -48,6 +48,9 @@ img {
 }
 
 .ncm_button {
+	color:yellow;
+	font-weight: bold;
+	text-decoration: none;
 	padding: 3px 5px 3px 5px;
 	margin: 3px 0.5em;
 	border-width: 1px;
@@ -133,6 +136,14 @@ img {
 	background-color: #FCFCFC;
 	-moz-border-radius: 15px;
 	border-radius:15px;
+}
+
+#catalog_controls{
+	display:block;
+	width:100%;
+	text-align:center;
+	margin:auto;
+	margin-top: 20px;
 }
 
 .product_image_panel {

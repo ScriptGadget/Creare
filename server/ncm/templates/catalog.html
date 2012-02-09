@@ -22,14 +22,14 @@
 {% block catalog %}
 	{% if products %}
        {% catalog products 4 maker %}
-		<div id="transaction_table_controls">
+		<div id="catalog_controls">
        {% if show_previous %}
-          <a id="prev_control" class="control" href="/category?category={{category|urlencode}}&start={{previous}}">(go back)</a>
+          <a id="prev_control" class="ncm_button" href="/category?category={{category|urlencode}}&start={{previous}}">Go Back</a>
 	   {% else %}
-		  <a id="prev_control" class="control" href=""></a>
+		  <a id="prev_control" class="control" href="#"></a>
        {% endif %}
        {% if next %}
-          <a id="next_control" class="control" href="/category?category={{category|urlencode}}&start={{next}}">(more)</a>
+          <a id="next_control" class="ncm_button" href="/category?category={{category|urlencode}}&start={{next}}">More</a>
        {% endif %}
 		</div>
 	{% else %}
