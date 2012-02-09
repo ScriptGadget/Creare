@@ -177,7 +177,7 @@ function buildImageUploadForm(panel, iframe_name, form_name, parent_form_name, i
 	file_input.onchange = function(){return ajaxFileUpload(this, preview_name, iframe_name);};
 	form.appendChild(file_input);
 
-	form.appendChild(afu_buildInput("hidden", "parent_form", "product_form"));
+	form.appendChild(afu_buildInput("hidden", "parent_form", parent_form_name));
 	form.appendChild(afu_buildInput("hidden", "max_width", width));
 	form.appendChild(afu_buildInput("hidden", "max_height", height));
 	form.appendChild(afu_buildInput("hidden", "image_field", image_name));

@@ -153,8 +153,10 @@ class MakerPage(webapp.RequestHandler):
             template_values = { 'title':'Open Your Store',
                                 'form':data,
                                 'tag_field':buildTagField(''),
-                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
+                                'max_width_photo': MakerPage.photo_width,
+                                'max_height_photo': MakerPage.photo_height,
+                                'max_width_logo': MakerPage.logo_width,
+                                'max_height_logo': MakerPage.logo_height,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -171,23 +173,23 @@ class MakerPage(webapp.RequestHandler):
         data = MakerForm(data=self.request.POST)
         accepted_terms = self.request.get('term1')
 
-        photo_file = self.request.get("photo")
-        photo_is_valid = photo_file is not None and photo_file != ''
-        photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
-        if photo_is_valid:
-            try:
-                photo = images.resize(photo_file, MakerPage.photo_width, MakerPage.photo_height)
-            except:
-                photo_is_valid = False
+        temp_key = self.request.get("photo")
+        if temp_key is None or temp_key == '':
+            photo_is_valid = True
+            photo = None
+        else:
+            photo = db.get(temp_key)
+            if photo is not None:
+                photo_is_valid = True;
 
-        logo_file = self.request.get("logo")
-        logo_is_valid = logo_file is not None and logo_file != ''
-        logo_is_valid = logo_is_valid and len(logo_file) < 1024*1024
-        if logo_is_valid:
-            try:
-                logo = images.resize(logo_file, MakerPage.logo_width, MakerPage.logo_height)
-            except:
-                logo_is_valid = False
+        temp_key = self.request.get("logo")
+        if temp_key is None or temp_key == '':
+            logo_is_valid = True
+            logo = None
+        else:
+            logo = db.get(temp_key)
+            if logo is not None:
+                logo_is_valid = True;
 
         if data.is_valid() and accepted_terms and photo_is_valid and logo_is_valid:
             # Save the data, and redirect to the view page
@@ -205,14 +207,16 @@ class MakerPage(webapp.RequestHandler):
                 Image( 
                     parent=entity, 
                     category='Portrait',
-                    content=photo,
+                    content=photo.content,
                     ).put()
+                photo.delete()
             if logo:
                 Image( 
                     parent=entity, 
                     category='Logo',
-                    content=logo,
+                    content=logo.content,
                     ).put()
+                logo.delete()
             community.increment_maker_score()
             self.redirect('/maker_dashboard/' + entity.slug)
         else:
@@ -228,8 +232,10 @@ class MakerPage(webapp.RequestHandler):
             template_values = { 'title':'Open Your Store', 
                                 'messages':messages,
                                 'tag_field':buildTagField(self.request.get('tags')),
-                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
+                                'max_width_photo': MakerPage.photo_width,
+                                'max_height_photo': MakerPage.photo_height,
+                                'max_width_logo': MakerPage.logo_width,
+                                'max_height_logo': MakerPage.logo_height,
                                 'form' : data, 
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -265,8 +271,10 @@ class EditMakerPage(webapp.RequestHandler):
             template_values = { 'form' : MakerForm(instance=maker),
                                 'id' : maker.key(),
                                 'tag_field':buildTagField(tags),
-                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
+                                'max_width_photo': MakerPage.photo_width,
+                                'max_height_photo': MakerPage.photo_height,
+                                'max_width_logo': MakerPage.logo_width,
+                                'max_height_logo': MakerPage.logo_height,
                                 'uri':self.request.uri,
                                 'title':'Update Store Information'}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -289,33 +297,23 @@ class EditMakerPage(webapp.RequestHandler):
             self.redirect('/maker/add')
         else:
             data = MakerForm(data=self.request.POST, instance=maker)
-            photo_file = self.request.get("photo")
-
-            if not photo_file:
+            temp_key = self.request.get("photo")
+            if temp_key is None or temp_key == '':
                 photo_is_valid = True
                 photo = None
             else:
-                photo_is_valid = len(photo_file) < 1024*1024
-                if photo_is_valid:
-                    try:
-                        photo = images.resize(photo_file, MakerPage.photo_width, MakerPage.photo_height)
-                    except:
-                        photo = None
-                        photo_is_valid = False
+                photo = db.get(temp_key)
+                if photo is not None:
+                    photo_is_valid = True;
 
-            logo_file = self.request.get("logo")
-
-            if not logo_file:
+            temp_key = self.request.get("logo")
+            if temp_key is None or temp_key == '':
                 logo_is_valid = True
                 logo = None
             else:
-                logo_is_valid = len(logo_file) < 1024*1024
-                if logo_is_valid:
-                    try:
-                        logo = images.resize(logo_file, MakerPage.logo_width, MakerPage.logo_height)
-                    except:
-                        logo = None
-                        logo_is_valid = False
+                logo = db.get(temp_key)
+                if logo is not None:
+                    logo_is_valid = True;
 
             if data.is_valid() and photo_is_valid and logo_is_valid:
                 entity = data.save(commit=False)
@@ -332,16 +330,18 @@ class EditMakerPage(webapp.RequestHandler):
                     Image(
                         parent=entity,
                         category='Portrait',
-                        content=photo,
+                        content=photo.content,
                         ).put()
+                    photo.delete()
                 if logo:
                     if maker.logo:
                         db.delete(maker.logo)
                     Image(
                         parent=entity,
                         category='Logo',
-                        content=logo,
+                        content=logo.content,
                         ).put()
+                    logo.delete()
                 self.redirect('/maker_dashboard/' + entity.slug)
             else:
                 messages = []
@@ -354,8 +354,10 @@ class EditMakerPage(webapp.RequestHandler):
                                     'id' : id,
                                     'messages':messages,
                                     'tag_field':buildTagField(self.request.get('tags')),
-                                    'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
-                                    'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
+                                    'max_width_photo': MakerPage.photo_width,
+                                    'max_height_photo': MakerPage.photo_height,
+                                    'max_width_logo': MakerPage.logo_width,
+                                    'max_height_logo': MakerPage.logo_height,
                                     'uri':self.request.uri,
                                     'title':'Update Store Information',
                                     }
