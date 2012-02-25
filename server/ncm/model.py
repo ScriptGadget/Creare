@@ -25,7 +25,7 @@ import hashlib
 import datetime as datetime_module
 from operator import attrgetter
 
-_default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic', 'Metalwork', 'Woodwork', 'Cards & Papercraft', 'Accessories', 'Baskets']
+_default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic', 'Metalwork', 'Woodwork', 'Cards & Papercraft', 'Accessories', 'Baskets', 'Bears, Dolls & Miniatures']
 
 _punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
 _word_re = re.compile('[\W]+')
