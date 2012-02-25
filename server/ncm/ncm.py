@@ -1845,18 +1845,21 @@ class UploadImage(webapp.RequestHandler):
 
 class DisplayImage(webapp.RequestHandler):
     def get(self, image_id):
-        try:
-            image = db.get(image_id)
-        except:
-            image = None
+        if image_id == 'None':
+            image = None;
+        else:
+            try:
+                image = db.get(image_id)
+            except:
+                image = None
+
+        self.response.headers['Content-Type'] = "image/png"
+        self.response.headers['Cache-Control'] = "max-age=2592000, must-revalidate"
 
         if image and image.content:
-            self.response.headers['Content-Type'] = "image/png"
-            self.response.headers['Cache-Control'] = "max-age=2592000, must-revalidate"
             self.response.out.write(image.content)
         else:
-            self.error(404)
-            self.response.out.write("I don't recognize that image.")
+            self.response.out.write(png_image_white_pixel)
 
 class ProductSearch(webapp.RequestHandler):
     def get(self):
