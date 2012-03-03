@@ -1548,6 +1548,14 @@ class RPCGetMethods:
             'total_items':total_items
             }
 
+    def GetScore(self, request, *args):
+        community = Community.get_current_community()
+        return {
+            'makers':community.maker_score,
+            'product':community.product_score,
+            'pending':community.pending_score,
+            }
+
 
 class RPCPostMethods:
     """ Handle any RPC request that change the state of the sytem. """
@@ -1951,6 +1959,7 @@ def main():
         (r'/rpc/(SetMakerTransactionShipped)', RPCHandler),
         (r'/rpc/(OrderProductsInCart)', RPCHandler),
         (r'/rpc/(EditContent)', RPCHandler),
+        (r'/rpc/(GetScore)', RPCHandler),
         ('/', CommunityHomePage),
         ('/communities', SiteHomePage),
         ('/maker', MakerPage),
