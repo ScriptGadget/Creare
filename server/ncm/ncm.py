@@ -688,11 +688,13 @@ class MakerDashboard(webapp.RequestHandler):
                 ad.img = '/images/' + str(ad.image)
                 ad.width = AdvertisementPage.photo_width
                 ad.height = AdvertisementPage.photo_height
+
+            products = maker.products
             template_values = { 
                 'title':'Maker Dashboard',
                 'ad':ad,
                 'store':maker,
-                'products':maker.products,
+                'products': sorted(products, key=attrgetter('when'), reverse=True),
                 }
             path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
