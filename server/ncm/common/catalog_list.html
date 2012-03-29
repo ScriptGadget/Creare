@@ -6,7 +6,7 @@
 	   </tr><tr>
 	   {% endif %}
 	   {% endif %}
-       <td>
+       <td {% if not product.show %}style="background-color: gray"{% endif %}>
 		 <span class="product_image_panel">
 		   <a href="/product/{{product.maker.slug}}/{{product.slug}}"><img class="product_image" src="/images/{{product.image}}" alt="{{product.name}}" title="{{product.name}}"/></a>
          </span>
