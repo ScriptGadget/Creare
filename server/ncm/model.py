@@ -124,7 +124,7 @@ class Community(db.Model):
     featured_maker = db.StringProperty()
     motto = db.StringProperty()
     twitter_account = db.StringProperty()
-
+    google_analytics_id = db.StringProperty()
     @property
     def business_id(self):
         if self.use_sandbox:
@@ -268,6 +268,7 @@ class Maker(db.Model):
     full_name = db.StringProperty(required=True, verbose_name="Your name")
     email = db.EmailProperty(required=True, verbose_name="Your email", validator=validateEmail)
     website = db.LinkProperty()
+    google_analytics_id = db.StringProperty()
     paypal_business_account_email = db.EmailProperty(required=True, verbose_name="Paypal business or premier account email", validator=validateEmail)
     phone_number = db.PhoneNumberProperty(required=True)
     mailing_address = db.PostalAddressProperty(required=True)

@@ -28,8 +28,14 @@
 	  <script type="text/javascript">
 
 		  var _gaq = _gaq || [];
-		    _gaq.push(['_setAccount', 'UA-22111434-1']);
+		    _gaq.push(['_setAccount', '{{ community.google_analytics_id }}']);
 		    _gaq.push(['_trackPageview']);
+		  {% if store %}
+		    {% if store.google_analytics_id %} 
+		    _gaq.push(['store._setAccount', '{{ store.google_analytics_id }}']);
+		    _gaq.push(['store._trackPageview']);
+		    {% endif %}
+		  {% endif %}
 
 		    (function() {
       var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
