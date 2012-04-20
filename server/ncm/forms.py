@@ -98,11 +98,14 @@ class CommaField(forms.CharField):
         tags.append(unicode(tag.strip()).encode('ascii'))
       return tags
 """
+
+
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
     # won't work (see above)
     # tags = CommaField(label="Comma separated keywords", widget=CommaTags())
-   
+    ga_id_pattern = re.compile('UA-[0-9]*-[0-9]*')
+
     def __init__(self, *args, **kwargs):
         super(MakerForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
@@ -111,8 +114,17 @@ class MakerForm(djangoforms.ModelForm):
         else:
           self.fields['store_name'].widget.attrs.pop('readonly',None)
 
+    def clean_google_analytics_id(self):
+      data = self.clean_data['google_analytics_id']
+      if data:
+        if not MakerForm.ga_id_pattern.match(data):
+          raise forms.ValidationError(u'The id should look something like: UA-22111434-1')
+        else:
+          data = data.strip()
+      return data
+
     def clean_store_name(self):
-        data=self.clean_data['store_name']
+        data = self.clean_data['store_name']
 
         if self.instance:
           if self.instance.store_name != data:
