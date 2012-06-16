@@ -130,7 +130,22 @@
 	  {% if community.use_sandbox %}
 	  <p class="errorlist">THIS WEBSITE IS IN TEST ONLY MODE! No actual products are for sale, and all payments are processed though test accounts in the PayPal sandbox.</p>
 	  {% endif %}
-	  <!--[if lt IE 9]> <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;'> <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode"><img src="http://www.theie6countdown.com/images/banners/warning_bar_0000_us.jpg" border="0" height="42" width="820" alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today." /></a></div> <![endif]-->
+
+	  <!--[if lt IE 9]>
+	  <div class="browser_table_caption">
+		<p class="alert">Oops! Your browser (IE) is really out of date and potentially broken. If you have questions, contact us at {{ community.support_email }} or ({{community.support_phone|slice:":3"}}) {{community.support_phone|slice:"3:6"}}-{{community.support_phone|slice:"6:"}}<p>
+		  <table class="browser_table">
+			<tr>			
+			  <td><a href="http://getfirefox.com/" alt="firefox" title="firefox"><div class="firefox_icon"></div></a></td>
+			  <td><a href="http://google.com/chrome" alt="chrome" title="chrome"><div class="chrome_icon"></div></a></td>
+			  <td><a href="http://opera.com/" alt="firefox" title="opera"><div class="opera_icon"></div></a></td>
+			  <td><a href="http://apple.com/safari/" alt="safari" title="safari"><div class="safari_icon"></div></a></td>
+			</tr>
+		  </table>
+		  <div class="browser_table_caption"><em>We recommend these free, secure browsers for a great Internet experience.</em></div>
+	  </div>
+	  <![endif]--> 
+
 	  <noscript class="errorlist">THIS SITE REQUIRES JAVASCRIPT TO WORK. Please use a browser which support javascript or turn on javascript if you have blocked it.</noscript>
 	  {% block content %}
       {% endblock %}

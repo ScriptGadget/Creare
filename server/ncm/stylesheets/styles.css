@@ -582,3 +582,48 @@ textarea.editable {
 	width: 150%;
 	text-align: left;
 }
+
+.firefox_icon {
+	background: url("/static/images/web-browser-icons.jpg");
+	background-position: -75px 0px;
+	background-repeat: no-repeat;
+	height: 70px;
+	width: 75px;
+}
+
+.opera_icon {
+	background: url("/static/images/web-browser-icons.jpg");
+	background-position: -150px 0px;
+	background-repeat: no-repeat;
+	height: 70px;
+	width: 75px;
+}
+
+.chrome_icon {
+	background: url("/static/images/web-browser-icons.jpg");
+	background-position: -225px 0px;
+	background-repeat: no-repeat;
+	height: 70px;
+	width: 75px;
+}
+
+.safari_icon {
+	background: url("/static/images/web-browser-icons.jpg");
+	background-position: 0px 0px;
+	background-repeat: no-repeat;
+	height: 70px;
+	width: 75px;
+}
+
+.browser_table {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.browser_table_caption {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	font-size: small;
+}
