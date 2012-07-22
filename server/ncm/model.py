@@ -344,10 +344,13 @@ class Product(db.Model):
     @property
     def image(self):
         image_key = None
-        if self.primary_image is None:
-            image_key = Image.all(keys_only=True).ancestor(self).get()
-        else:
-            image_key = Product.primary_image.get_value_for_datastore(self)
+        try:
+            if self.primary_image is None:
+                image_key = Image.all(keys_only=True).ancestor(self).get()
+            else:
+                image_key = Product.primary_image.get_value_for_datastore(self)
+        except:
+            logging.error("Bad key in Product.image for %s" % (self.name))
         return image_key
 
     @property
