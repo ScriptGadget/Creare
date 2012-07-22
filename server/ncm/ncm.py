@@ -564,7 +564,7 @@ class ViewProductPage(webapp.RequestHandler):
             return
 
         product = Product.get_product_for_slug(product_slug)
-        if product.disable or not product.show:
+        if product and (product.disable or not product.show):
             product = None
 
         if not product:
