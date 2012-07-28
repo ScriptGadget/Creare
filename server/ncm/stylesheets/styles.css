@@ -23,6 +23,7 @@ img {
 #holder {
 	margin:auto;
 	width:1080px;
+	padding-right: 15px;
 	background:white;
 	border-radius:15px;
 	-moz-border-radius:15px;
