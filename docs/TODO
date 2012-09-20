@@ -1,0 +1,4 @@
+[ ] Test Shipping/Pickup changes in the sandbox
+[+] Don't charge shipping and handling on local orders. 
+	Add a checkbox to the Maker dashboard to charge handling fees for local orders (off by default).
+	

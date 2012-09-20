@@ -1482,12 +1482,14 @@ class RPCGetMethods:
         session = get_current_session()
         results = {}
         items = session.get('ShoppingCartItems', [])
-            
+        delivery_option = session.get('DeliveryOption', "")
         products = []
         amount = 0.0
         for item in items:
             product = Product.get(item.product_key)
             if product:
+                if delivery_option == 'local' and product.maker.handling_charge_for_pickup is False:
+                    item.shipping = 0.0
                 p = { "count": str(item.count),
                       "name": product.name,
                       "key": str(product.key()),
@@ -1635,6 +1637,15 @@ class RPCPostMethods:
         session['ShoppingCartItems'] = items
         return {"result":"success"}
 
+    def SetDeliveryOption(self, request, *args):
+        """ Set local pickup or ship recalculate the cart as needed. """
+        delivery_option = args[0];
+        session = get_current_session()
+        if not session.is_active():
+            session.regenerate_id()
+        session['DeliveryOption'] = delivery_option;
+        return {"result":"success"};
+
     def SetMakerTransactionShipped(self, request, *args):
         try:
             maker = Maker.get(args[0])
@@ -1670,6 +1681,7 @@ class RPCPostMethods:
             return{"message":"I don't see anything in your cart"}
         else:
             items = session.get('ShoppingCartItems', [])
+            delivery_option = session.get('DeliveryOption', "")
             cart_transaction = CartTransaction(transaction_type='Sale')
             cart_transaction.shopper_name = sanitizeHtml(args[0])
             cart_transaction.shopper_email = sanitizeHtml(args[1])
@@ -1684,6 +1696,7 @@ class RPCPostMethods:
             maker_transactions = []
             products = []
             maker_business_ids = []
+            adjusted_items = []
             for item in items:
                 product = Product.get(item.product_key)
                 if product.inventory - item.count < 0:
@@ -1694,8 +1707,12 @@ class RPCPostMethods:
 
                 products.append(product)
 
+                if delivery_option == 'local' and product.maker.handling_charge_for_pickup is False:
+                    item.shipping = 0.0
+
                 for maker_transaction in maker_transactions:
                     if maker_transaction.maker.key() == product.maker.key():
+
                         entry = "%s:%s:%s:%s" % (str(product.key()),
                                               str(item.count),
                                               str(item.price),
@@ -1719,11 +1736,13 @@ class RPCPostMethods:
                     maker_transactions.append(maker_transaction)
                     maker_business_ids.append((product.maker.paypal_business_account_email, 1.00))
 
+                adjusted_items.append(item)
+
             community = Community.get_current_community()
             base_url = request.url.replace(request.path, '')
 
             receivers = ShoppingCartItem.createReceiverList(community=community,
-                                                            shopping_cart_items=items)
+                                                            shopping_cart_items=adjusted_items)
 
             try:
                 if community.use_sandbox:
@@ -1962,6 +1981,7 @@ def main():
         (r'/rpc/(OrderProductsInCart)', RPCHandler),
         (r'/rpc/(EditContent)', RPCHandler),
         (r'/rpc/(GetScore)', RPCHandler),
+        (r'/rpc/(SetDeliveryOption)', RPCHandler),
         ('/', CommunityHomePage),
         ('/communities', SiteHomePage),
         ('/maker', MakerPage),

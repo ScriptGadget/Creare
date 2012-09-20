@@ -7,6 +7,7 @@
   form.email = "";
   form.phone = "";
   form.shipping = "";
+  form.pickup = "";
 
   orderInProgress = false;
 
@@ -15,6 +16,7 @@
   InstallFunction(server, 'RemoveProductFromCart', false);
   InstallFunction(server, 'RemoveAllProductFromCart', false);
   InstallFunction(server, 'AddProductToCart', false);
+  InstallFunction(server, 'SetDeliveryOption', false);
 
   function doRemoveProductFromCart(product){
     server.RemoveProductFromCart(product, doGetShoppingCart);
@@ -37,6 +39,10 @@
         server.OrderProductsInCart(form.name, form.email, form.phone, form.shipping, displayOrderResultOrRedirect);
       }
     }
+  }
+
+  function doSetDeliveryOption(option){
+    server.SetDeliveryOption(option, doGetShoppingCart);
   }
 
   function doGetShoppingCart(){
@@ -71,7 +77,12 @@
           }
           cart_content += thumbnailImage + "</td><td>"+ removeButton + "&nbsp;(" + products[i].count + ")&nbsp;" + addButton + "&nbsp;" + removeAllButton + "&nbsp;-&nbsp;" + products[i].name + "</td><td>$" + products[i].total  +" ($" + products[i].price;
 	 	  if(products[i].shipping > 0.0) {
-		    cart_content += "ea + S&H $" + products[i].shipping + ")</td></tr>";
+	        if(form.pickup == "local")
+              {
+	            cart_content += "ea + Handling $" + products[i].shipping + ")</td></tr>";
+              } else {
+	            cart_content += "ea + S&H $" + products[i].shipping + ")</td></tr>";
+              }
           } else {
             cart_content += "ea)</td></tr>";
           }
@@ -106,6 +117,16 @@
     form.email = $("email_id").value;
     form.phone = $("phone_id").value;
     form.shipping = $("shipping_id").value;
+    oldPickup = form.pickup;
+    if($("will_pickup_id").checked){
+      form.pickup = "local";
+    }else{
+      form.pickup = "ship";
+    }
+    if(oldPickup != form.pickup)
+    {
+       doSetDeliveryOption(form.pickup);
+    }
 	return form.name != "" && form.email != "" && form.phone != "" && form.shipping != "";
   }
 
@@ -131,6 +152,13 @@
 	<table id="ShippingInfo">
 	<tr><th>Name:</th><td><input type="text" name="name" id="name_id" onchange="updateForm()"/></td></tr>
 	<tr><th>Email:</th><td><input type="text" name="email" id="email_id" onchange="updateForm()"/></td></tr>
+	<tr><th>Pickup/Ship:</th>
+	  <td>
+		<input type="radio" name="pickup" id="ship_it_id" value="ship" onchange="updateForm()" checked/><label>Please ship items</label></br>
+
+		<input type="radio" name="pickup" id="will_pickup_id" value="local" onchange="updateForm()"/><label>I will pick-up items</label>
+	  </td>
+	</tr>
 	<tr><th>Phone (for pick-up):</th><td><input type="text" name="phone" id="phone_id" onchange="updateForm()"/></td></tr>
 	<tr><th>Shipping Address or<br/>Pick-up time and Notes to Maker:</th><td><textarea name="shipping" id="shipping_id" onchange="updateForm()"></textarea></td></tr>
 	</table>

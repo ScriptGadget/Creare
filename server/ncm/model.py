@@ -276,6 +276,7 @@ class Maker(db.Model):
     location = db.TextProperty(required=True, verbose_name="Store Location, Market Booth, Maker Space")
     tags = db.StringListProperty(required=True, verbose_name="Comma Separated Keywords")
     accepted_terms = db.BooleanProperty(required=False)
+    handling_charge_for_pickup = db.BooleanProperty(required=False, default=False, verbose_name="Charge handling for local pick-up")
 
     @property
     def photo(self):
