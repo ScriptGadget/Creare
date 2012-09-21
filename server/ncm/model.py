@@ -317,8 +317,11 @@ class Maker(db.Model):
                 maker = makers.get()
             except db.KindError:
                 maker = None
-                logging.debugging.error("Unexpected db.KindError: " + db.KindError)
+                logging.error("Unexpected db.KindError: " + db.KindError)
 
+            if maker is None:
+                logging.info("New maker joining? " + str(user))
+                logging.info("email: %s nickname: %s user_id: %s auth_domain: %s " % (str(user.email()), str(user.nickname()), str(user.user_id()), str(user.auth_domain())))
         return maker;
 
 class Product(db.Model):
