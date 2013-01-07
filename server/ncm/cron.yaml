@@ -5,4 +5,5 @@ cron:
 
 - description: Update Featured Maker
   url: /update_featured
-  schedule: every 3 days 07:42
+  schedule: every sunday, wednesday 23:42
+  timezone: America/Los_Angeles
