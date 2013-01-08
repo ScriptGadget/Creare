@@ -277,6 +277,7 @@ class Maker(db.Model):
     tags = db.StringListProperty(required=True, verbose_name="Comma Separated Keywords")
     accepted_terms = db.BooleanProperty(required=False)
     handling_charge_for_pickup = db.BooleanProperty(required=False, default=False, verbose_name="Charge handling for local pick-up")
+    user_id = db.StringProperty(required=False, default="")
 
     @property
     def photo(self):
@@ -320,8 +321,15 @@ class Maker(db.Model):
                 logging.error("Unexpected db.KindError: " + db.KindError)
 
             if maker is None:
-                logging.info("New maker joining? " + str(user))
-                logging.info("email: %s nickname: %s user_id: %s auth_domain: %s " % (str(user.email()), str(user.nickname()), str(user.user_id()), str(user.auth_domain())))
+                try:
+                    makers = Maker.gql("WHERE user_id = :1", user.user_id())
+                    maker = makers.get()
+                except db.KindError:
+                    maker = None
+                    logging.error("Unexpected db.KindError: " + db.KindError)
+                if maker is None:
+                    logging.info("New maker joining? " + str(user))
+                    logging.info("email: %s nickname: %s user_id: %s auth_domain: %s " % (str(user.email()), str(user.nickname()), str(user.user_id()), str(user.auth_domain())))
         return maker;
 
 class Product(db.Model):

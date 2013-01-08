@@ -146,6 +146,7 @@ class MakerForm(djangoforms.ModelForm):
             'approval_status',
             'accepted_terms',
             'tags',
+            'user_id',
             ]
 
 PersonForm = autostrip(MakerForm)

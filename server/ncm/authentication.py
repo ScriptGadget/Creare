@@ -37,6 +37,10 @@ class Authenticator:
             raise AuthenticationException('User must authenticate')
         else:
             maker = Maker.getMakerForUser(user)
+            if maker:
+                maker.user = user
+                maker.user_id = user.user_id()
+                maker.put()
         return (user, maker)
 
     @staticmethod
