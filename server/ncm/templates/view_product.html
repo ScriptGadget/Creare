@@ -19,7 +19,20 @@
 		   <span class="pickup">(Pick-up Only)</span>
 		   {% endif %}
 		   </p>
-		   <p class="price">${{product.price|floatformat:2}} <input class="add_button" type="button" value="Add to Cart" onclick="doAddProductToCart('{{product.key}}')" /> </p>
+		   <p class="price">
+			 {% if product.discount_price %}
+			   <span class="discounted">${{product.price|floatformat:2}}</span> &nbsp;
+			   ${{product.discount_price|floatformat:2}}
+			 {% else %}
+			   ${{product.price|floatformat:2}}
+			 {% endif %}			 
+			 {% if product.shipping %}
+			   <br/>
+			   plus shipping and handling: ${{product.shipping|floatformat:2}}
+			 {% endif %}
+			 <br/>
+			 <input class="ncm_button add_button" type="button" value="Take Me Home" onclick="doAddProductToCart('{{product.key}}')" />
+		   </p>
 		 {% else %}
 		 <span class="product_sold_panel">
 		   <p>Sold!</p>
@@ -38,7 +51,11 @@
 	   <!-- Twitter -->
 	   <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-url="{{url}}" data-text="{{product.name}}" data-via="community.twitter_account">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
 	 </p>
+	 {% if product.video_link %}
 	 <p class="product_info">{{product.video_link}}</p>
+     {% else %}
+     <p class="product_info"> &nbsp; </p>
+     {% endif %}
 	 <p class="product_info"> {{product.short_description}}</p>
 	 <p class="product_info"> {{product.description}}</p>
    </div>

@@ -119,3 +119,74 @@ function hideOrShow(panel, control){
 	}
 }
 
+function afu_buildInput(type, name, value)
+{
+	input = document.createElement('input');
+	input.type = type;
+	input.name = name;
+	input.value = value;
+	return input;
+}
+
+function ajaxFileUpload(upload_field, preview, iframe)
+{
+	// Checking file type
+	var re_text = /\.jpg|\.png|\.jpeg/i;
+	var filename = upload_field.value;
+	if (filename.search(re_text) == -1) {
+		alert("File should be either jpg or png or jpeg");
+		upload_field.form.reset();
+		return false;
+	}
+	document.getElementById(preview).innerHTML = '<img src="/static/images/loading.gif" border="0" />';
+	upload_field.form.action = '/image/upload';
+	upload_field.form.target = iframe;
+	upload_field.form.submit();
+	upload_field.form.action = '';
+	upload_field.form.target = '';
+	return true;
+}
+
+function buildImageUploadForm(panel, iframe_name, form_name, parent_form_name, image_name, error_name, preview_name, preview_content, width, height)
+{
+	iframe = document.createElement('iframe');
+	iframe.name = iframe_name;
+	iframe.id = iframe_name;
+	iframe.style.display = "none";
+	panel.appendChild(iframe);
+
+	preview = document.createElement('div');
+	preview.id = preview_name;
+	preview.innerHTML = preview_content;
+	panel.appendChild(preview);
+
+	form = document.createElement('form');
+	form.name = form_name;
+	form.method = "post";
+	form.autocomplete = "off";
+	form.enctype = "multipart/form-data";
+
+	prompt = document.createElement('span');
+	prompt.innerHTML = "Upload Picture :  (PNG or JPG " + width + "wx" + height + "h, less than 1MB)";
+	form.appendChild(prompt);
+
+	file_input = document.createElement('input');
+	file_input.type = "file";
+	file_input.name = "img";
+	file_input.id = "picture";
+	file_input.onchange = function(){return ajaxFileUpload(this, preview_name, iframe_name);};
+	form.appendChild(file_input);
+
+	form.appendChild(afu_buildInput("hidden", "parent_form", parent_form_name));
+	form.appendChild(afu_buildInput("hidden", "max_width", width));
+	form.appendChild(afu_buildInput("hidden", "max_height", height));
+	form.appendChild(afu_buildInput("hidden", "image_field", image_name));
+	form.appendChild(afu_buildInput("hidden", "error", error_name));
+	form.appendChild(afu_buildInput("hidden", "preview", preview_name));
+	
+	error = document.createElement('span');
+	error.id = error_name;
+	form.appendChild(error);
+
+	panel.appendChild(form);
+}

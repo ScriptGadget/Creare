@@ -23,8 +23,11 @@ import logging
 import shardedcounter
 import hashlib
 import datetime as datetime_module
+from operator import attrgetter
 
-_default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic', 'Metalwork', 'Woodwork', 'Cards & Papercraft']
+png_image_white_pixel = '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90\x77\x53\xde\x00\x00\x00\x01\x73\x52\x47\x42\x00\xae\xce\x1c\xe9\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\xf8\xff\xff\x3f\x00\x05\xfe\x02\xfe\xdc\xcc\x59\xe7\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82'
+
+_default_categories = ['Unclassifiable', 'Bags & Totes', 'Jewelry', 'Clothing', 'Food', 'Furniture', 'Napkins & Linens & The Like', 'Soap & Skin Care', 'Pictures (Fine Art & Photographs)', 'Sculptures & Pottery', 'Toys & Games', 'Gears & Gadgets', 'Wellness & Therapeutic', 'Metalwork', 'Woodwork', 'Cards & Papercraft', 'Accessories', 'Baskets', 'Bears, Dolls & Miniatures']
 
 _punct_re = re.compile(r'[\t !"#$%&\()*\-/<=>?@\[\\\]^_`{|},.]+')
 _word_re = re.compile('[\W]+')
@@ -76,6 +79,13 @@ def validateEmail(value):
     if not allowed.match(value):
         raise db.BadValueError("Bad email address: " + value)
 
+class Image(db.Model):
+    """ 
+    An icon, photo or graphic. 
+    Use ancestry to associate with Makers, Products and Communities.
+    """
+    category = db.StringProperty(choices=set(['Product','Advertisement','Portrait','Logo','Banner','Temporary']), required=True)
+    content = db.BlobProperty(required=True)
 
 class Community(db.Model):
     """ A Community of Makers and Crafters  """
@@ -114,7 +124,7 @@ class Community(db.Model):
     featured_maker = db.StringProperty()
     motto = db.StringProperty()
     twitter_account = db.StringProperty()
-
+    google_analytics_id = db.StringProperty()
     @property
     def business_id(self):
         if self.use_sandbox:
@@ -258,6 +268,7 @@ class Maker(db.Model):
     full_name = db.StringProperty(required=True, verbose_name="Your name")
     email = db.EmailProperty(required=True, verbose_name="Your email", validator=validateEmail)
     website = db.LinkProperty()
+    google_analytics_id = db.StringProperty()
     paypal_business_account_email = db.EmailProperty(required=True, verbose_name="Paypal business or premier account email", validator=validateEmail)
     phone_number = db.PhoneNumberProperty(required=True)
     mailing_address = db.PostalAddressProperty(required=True)
@@ -265,6 +276,8 @@ class Maker(db.Model):
     location = db.TextProperty(required=True, verbose_name="Store Location, Market Booth, Maker Space")
     tags = db.StringListProperty(required=True, verbose_name="Comma Separated Keywords")
     accepted_terms = db.BooleanProperty(required=False)
+    handling_charge_for_pickup = db.BooleanProperty(required=False, default=False, verbose_name="Charge handling for local pick-up")
+    user_id = db.StringProperty(required=False, default="")
 
     @property
     def photo(self):
@@ -305,8 +318,18 @@ class Maker(db.Model):
                 maker = makers.get()
             except db.KindError:
                 maker = None
-                logging.debugging.error("Unexpected db.KindError: " + db.KindError)
+                logging.error("Unexpected db.KindError: " + db.KindError)
 
+            if maker is None:
+                try:
+                    makers = Maker.gql("WHERE user_id = :1", user.user_id())
+                    maker = makers.get()
+                except db.KindError:
+                    maker = None
+                    logging.error("Unexpected db.KindError: " + db.KindError)
+                if maker is None:
+                    logging.info("New maker joining? " + str(user))
+                    logging.info("email: %s nickname: %s user_id: %s auth_domain: %s " % (str(user.email()), str(user.nickname()), str(user.user_id()), str(user.auth_domain())))
         return maker;
 
 class Product(db.Model):
@@ -316,8 +339,9 @@ class Product(db.Model):
     slug = db.StringProperty()
     short_description = db.StringProperty(required=True, verbose_name="three related, descriptive words")
     description = db.TextProperty(required=True, verbose_name="Everything amazing about your item")
-    price = db.FloatProperty(required=True, verbose_name="Price with shipping/handling and tax (no $ or commas)", default=10.0)
-    discount_price = db.FloatProperty(required=False, verbose_name="Optional Discounted Price")
+    price = db.FloatProperty(required=True, verbose_name="Price including tax (no $ or commas)", default=10.0)
+    discount_price = db.FloatProperty(required=False, verbose_name="Optional discounted price")
+    shipping = db.FloatProperty(required=False, verbose_name="Optional shipping & handling")
     tags = db.StringListProperty(required=True, verbose_name="Tags (search terms separated by commas)")
     unique = db.BooleanProperty(default=False)
     inventory = db.IntegerProperty(required=True, verbose_name="Number of items you have to sell", default=1)
@@ -327,10 +351,19 @@ class Product(db.Model):
     pickup_only = db.BooleanProperty(default=False, verbose_name="Pick-up only")
     category = db.StringProperty(choices=set(_default_categories), default=_default_categories[0], required=True)
     video_link = db.StringProperty(verbose_name="Embedded Video Link")
+    primary_image = db.ReferenceProperty(Image)
 
     @property
     def image(self):
-        return Image.all(keys_only=True).ancestor(self).get()
+        image_key = None
+        try:
+            if self.primary_image is None:
+                image_key = Image.all(keys_only=True).ancestor(self).get()
+            else:
+                image_key = Product.primary_image.get_value_for_datastore(self)
+        except:
+            logging.error("Bad key in Product.image for %s" % (self.name))
+        return image_key
 
     @property
     def tag_string(self):
@@ -435,9 +468,7 @@ class Product(db.Model):
             for product in stuff:
                 if product.show and not product.disable:
                     products.append(product)
-                    count += 1
-                    if count >= 4:
-                        break;
+            products = sorted(products, key=attrgetter('when'), reverse=True)[0:number_to_return]
             return (maker, products)
         else:
             return (None, None)
@@ -449,14 +480,19 @@ class Product(db.Model):
 
 class ShoppingCartItem():
     """ This is not a db.Model and does not persist! """
-    def __init__(self, product_key, price, count = 0):
+    def __init__(self, product_key, price, shipping = 0.0, count = 0):
         self.product_key = product_key
         self.price = price
         self.count = count
+        if(shipping is not None):
+            self.shipping = shipping
+        else:
+            self.shipping = 0.0
+        
 
     @property
     def subtotal(self):
-        return self.price * self.count
+        return (self.price + self.shipping) * self.count
 
     @staticmethod
     def createReceiverList(community, shopping_cart_items):
@@ -469,7 +505,7 @@ class ShoppingCartItem():
         total_amount = 0.0
         makers = {}
         for item in shopping_cart_items:
-            subtotal = item.count * item.price
+            subtotal = item.subtotal
             total_amount += subtotal
             product = Product.get(item.product_key)
             if product.maker.key() in makers:
@@ -614,11 +650,3 @@ class Advertisement(db.Model):
 
     def refill_impressions(self, impressions):
         shardedcounter.increment(str(self.key()), impressions)
-
-class Image(db.Model):
-    """ 
-    An icon, photo or graphic. 
-    Use ancestry to associate with Makers, Products and Communities.
-    """
-    category = db.StringProperty(choices=set(['Product','Advertisement','Portrait','Logo','Banner']), required=True)
-    content = db.BlobProperty(required=True)

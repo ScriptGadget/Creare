@@ -34,6 +34,8 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp import util
 from google.appengine.api import users
 from google.appengine.ext import db
+from google.appengine.api import memcache
+from google.appengine.datastore import entity_pb
 
 from gaesessions import get_current_session
 
@@ -43,6 +45,35 @@ from payment import *
 from authentication import Authenticator
 
 template.register_template_library('common.catalog_tag')
+
+
+# some settings
+MAX_PRODUCT_IMAGE_HEIGHT=320
+MAX_PRODUCT_IMAGE_WIDTH=320
+
+
+# These two methods are from an article at
+# http://blog.notdot.net/2009/9/Efficient-model-memcaching
+def serialize_entities(models):
+    "Convert db.Models into protobufs which work great in Memcached"
+    if models is None:
+        return None
+    elif isinstance(models, db.Model):
+        # Just one instance
+        return db.model_to_protobuf(models).Encode()
+    else:
+        # A list
+        return [db.model_to_protobuf(x).Encode() for x in models]
+
+def deserialize_entities(data):
+    "Convert a protobuf or list of protobufs into db.Models"
+    if data is None:
+        return None
+    elif isinstance(data, str):
+        # Just one instance
+        return db.model_from_protobuf(entity_pb.EntityProto(data))
+    else:
+        return [db.model_from_protobuf(entity_pb.EntityProto(x)) for x in data]
 
 def add_base_values(template_values):
     community = Community.get_current_community()
@@ -73,12 +104,13 @@ def add_base_values(template_values):
     template_values['cartItems'] = count
     return template_values;
 
-def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, 240x240, less then 1MB)", name="img"):
+def buildImageUploadForm(prompt="Upload Image: (PNG or JPG, %(height)sx%(width)s, less then 1MB)", name="img", height=MAX_PRODUCT_IMAGE_HEIGHT, width=MAX_PRODUCT_IMAGE_WIDTH, count=1):
     """ Build a form to upload images with a configurable prompt message. """
+    new_prompt = prompt % {'height':height, 'width':width}
     return """
-<div><label>%s</label></div> 
-<div><input type="file" name="%s"/></div>
-""" % (prompt, name)
+<div><label>%(prompt)s</label></div> 
+<div><input type="file" name="%(name)s"/></div>
+""" % {'prompt':new_prompt, 'name':name}
 
 def buildTagField(value):
     return """<tr><th><label for="id_tags">%s: </label></th><td><input type="text" name="tags" value="%s" id="id_tags" /></td></tr>""" % (Product.tags.verbose_name, value)
@@ -121,8 +153,10 @@ class MakerPage(webapp.RequestHandler):
             template_values = { 'title':'Open Your Store',
                                 'form':data,
                                 'tag_field':buildTagField(''),
-                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
+                                'max_width_photo': MakerPage.photo_width,
+                                'max_height_photo': MakerPage.photo_height,
+                                'max_width_logo': MakerPage.logo_width,
+                                'max_height_logo': MakerPage.logo_height,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -139,23 +173,23 @@ class MakerPage(webapp.RequestHandler):
         data = MakerForm(data=self.request.POST)
         accepted_terms = self.request.get('term1')
 
-        photo_file = self.request.get("photo")
-        photo_is_valid = photo_file is not None and photo_file != ''
-        photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
-        if photo_is_valid:
-            try:
-                photo = images.resize(photo_file, MakerPage.photo_width, MakerPage.photo_height)
-            except:
-                photo_is_valid = False
+        temp_key = self.request.get("photo")
+        if temp_key is None or temp_key == '':
+            photo_is_valid = True
+            photo = None
+        else:
+            photo = db.get(temp_key)
+            if photo is not None:
+                photo_is_valid = True;
 
-        logo_file = self.request.get("logo")
-        logo_is_valid = logo_file is not None and logo_file != ''
-        logo_is_valid = logo_is_valid and len(logo_file) < 1024*1024
-        if logo_is_valid:
-            try:
-                logo = images.resize(logo_file, MakerPage.logo_width, MakerPage.logo_height)
-            except:
-                logo_is_valid = False
+        temp_key = self.request.get("logo")
+        if temp_key is None or temp_key == '':
+            logo_is_valid = True
+            logo = None
+        else:
+            logo = db.get(temp_key)
+            if logo is not None:
+                logo_is_valid = True;
 
         if data.is_valid() and accepted_terms and photo_is_valid and logo_is_valid:
             # Save the data, and redirect to the view page
@@ -173,14 +207,16 @@ class MakerPage(webapp.RequestHandler):
                 Image( 
                     parent=entity, 
                     category='Portrait',
-                    content=photo,
+                    content=photo.content,
                     ).put()
+                photo.delete()
             if logo:
                 Image( 
                     parent=entity, 
                     category='Logo',
-                    content=logo,
+                    content=logo.content,
                     ).put()
+                logo.delete()
             community.increment_maker_score()
             self.redirect('/maker_dashboard/' + entity.slug)
         else:
@@ -196,8 +232,10 @@ class MakerPage(webapp.RequestHandler):
             template_values = { 'title':'Open Your Store', 
                                 'messages':messages,
                                 'tag_field':buildTagField(self.request.get('tags')),
-                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
+                                'max_width_photo': MakerPage.photo_width,
+                                'max_height_photo': MakerPage.photo_height,
+                                'max_width_logo': MakerPage.logo_width,
+                                'max_height_logo': MakerPage.logo_height,
                                 'form' : data, 
                                 'uri': self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -233,8 +271,10 @@ class EditMakerPage(webapp.RequestHandler):
             template_values = { 'form' : MakerForm(instance=maker),
                                 'id' : maker.key(),
                                 'tag_field':buildTagField(tags),
-                                'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
-                                'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
+                                'max_width_photo': MakerPage.photo_width,
+                                'max_height_photo': MakerPage.photo_height,
+                                'max_width_logo': MakerPage.logo_width,
+                                'max_height_logo': MakerPage.logo_height,
                                 'uri':self.request.uri,
                                 'title':'Update Store Information'}
             path = os.path.join(os.path.dirname(__file__), "templates/maker.html")
@@ -244,7 +284,7 @@ class EditMakerPage(webapp.RequestHandler):
 
     def post(self, id):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
 
         if not community:
             self.error(404)
@@ -257,33 +297,23 @@ class EditMakerPage(webapp.RequestHandler):
             self.redirect('/maker/add')
         else:
             data = MakerForm(data=self.request.POST, instance=maker)
-            photo_file = self.request.get("photo")
-
-            if not photo_file:
+            temp_key = self.request.get("photo")
+            if temp_key is None or temp_key == '':
                 photo_is_valid = True
                 photo = None
             else:
-                photo_is_valid = len(photo_file) < 1024*1024
-                if photo_is_valid:
-                    try:
-                        photo = images.resize(photo_file, MakerPage.photo_width, MakerPage.photo_height)
-                    except:
-                        photo = None
-                        photo_is_valid = False
+                photo = db.get(temp_key)
+                if photo is not None:
+                    photo_is_valid = True;
 
-            logo_file = self.request.get("logo")
-
-            if not logo_file:
+            temp_key = self.request.get("logo")
+            if temp_key is None or temp_key == '':
                 logo_is_valid = True
                 logo = None
             else:
-                logo_is_valid = len(logo_file) < 1024*1024
-                if logo_is_valid:
-                    try:
-                        logo = images.resize(logo_file, MakerPage.logo_width, MakerPage.logo_height)
-                    except:
-                        logo = None
-                        logo_is_valid = False
+                logo = db.get(temp_key)
+                if logo is not None:
+                    logo_is_valid = True;
 
             if data.is_valid() and photo_is_valid and logo_is_valid:
                 entity = data.save(commit=False)
@@ -300,16 +330,18 @@ class EditMakerPage(webapp.RequestHandler):
                     Image(
                         parent=entity,
                         category='Portrait',
-                        content=photo,
+                        content=photo.content,
                         ).put()
+                    photo.delete()
                 if logo:
                     if maker.logo:
                         db.delete(maker.logo)
                     Image(
                         parent=entity,
                         category='Logo',
-                        content=logo,
+                        content=logo.content,
                         ).put()
+                    logo.delete()
                 self.redirect('/maker_dashboard/' + entity.slug)
             else:
                 messages = []
@@ -322,8 +354,10 @@ class EditMakerPage(webapp.RequestHandler):
                                     'id' : id,
                                     'messages':messages,
                                     'tag_field':buildTagField(self.request.get('tags')),
-                                    'photo_upload_form':buildImageUploadForm(prompt=MakerPage.photo_prompt, name="photo"),
-                                    'logo_upload_form':buildImageUploadForm(prompt=MakerPage.logo_prompt, name="logo"),
+                                    'max_width_photo': MakerPage.photo_width,
+                                    'max_height_photo': MakerPage.photo_height,
+                                    'max_width_logo': MakerPage.logo_width,
+                                    'max_height_logo': MakerPage.logo_height,
                                     'uri':self.request.uri,
                                     'title':'Update Store Information',
                                     }
@@ -332,10 +366,6 @@ class EditMakerPage(webapp.RequestHandler):
 
 class ProductPage(webapp.RequestHandler):
     """ Add a Product """
-
-    @staticmethod
-    def buildImageUploadForm():
-        return buildImageUploadForm("Product Image: (PNG or JPG, 240x240, less then 1MB)")
 
     def get(self):
         authenticator = Authenticator(self)
@@ -353,7 +383,8 @@ class ProductPage(webapp.RequestHandler):
         else:
             template_values = { 'form' : ProductForm(maker=maker), 
                                 'tag_field':buildTagField(''),
-                                'upload_form': ProductPage.buildImageUploadForm(),
+                                'max_width':MAX_PRODUCT_IMAGE_WIDTH,
+                                'max_height':MAX_PRODUCT_IMAGE_HEIGHT,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -373,14 +404,8 @@ class ProductPage(webapp.RequestHandler):
             return
         else:
             data = ProductForm(data=self.request.POST, maker=maker)
-            uploaded_file = self.request.get("img")
-            image_is_valid = uploaded_file is not None and uploaded_file != ''
-            image_is_valid = image_is_valid and len(uploaded_file) < 1024*1024
-            if image_is_valid:
-                try:
-                    image = images.resize(uploaded_file, 240, 240)
-                except:
-                    image_is_valid = False
+            image_key = self.request.get("img0")
+            image_is_valid = image_key is not None and image_key != ''
 
             if data.is_valid() and image_is_valid:
                 entity = data.save(commit=False)
@@ -394,23 +419,29 @@ class ProductPage(webapp.RequestHandler):
                 for tag in tags:
                     entity.tags.append(tag.strip().lower())
                 entity.put()
-                Image(
+                temp_image = db.get(image_key)
+                primary_image = Image(
                     parent=entity,
                     category='Product',
-                    content=image,
-                    ).put()
+                    content=temp_image.content,
+                    )
+                primary_image.put()
+                temp_image.delete()
+                entity.primary_image = primary_image
+                entity.put()
                 Community.get_current_community().increment_product_score()
                 self.redirect('/maker_dashboard/' + maker.slug)
             else:
                 messages = []
                 if not image_is_valid:
-                    messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+                    messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square %(height)s pixels high by %(width)s pixels wide." % {'height':MAX_PRODUCT_IMAGE_HEIGHT, 'width':MAX_PRODUCT_IMAGE_WIDTH})
 
                 # Reprint the form
                 template_values = { 'form' : data,
                                     'tag_field':buildTagField(self.request.get('tags')),
                                     'messages':messages,
-                                    'upload_form': ProductPage.buildImageUploadForm(),
+                                    'max_width':MAX_PRODUCT_IMAGE_WIDTH,
+                                    'max_height':MAX_PRODUCT_IMAGE_HEIGHT,
                                     'uri':self.request.uri}
                 path = os.path.join(os.path.dirname(__file__), "templates/product.html")
                 self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -429,7 +460,7 @@ class EditProductPage(webapp.RequestHandler):
 
         if not maker:
             session = get_current_session()
-            community = Community.get_community_for_slug(session.get('community'))
+            community = Community.get_current_community()
 
             if not community:
                 self.error(404)
@@ -452,9 +483,10 @@ class EditProductPage(webapp.RequestHandler):
                 tags = ''
             template_values = { 'form' : ProductForm(instance=product),
                                 'tag_field':buildTagField(tags),
-                                'upload_form': ProductPage.buildImageUploadForm(),
                                 'product':product,
                                 'id' : product.key(),
+                                'max_width':MAX_PRODUCT_IMAGE_WIDTH,
+                                'max_height':MAX_PRODUCT_IMAGE_HEIGHT,
                                 'uri':self.request.uri}
             path = os.path.join(os.path.dirname(__file__), "templates/product.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -476,19 +508,8 @@ class EditProductPage(webapp.RequestHandler):
           return
       else:
           data = ProductForm(data=self.request.POST, instance=product)
-          uploaded_file = self.request.get("img")
-
-          if not uploaded_file:
-              image_is_valid = True
-              image = None
-          else:
-              image_is_valid = len(uploaded_file) < 1024*1024
-              if image_is_valid:
-                  try:
-                      image = images.resize(uploaded_file, 240, 240)
-                  except:
-                      image = None
-                      image_is_valid = False
+          image_key = self.request.get("img0")
+          image_is_valid = True
 
           if data.is_valid() and image_is_valid:
               entity = data.save(commit=False)
@@ -499,27 +520,35 @@ class EditProductPage(webapp.RequestHandler):
               entity.tags = []
               for tag in tags:
                   entity.tags.append(tag.strip().lower())
-              entity.put()
-              if image:
+
+              temp_image = None;
+              if image_key is not None and image_key != '':
+                  temp_image = db.get(image_key)
+              if temp_image:
                   if product.image:
                       db.delete(product.image)
-                  Image(
+                  primary_image = Image(
                       parent=entity,
                       category='Product',
-                      content=image,
-                      ).put()
+                      content=temp_image.content,
+                      )
+                  primary_image.put()
+                  temp_image.delete()
+                  entity.primary_image = primary_image
+              entity.put()
               self.redirect('/maker_dashboard/' + maker.slug)
           else:
               messages = []
               if not image_is_valid:
-                  messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square 240 pixels high by 240 pixels wide.")
+                  messages.append("That doesn't seem to be a valid image. Images must be PNG or JPG files and be less than 1MB. Try resizing until the image fits in a square %(height)s pixels high by %(width)s pixels wide." % {'height':MAX_PRODUCT_IMAGE_HEIGHT, 'width':MAX_PRODUCT_IMAGE_WIDTH})
               # Reprint the form
               template_values = { 'form' : data,
                                   'tag_field':buildTagField(self.request.get('tags')),
                                   'messages': messages,
-                                  'upload_form': ProductPage.buildImageUploadForm(),
                                   'product':product,
                                   'id' : _id,
+                                  'max_width':MAX_PRODUCT_IMAGE_WIDTH,
+                                  'max_height':MAX_PRODUCT_IMAGE_HEIGHT,
                                   'uri':self.request.uri}
               path = os.path.join(os.path.dirname(__file__), "templates/product.html")
               self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -527,8 +556,7 @@ class EditProductPage(webapp.RequestHandler):
 class ViewProductPage(webapp.RequestHandler):
     """ View a Product """
     def get(self, maker_slug, product_slug):
-        session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
 
         if not community:
             self.error(404)
@@ -536,6 +564,13 @@ class ViewProductPage(webapp.RequestHandler):
             return
 
         product = Product.get_product_for_slug(product_slug)
+        if product and (product.disable or not product.show):
+            product = None
+
+        if not product:
+            self.error(404)
+            self.response.out.write("I don't recognize that product.")
+            return
 
         template_values = { 
             'title' : product.name,
@@ -592,7 +627,15 @@ class CommunityHomePage(webapp.RequestHandler):
             return
 
         session['community'] = community.slug
-        (featured_maker, featured_products) = Product.getFeatured(4, community)
+
+        featured_maker = deserialize_entities(memcache.get("featured_maker"))
+        featured_products = deserialize_entities(memcache.get("featured_products"))
+        if not featured_maker:
+            (featured_maker, featured_products) = Product.getFeatured(4, community)
+            cache_map = { "featured_maker" : serialize_entities(featured_maker),
+                          "featured_products" : serialize_entities(featured_products)}
+            memcache.set_multi(cache_map, time=3600)
+
         template_values = { 
             'title': community.name,
             'latest': Product.getLatest(4),
@@ -617,7 +660,11 @@ class MakerDashboard(webapp.RequestHandler):
             # Return immediately
             return
 
-        if not maker or not maker.slug == maker_slug:
+        if not maker:
+            self.redirect("/maker_store/" + maker_slug)
+            return
+
+        if not maker.slug == maker_slug:
             logging.info('=== MakerDashboard.get(): ' + maker.slug + ' does not equal ' + maker_slug)
             self.redirect("/maker_store/" + maker_slug)
             return
@@ -641,11 +688,13 @@ class MakerDashboard(webapp.RequestHandler):
                 ad.img = '/images/' + str(ad.image)
                 ad.width = AdvertisementPage.photo_width
                 ad.height = AdvertisementPage.photo_height
+
+            products = maker.products
             template_values = { 
                 'title':'Maker Dashboard',
                 'ad':ad,
                 'store':maker,
-                'products':maker.products,
+                'products': sorted(products, key=attrgetter('when'), reverse=True),
                 }
             path = os.path.join(os.path.dirname(__file__), "templates/maker_dashboard.html")
             self.response.out.write(template.render(path, add_base_values(template_values)))
@@ -929,7 +978,7 @@ class CheckoutPage(webapp.RequestHandler):
             self.response.out.write("I don't see anything in your cart")
             return
         else:
-            community = Community.get_community_for_slug(session.get('community'))        
+            community = Community.get_current_community()        
             if not community:
                 self.error(404)
                 self.response.out.write("I don't recognize that community")
@@ -1076,7 +1125,7 @@ class AddNewsItem(webapp.RequestHandler):
         if data.is_valid():
             entity = data.save(commit=False)
             session = get_current_session()
-            community = Community.get_community_for_slug(session.get('community'))
+            community = Community.get_current_community()
 
             if not community:
                 self.error(404)
@@ -1139,7 +1188,7 @@ class AdvertisementPage(webapp.RequestHandler):
             return
         else:
             session = get_current_session()
-            community = Community.get_community_for_slug(session.get('community'))
+            community = Community.get_current_community()
 
             data = AdvertisementForm(data=self.request.POST)
             if data.is_valid():
@@ -1234,7 +1283,7 @@ class ViewAdvertisementPage(webapp.RequestHandler):
     """ View a Advertisement """
     def get(self, advertisement_slug):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
         
         if not community:
             self.error(404)
@@ -1255,7 +1304,7 @@ class ListAdvertisements(webapp.RequestHandler):
     """ List news items. """
     def get(self):
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
         
         if not community:
             self.error(404)
@@ -1284,7 +1333,7 @@ class ListMakers(webapp.RequestHandler):
             self.response.out.write("You don't have permission to coordinate Makers.")
             
         session = get_current_session()
-        community = Community.get_community_for_slug(session.get('community'))
+        community = Community.get_current_community()
         
         if not community:
             self.error(404)
@@ -1392,24 +1441,34 @@ def _buildTransactionRow(community, transaction, fee_percentage, fee_minimum):
     products = []
     sale_amount = 0.0
     sale_items = 0
-        
+    sale_shipping = 0.0
+    
     for entry in transaction.detail:
         product = {}
-        (product_key, items, amount) = entry.split(':')
+
+        entry_fields = entry.split(':')
+        if len(entry_fields) == 4:
+            (product_key, items, amount, shipping) = entry_fields
+        else:
+            (product_key, items, amount) = entry_fields
+            shipping = 0.0
+
         product_amount = float(amount)
         product_items = int(items)
         sale_items += product_items
         sale_amount += product_amount * product_items
+        sale_shipping += float(shipping) * product_items
         product['product_name'] = Product.get(product_key).name
         product['items'] = product_items
         products.append(product)
 
-    sale_fee = sale_amount * fee_percentage + fee_minimum
+    sale_fee = (sale_amount + sale_shipping) * fee_percentage + fee_minimum
     sale['products'] = products
     sale['items'] = sale_items
     sale['fee'] = "%.2f" % sale_fee
     sale['amount'] = "%.2f" % sale_amount
-    sale['net'] = "%.2f" % (sale_amount - sale_fee)
+    sale['shipping'] = "%.2f" % sale_shipping
+    sale['net'] = "%.2f" % ((sale_amount + sale_shipping) - sale_fee)
 
     return (sale, sale_items, sale_amount)
 
@@ -1423,17 +1482,20 @@ class RPCGetMethods:
         session = get_current_session()
         results = {}
         items = session.get('ShoppingCartItems', [])
-            
+        delivery_option = session.get('DeliveryOption', "")
         products = []
         amount = 0.0
         for item in items:
             product = Product.get(item.product_key)
             if product:
+                if delivery_option == 'local' and product.maker.handling_charge_for_pickup is False:
+                    item.shipping = 0.0
                 p = { "count": str(item.count),
                       "name": product.name,
                       "key": str(product.key()),
                       "image": str(product.image),
                       "price":'%3.2f' % item.price,
+                      "shipping":'%3.2f' % item.shipping,
                       "total":'%3.2f' % item.subtotal,
                       "pickup_only": product.pickup_only
                       }
@@ -1490,6 +1552,14 @@ class RPCGetMethods:
             'total_items':total_items
             }
 
+    def GetScore(self, request, *args):
+        community = Community.get_current_community()
+        return {
+            'makers':community.maker_score,
+            'product':community.product_score,
+            'pending':community.pending_score,
+            }
+
 
 class RPCPostMethods:
     """ Handle any RPC request that change the state of the sytem. """
@@ -1521,7 +1591,7 @@ class RPCPostMethods:
                     item.count += 1
                 break
         else:
-            newItem = ShoppingCartItem(product_key=product_id, price=product.actual_price, count=1)
+            newItem = ShoppingCartItem(product_key=product_id, shipping=product.shipping, price=product.actual_price, count=1)
             items.append(newItem)
 
         total = 0
@@ -1567,6 +1637,15 @@ class RPCPostMethods:
         session['ShoppingCartItems'] = items
         return {"result":"success"}
 
+    def SetDeliveryOption(self, request, *args):
+        """ Set local pickup or ship recalculate the cart as needed. """
+        delivery_option = args[0];
+        session = get_current_session()
+        if not session.is_active():
+            session.regenerate_id()
+        session['DeliveryOption'] = delivery_option;
+        return {"result":"success"};
+
     def SetMakerTransactionShipped(self, request, *args):
         try:
             maker = Maker.get(args[0])
@@ -1591,7 +1670,7 @@ class RPCPostMethods:
         fee_percentage = (community.paypal_fee_percentage + community.fee_percentage)*0.01
         fee_minimum = community.paypal_fee_minimum + community.fee_minimum
         
-        (sale, additional_items, additional_sales) = _buildTransactionRow(transaction, fee_percentage, fee_minimum)
+        (sale, additional_items, additional_sales) = _buildTransactionRow(community, transaction, fee_percentage, fee_minimum)
         return {"sale":sale}
 
     def OrderProductsInCart(self, request, *args):
@@ -1602,20 +1681,22 @@ class RPCPostMethods:
             return{"message":"I don't see anything in your cart"}
         else:
             items = session.get('ShoppingCartItems', [])
+            delivery_option = session.get('DeliveryOption', "")
             cart_transaction = CartTransaction(transaction_type='Sale')
             cart_transaction.shopper_name = sanitizeHtml(args[0])
             cart_transaction.shopper_email = sanitizeHtml(args[1])
             cart_transaction.shopper_phone = sanitizeHtml(args[2])
-            shipping = sanitizeHtml(args[3].decode('unicode_escape'))
+            shipping_info = sanitizeHtml(args[3].decode('unicode_escape'))
 
-            logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping)
+            logging.info(cart_transaction.shopper_name + " : " +cart_transaction.shopper_email + " : " + shipping_info)
 
-            cart_transaction.shopper_shipping = shipping
+            cart_transaction.shopper_shipping = shipping_info
             cart_transaction.put()
 
             maker_transactions = []
             products = []
             maker_business_ids = []
+            adjusted_items = []
             for item in items:
                 product = Product.get(item.product_key)
                 if product.inventory - item.count < 0:
@@ -1626,11 +1707,16 @@ class RPCPostMethods:
 
                 products.append(product)
 
+                if delivery_option == 'local' and product.maker.handling_charge_for_pickup is False:
+                    item.shipping = 0.0
+
                 for maker_transaction in maker_transactions:
                     if maker_transaction.maker.key() == product.maker.key():
-                        entry = "%s:%s:%s" % (str(product.key()),
+
+                        entry = "%s:%s:%s:%s" % (str(product.key()),
                                               str(item.count),
-                                              str(item.price))
+                                              str(item.price),
+                                              str(item.shipping))
                         maker_transaction.detail.append(entry)
                         break
                     else:
@@ -1642,18 +1728,21 @@ class RPCPostMethods:
                                                          email=product.maker.paypal_business_account_email,
                                                          when=when)
 
-                    entry = "%s:%s:%s" % (str(product.key()),
+                    entry = "%s:%s:%s:%s" % (str(product.key()),
                                           str(item.count),
-                                          str(item.price))
+                                          str(item.price),
+                                          str(item.shipping))
                     maker_transaction.detail.append(entry)
                     maker_transactions.append(maker_transaction)
                     maker_business_ids.append((product.maker.paypal_business_account_email, 1.00))
+
+                adjusted_items.append(item)
 
             community = Community.get_current_community()
             base_url = request.url.replace(request.path, '')
 
             receivers = ShoppingCartItem.createReceiverList(community=community,
-                                                            shopping_cart_items=items)
+                                                            shopping_cart_items=adjusted_items)
 
             try:
                 if community.use_sandbox:
@@ -1733,20 +1822,73 @@ class RPCPostMethods:
             page.content=args[1].replace(u'\u201c', '"').replace(u'\u201d', '"').decode('unicode_escape')
             page.put()
 
+class UploadImage(webapp.RequestHandler):
+    """ Handle temporary image uploads."""
+    def post(self):
+        photo_file = self.request.get("img")
+        parent_form = self.request.get("parent_form")
+        max_width = int(self.request.get("max_width"))
+        max_height = int(self.request.get("max_height"))
+        image_field = self.request.get("image_field")
+        preview = self.request.get("preview")
+        error = self.request.get("error")
+        photo_is_valid = photo_file is not None and photo_file != ''
+        photo_is_valid = photo_is_valid and len(photo_file) < 1024*1024
+        output = """<script language="JavaScript" type="text/javascript">
+                     var parDoc = window.parent.document;
+                     var picture_error = parDoc.getElementById("%(error)s");
+                     var picture_preview = parDoc.getElementById("%(preview)s"); """ % {'preview':preview, 'error':error}
+        if photo_is_valid:
+            try:
+                photo = images.resize(photo_file, max_width, max_height)
+            except:
+                photo = None;
+
+            if photo:
+                image = Image( 
+                    category='Temporary',
+                    content=photo,
+                    )
+                image.put()
+                output += """ picture_error.innerHTML = ""; """
+                output += """ hidden_element = parDoc.getElementById("%(image_field)s");
+                              if(!hidden_element) {
+                                parent_form = parDoc.getElementById("%(parent_form)s");
+                                var hidden_element = document.createElement("input");
+                                hidden_element.type="hidden";
+                                hidden_element.name="%(image_field)s";
+                                hidden_element.id="%(image_field)s";
+                                parent_form.appendChild(hidden_element); 
+                              }
+                              hidden_element.value="%(image_key)s";
+                          """ % {'image_field':image_field, 'parent_form':parent_form, 'image_key':str(image.key())}
+                output += """ picture_preview.innerHTML = "<img src='/images/%s' id='preview_picture_tag' \>"; """ % (str(image.key()))
+            else:
+                output += """ picture_error.innerHTML = "Resize failed."; picture_preview.innerHTML = '';""";
+        else:
+            output += """  picture_error.innerHTML = "Not a valid image."; picture_preview.innerHTML = '';""";
+        
+        output += "</script>"
+        self.response.out.write(output)
+
+
 class DisplayImage(webapp.RequestHandler):
     def get(self, image_id):
-        try:
-            image = db.get(image_id)
-        except:
-            image = None
+        if image_id == 'None':
+            image = None;
+        else:
+            try:
+                image = db.get(image_id)
+            except:
+                image = None
+
+        self.response.headers['Content-Type'] = "image/png"
+        self.response.headers['Cache-Control'] = "max-age=2592000, must-revalidate"
 
         if image and image.content:
-            self.response.headers['Content-Type'] = "image/png"
-            self.response.headers['Cache-Control'] = "max-age=2592000, must-revalidate"
             self.response.out.write(image.content)
         else:
-            self.error(404)
-            self.response.out.write("I don't recognize that image.")
+            self.response.out.write(png_image_white_pixel)
 
 class ProductSearch(webapp.RequestHandler):
     def get(self):
@@ -1838,6 +1980,8 @@ def main():
         (r'/rpc/(SetMakerTransactionShipped)', RPCHandler),
         (r'/rpc/(OrderProductsInCart)', RPCHandler),
         (r'/rpc/(EditContent)', RPCHandler),
+        (r'/rpc/(GetScore)', RPCHandler),
+        (r'/rpc/(SetDeliveryOption)', RPCHandler),
         ('/', CommunityHomePage),
         ('/communities', SiteHomePage),
         ('/maker', MakerPage),
@@ -1870,6 +2014,7 @@ def main():
         ('/return', CompletePurchase),
         ('/cancel', CompletePurchase),
         (r'/images/(.*)', DisplayImage),
+        ('/image/upload', UploadImage),
         ('/search', ProductSearch),
         ('/category', CategorySearch),
         ('/maker_directory', MakerDirectory),

@@ -98,11 +98,14 @@ class CommaField(forms.CharField):
         tags.append(unicode(tag.strip()).encode('ascii'))
       return tags
 """
+
+
 class MakerForm(djangoforms.ModelForm):
     """ Auto generate a form for adding and editing a Maker store  """
     # won't work (see above)
     # tags = CommaField(label="Comma separated keywords", widget=CommaTags())
-   
+    ga_id_pattern = re.compile('UA-[0-9]*-[0-9]*')
+
     def __init__(self, *args, **kwargs):
         super(MakerForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
@@ -111,14 +114,23 @@ class MakerForm(djangoforms.ModelForm):
         else:
           self.fields['store_name'].widget.attrs.pop('readonly',None)
 
+    def clean_google_analytics_id(self):
+      data = self.clean_data['google_analytics_id']
+      if data:
+        if not MakerForm.ga_id_pattern.match(data):
+          raise forms.ValidationError(u'The id should look something like: UA-22111434-1')
+        else:
+          data = data.strip()
+      return data
+
     def clean_store_name(self):
-        data=self.clean_data['store_name']
+        data = self.clean_data['store_name']
 
         if self.instance:
           if self.instance.store_name != data:
             raise forms.ValidationError(u'Store names cannot be changed.')
 
-        maker = Maker.all().filter('store_name = ', data).get()
+        maker = Maker.all().filter('slug = ', Maker.get_slug_for_store_name(data)).get()
         if maker:
             if not self.instance or self.instance.key() != maker.key():
                 raise forms.ValidationError(u'That store name is already taken.')
@@ -134,6 +146,7 @@ class MakerForm(djangoforms.ModelForm):
             'approval_status',
             'accepted_terms',
             'tags',
+            'user_id',
             ]
 
 PersonForm = autostrip(MakerForm)
@@ -157,7 +170,7 @@ class ProductForm(djangoforms.ModelForm):
         else:
           if self.maker:
             p = Product.all()
-            p.filter('name = ', data)
+            p.filter('slug = ', Product.get_slug_for_name(data))
             p.filter('maker == ', self.maker.key())
             product = p.get()
             if product:
@@ -176,8 +189,25 @@ class ProductForm(djangoforms.ModelForm):
       """ This would have been better as a validator, but adding a validator seems problematic with the GAE ModelForm."""
       data=self.clean_data['discount_price']
       if not data is None and not len(data) == 0:
+        discount = float(data)
+        if discount < 0.99:
+          raise forms.ValidationError(u"Discounted price must be $0.00 or greater than $0.98")
+        else:
+          price = 0.0
+          price_data=self.clean_data['price']
+          if not price_data is None and not len(price_data) == 0:
+            price = float(price_data)
+          if discount >= price:
+            raise forms.ValidationError(u"Discounted price must be less than price.")
+          
+      return data
+
+    def clean_shipping(self):
+      """ This would have been better as a validator, but adding a validator seems problematic with the GAE ModelForm."""
+      data=self.clean_data['shipping']
+      if not data is None and not len(data) == 0:
         if float(data) < 0.99:
-          raise forms.ValidationError(u"Prices must be greater than $0.98")
+          raise forms.ValidationError(u"Shipping must be $0.00 or greater than $0.98")
       return data
 
     class Meta:
@@ -189,6 +219,7 @@ class ProductForm(djangoforms.ModelForm):
           'disable',
           'when',
           'tags',
+          'primary_image',
           ]
 
 ProductForm = autostrip(ProductForm)

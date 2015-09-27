@@ -1,6 +1,9 @@
 body { 
 	background-color:#996600;
 	font-family: Georgia, Times New Roman, Times, serif;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#996600', endColorstr='#000'); /* for IE */
+	background: -webkit-gradient(linear, left top, right bottom, from(#996600), to(#000)); /* for webkit browsers */
+	background: -moz-linear-gradient(top,  #996600,  #000); /* for firefox 3.6+ */ 
 }
 
 img { 
@@ -19,7 +22,8 @@ img {
 
 #holder {
 	margin:auto;
-	width:1000px;
+	width:1080px;
+	padding-right: 15px;
 	background:white;
 	border-radius:15px;
 	-moz-border-radius:15px;
@@ -44,6 +48,34 @@ img {
 	-webkit-border-radius:15px;
 }
 
+.ncm_button {
+	color:yellow;
+	font-weight: bold;
+	text-decoration: none;
+	padding: 3px 5px 3px 5px;
+	margin: 3px 0.5em;
+	border-width: 1px;
+	border-style: solid;
+	border-color: brown;
+
+	border-top-color: #996600;
+	border-bottom-color: #000000;
+	border-left-color: #996600;
+	border-right-color: #000000;
+	background-color: #996600;
+	border-radius:15px;
+	-moz-border-radius:15px;
+	-webkit-border-radius:15px;
+	overflow:hidden;
+	-moz-box-shadow: 3px 3px 4px #000;
+	-webkit-box-shadow: 3px 3px 4px #000;
+	box-shadow: 3px 3px 4px #000;
+	/* For IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+	/* For IE 5.5 - 7 */
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
+}
+
 #content { 
 	float: left;
 	margin: auto;
@@ -62,7 +94,8 @@ img {
 }
 
 #content .add_button {
-	width:85px;
+	color:yellow;
+	font-weight: bold;
 }
 
 .catalog {
@@ -100,6 +133,14 @@ img {
 	background-color: #FCFCFC;
 	-moz-border-radius: 15px;
 	border-radius:15px;
+}
+
+#catalog_controls{
+	display:block;
+	width:100%;
+	text-align:center;
+	margin:auto;
+	margin-top: 20px;
 }
 
 .product_image_panel {
@@ -298,7 +339,6 @@ img {
 	margin-left: 0px;
 }
 .product_image {
-	width:240px;
 	border-width: 1px;
 	border-color: gray;
 	-moz-box-shadow: 3px 3px 4px #000;
@@ -416,16 +456,9 @@ textarea.editable {
 }
 
 #checkout_button a {
-	background:yellow;
-	color:blue;
+	color:yellow;
 	font-weight:bold;
 	font-size:1em;
-	padding-left: 2px;
-	padding-right: 2px;
-	border-width:1px;
-	border-color:gold;
-	border-style:dotted;
-	margin:2px;
 }
 
 .score {
@@ -452,13 +485,42 @@ textarea.editable {
 	padding: 2px;
 }
 
-.increment_button {
+#checkout_table a {
+	font-family:'Courier New', monospace;
+	font-weight: bold;
+	font-size: 1em;
+	text-decoration: none;
+	padding:1px;
+	color: white;
+
+	border-radius:15px;
+	-moz-border-radius:15px;
+	-webkit-border-radius:15px;
+	overflow:hidden;
+	-moz-box-shadow: 3px 3px 4px #000;
+	-webkit-box-shadow: 3px 3px 4px #000;
+	box-shadow: 3px 3px 4px #000;
+	/* For IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+	/* For IE 5.5 - 7 */
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
 }
 
-.decrement_button {
+#checkout_table a:hover{
+	background: orange;
+	color: black;
 }
 
-.clear_button {
+.increment {
+	background:#33AA33;
+}
+
+.decrement {
+	background:#CC3333;
+}
+
+.clear {
+	background:#CC3333;
 }
 
 .module {
@@ -501,23 +563,6 @@ textarea.editable {
 #categories li {
 	float: left;
 	list-style: none;
-	padding: 3px 5px 3px 5px;
-	margin: 3px 0.5em;
-	border-width: 1px;
-	border-style: dotted;
-	border-color: brown;
-	background-color: #996600;
-	border-radius:15px;
-	-moz-border-radius:15px;
-	-webkit-border-radius:15px;
-	overflow:hidden;
-	-moz-box-shadow: 3px 3px 4px #000;
-	-webkit-box-shadow: 3px 3px 4px #000;
-	box-shadow: 3px 3px 4px #000;
-	/* For IE 8 */
-	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
-	/* For IE 5.5 - 7 */
-	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
 }
 
 #categories a {
@@ -537,4 +582,49 @@ textarea.editable {
 #maker_gallery {
 	width: 150%;
 	text-align: left;
+}
+
+.firefox_icon {
+	background: url("/static/images/web-browser-icons.jpg");
+	background-position: -75px 0px;
+	background-repeat: no-repeat;
+	height: 70px;
+	width: 75px;
+}
+
+.opera_icon {
+	background: url("/static/images/web-browser-icons.jpg");
+	background-position: -150px 0px;
+	background-repeat: no-repeat;
+	height: 70px;
+	width: 75px;
+}
+
+.chrome_icon {
+	background: url("/static/images/web-browser-icons.jpg");
+	background-position: -225px 0px;
+	background-repeat: no-repeat;
+	height: 70px;
+	width: 75px;
+}
+
+.safari_icon {
+	background: url("/static/images/web-browser-icons.jpg");
+	background-position: 0px 0px;
+	background-repeat: no-repeat;
+	height: 70px;
+	width: 75px;
+}
+
+.browser_table {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.browser_table_caption {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	font-size: small;
 }

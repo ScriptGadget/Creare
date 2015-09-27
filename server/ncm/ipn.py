@@ -76,11 +76,14 @@ class IPNHandler(webapp.RequestHandler):
             transactions.ancestor(cart)
             for transaction in transactions:
                 for entry in transaction.detail:
-                    (product_key, items, amount) = entry.split(':')
+                    entry_fields = entry.split(':')
+                    if len(entry_fields) == 4:
+                        (product_key, items, amount, shipping) = entry_fields
+                    else:
+                        (product_key, items, amount) = entry_fields
                     count = int(items)
                     product = Product.get(product_key)                        
                     db.run_in_transaction( Product.decrement_product_inventory, product.key(), count )
-
 
 
     def ipn(self):

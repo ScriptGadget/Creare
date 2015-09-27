@@ -1,5 +1,22 @@
 {% extends "base.html" %}
 
+{% block functions %}
+
+  function submitRegisterForm(){
+	  $('register').submit();
+  }
+
+  function tangram_init(){
+	  preview_content_photo = "{% if maker %}<img src='/images/{{maker.photo}}' border='0' />{% endif %}";
+	  buildImageUploadForm($("upload_panel_photo"), "upload_iframe_photo", "pictureForm_photo", "register", "photo",
+	  				   "picture_error_photo", "picture_preview_photo", preview_content_photo, {{max_width_photo}}, {{max_height_photo}});
+	  preview_content_logo = "{% if maker %}<img src='/images/{{maker.logo}}' border='0' />{% endif %}";
+	  buildImageUploadForm($("upload_panel_logo"), "upload_iframe_logo", "pictureForm_logo", "register", "logo",
+	  				   "picture_error_logo", "picture_preview_logo", preview_content_logo, {{max_width_logo}}, {{max_height_logo}});
+}
+
+{% endblock functions%}
+
 {% block content %}
     <div id="messagePanel">
 	  {% if id %} 
@@ -25,16 +42,6 @@
 		  {{ tag_field }}
 		</table>
 		
-		<div id="image_upload_panel">
-		  {% if maker.photo %}
-		  <img class="maker_photo" src="/images/{{maker.photo}}"/></br>
-		  {% endif %}
-		  {{ photo_upload_form }}
-		  {% if maker.logo %}
-		  <img class="maker_logo" src="/images/{{maker.logo}}"/></br>
-		  {% endif %}
-		  {{ logo_upload_form }}
-		</div>
 		{% if messages %}
 		<ul class="errorlist">
 		  {% for message in messages %}
@@ -50,7 +57,21 @@
 		{% endif %}
 		
 		<input type="hidden" name="_id" value="{{ id }}" />
-        <div id="account_button"><input id="submit" class="button"  type="submit" {% if id %} value="Update Store" {% else %} value="Create Store" {% endif %} /></div>
       </form>
+
+	  <div id="image_upload_panel">
+		<div>Please upload a photo of yourself:</div>
+		<div class="image_upload_panel" id="upload_panel_photo">
+		</div>
+		<br/>
+		<div>Please upload your logo:</div>
+		<div class="image_upload_panel" id="upload_panel_logo">
+		</div>
+	  </div>
+
+	  <div>
+		<input id="submit" class="button"  type="button" value="Save Changes" onclick="return submitRegisterForm()"/>
+	  </div>
+
 	</div>
 {% endblock %}

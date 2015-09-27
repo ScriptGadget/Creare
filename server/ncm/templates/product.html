@@ -12,9 +12,17 @@
 	  }
   }
 
+  function submitProductForm(){
+	  $('product_form').submit();
+  }
+
   function tangram_init(){
 	  hide_show_inventory();
-	  $("id_unique").onclick = hide_show_inventory
+	  $("id_unique").onclick = hide_show_inventory;
+	  preview_content = "{% if product %}<img src='/images/{{product.image}}' border='0' />{% endif %}";
+	  panel = $("upload_panel");
+	  buildImageUploadForm(panel, "upload_iframe", "pictureForm", "product_form", "img0",
+	  				   "picture_error", "picture_preview", preview_content, {{max_width}}, {{max_height}});
   }
 
 {% endblock functions%}
@@ -27,12 +35,6 @@
 		   {{ tag_field }}
 		   </table>
 		   <input type="hidden" name="_id" value="{{ id }}">
-		   <div id="image_upload_panel">
-			 {% if product %}
-			   <img src="/images/{{product.image}}" border="0" /></br>
-			 {% endif %}
-			 {{ upload_form }}
-		   </div>
 		   {% if messages %}
 		   <ul class="errorlist">
 		   {% for message in messages %}
@@ -40,7 +42,14 @@
 		   {% endfor %}
 		   </ul>
 		   {% endif %}
-           <div><input id="submit" class="button"  type="submit" {% if id %} value="Update Product" {% else %} value="Create Product" {% endif %}/></div>
          </form>
+
+		 <div class="image_upload_panel" id="upload_panel">
+		 </div>
+
+		 <div>
+		   <input id="submit" class="button"  type="button" value="Save Changes" onclick="return submitProductForm()"/>
+		 </div>
+
 	</div>
 {% endblock %}
